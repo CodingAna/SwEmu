@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="/main.css">
+    <title>SwEmu</title>
+  </head>
+  <body class="disable-select">
+    <div>
+      <canvas class="disable-select" id="canvas_static" width="100vh" height="100vh"></canvas>
+      <canvas class="disable-select" id="canvas_dynamic" width="100vh" height="100vh" style="background-color: black;"></canvas>
+      <canvas class="disable-select" id="canvas_vgamepad" width="100vh" height="100vh"></canvas>
+    </div>
+    <script type="module">
+      import { CustomDraw } from "./CustomDraw.js";
+      import { Point, Vector2D } from "./Geometry.js";
+      import { MyMath } from "./MyMath.js";
+
+      let canvas = {
+        static: document.getElementById("canvas_static"),
+        dynamic: document.getElementById("canvas_dynamic"),
+        vgamepad: document.getElementById("canvas_vgamepad"),
+      };
+      let context = {
+        static: canvas.static.getContext("2d"),
+        dynamic: canvas.dynamic.getContext("2d"),
+        vgamepad: canvas.vgamepad.getContext("2d"),
+      };
+      let draw = {
+        static: new CustomDraw(canvas.static, context.static),
+        dynamic: new CustomDraw(canvas.dynamic, context.dynamic),
+        vgamepad: new CustomDraw(canvas.vgamepad, context.vgamepad),
+      };
+
+      let swemu = {
+        screen: {
+          width: 630,
+          height: 360,
+        }
+      };
+      let points = {
+        zero: new Point(),
+      };
+      let buffers = {
+        obstacles: [],
+        coins: [],
+      }
+      let mouse = {
+        position: new Point(),
+        pressed: false,
+        pressedPosition: new Point(),
+        released: true,
+        releasedPosition: new Point(),
+      };
+      let gamepads = {
+        virtual: {
+          axes: [0, 0],
+          renderRadius: 120
+        },
+        real: {},
+        output: {
+          axes: [0, 0],
+          buttons: {},
+        },
+        actions: {
+          south: false,
+          pause: false,
+        }
+      };
+      let player = {
+        life: {
+          alive: true,
+          dead: false,
+          killer: [],
+          killerColors: [],
+        },
+        position: {
+          current: new Point(100, 100),
+          future: new Point(100, 100),
+        },
+        move: new Vector2D(),
+        radius: 10,
+        speed: {
+          current: 2.25,
+          init: 2.25,
+          max: 3,
+        },
+        coins: 0,
+        finalCoins: 40,
+        finalMultiplier: 1.8,
+        paused: false,
+      };
+      let render = {
+        deltaTime: Date.now(),
+        now: Date.now(),
+        input: { // Used for debugging, if verbose === true: print delay (in ms) between (mousedown or mouseup or mousemove) and finished render
+          verbose: false,
+          delay: 0, // debug output (01.05.2023 22:50 => ~10ms (before obstacles and coins))
+          now: 0,
+          updated: false,
+        }
+      }
+
+      // Static
+      canvas.static.width = 160 + 20 + swemu.screen.width + 20 + 160;
+      canvas.static.height = 20 + swemu.screen.height + 20;
+
+      canvas.static.style.position = "absolute";
+      canvas.static.style.left = (window.innerWidth / 2) - (swemu.screen.width / 2) - 180 + "px";
+      canvas.static.style.top = (window.innerHeight / 2) - (swemu.screen.height / 2) - 20 + "px";
+
+      // Dynamic
+      canvas.dynamic.width = swemu.screen.width;
+      canvas.dynamic.height = swemu.screen.height;
+
+      canvas.dynamic.style.position = "absolute";
+      canvas.dynamic.style.left = (window.innerWidth / 2) - (swemu.screen.width / 2) + "px";
+      canvas.dynamic.style.top = (window.innerHeight / 2) - (swemu.screen.height / 2)+ "px";
+
+      // vGamepad
+      canvas.vgamepad.width = window.innerWidth;
+      canvas.vgamepad.height = window.innerHeight;
+
+      canvas.vgamepad.style.position = "absolute";
+      canvas.vgamepad.style.left = "0px";
+      canvas.vgamepad.style.top = "0px";
+
+      // Draw static (Switch Case)
+      draw.static.setColor("2d2d2d");
+      draw.static.rect(points.zero, new Point(canvas.static.width, canvas.static.height));
+
+      draw.static.setColor("2d2dd2");
+      draw.static.rect(points.zero, new Point(160, canvas.static.height));
+
+      draw.static.setColor("d22d2d");
+      draw.static.rect(new Point(160 + 20 + swemu.screen.width + 20, 0), new Point(canvas.static.width, canvas.static.height));
+
+      let gamepadHandler = (event, connecting) => {
+        if (connecting) gamepads.real[event.gamepad.index] = navigator.getGamepads()[event.gamepad.index];
+        else delete gamepads.real[event.gamepad.index];
+      }
+      let mouseMoveHandler = (event) => {
+        if (render.input.verbose && !render.input.updated) {
+          render.input.updated = true;
+          render.input.now = Date.now();
+        }
+
+        var eventDoc, doc, body;
+
+        event = event || window.event;
+
+        if (event.pageX == null && event.clientX != null) {
+            eventDoc = (event.target && event.target.ownerDocument) || document;
+            doc = eventDoc.documentElement;
+            body = eventDoc.body;
+
+            event.pageX = event.clientX + (doc && doc.scrollLeft || body && body.scrollLeft || 0) - (doc && doc.clientLeft || body && body.clientLeft || 0);
+            event.pageY = event.clientY + (doc && doc.scrollTop  || body && body.scrollTop  || 0) - (doc && doc.clientTop  || body && body.clientTop  || 0);
+        }
+
+        mouse.position = new Point(event.pageX, event.pageY);
+      }
+      let mouseClickHandler = (event) => {
+        mouseMoveHandler(event); // Refresh mouse position before updating
+
+        mouse.pressed = event.type === "mousedown";
+        mouse.released = event.type === "mouseup";
+        if (event.type === "mousedown") mouse.pressedPosition = mouse.position.valueOf();
+        else if (event.type === "mouseup") mouse.releasedPosition = mouse.position.valueOf();
+      }
+
+      let getVirtualGamepadData = () => {
+        if (mouse.released) return;
+        gamepads.used = true;
+
+        // Calculate vector from starting to current position and normalize
+        gamepads.virtual.dragVector = new Vector2D(mouse.position, mouse.pressedPosition);
+
+        // Calculate "strength" (0 <= strength <= 1 if in .renderRadius)
+        gamepads.virtual.dragStrength = gamepads.virtual.dragVector.length() / gamepads.virtual.renderRadius;
+
+        // Normalize vector after calculating .drawStrength or else it'd be 1 / .renderRadius
+        gamepads.virtual.dragVector.normalize();
+
+        // Multiply vector with strength only if 0 <= strength <= 1
+        if (gamepads.virtual.dragStrength < 1) gamepads.virtual.dragVector.multiply(gamepads.virtual.dragStrength);
+
+        // Apply dragVector values to .axes for easier and more similar (compared to .real gamepads) access
+        gamepads.virtual.axes[0] = gamepads.virtual.dragVector.x;
+        gamepads.virtual.axes[1] = gamepads.virtual.dragVector.y;
+
+        gamepads.output.axes = gamepads.virtual.axes;
+      }
+      let getGamepadData = () => {
+        let gamepad = navigator.getGamepads()[0];
+        if (gamepad === undefined || gamepad === null) return;
+
+        let deadzone = 0.065;
+        if (MyMath.abs(gamepad.axes[0]) >= deadzone || MyMath.abs(gamepad.axes[1]) >= deadzone) {
+          gamepads.used = true;
+          gamepads.output.axes = gamepad.axes;
+        }
+
+        gamepads.output.buttons.south = gamepad.buttons[0];
+        gamepads.output.buttons.pause = gamepad.buttons[9];
+
+        if (gamepads.output.buttons.south.pressed) {
+          if (!gamepads.actions.south && player.life.dead)
+            location.reload();
+          gamepads.actions.south = true;
+        } else gamepads.actions.south = false;
+
+        if (gamepads.output.buttons.pause.pressed) {
+          if (!gamepads.actions.pause)
+            if(player.life.alive)
+              player.paused = !player.paused;
+          gamepads.actions.pause = true;
+        } else gamepads.actions.pause = false;
+      }
+      let renderGamepad = () => {
+        if (!gamepads.used) return;
+        if (mouse.released) return; // return for now === only draw vgamepad (mouse pressed)
+
+        draw.vgamepad.setColor("ffffff");
+        draw.vgamepad.arc(mouse.pressedPosition, gamepads.virtual.renderRadius, false);
+        draw.vgamepad.arc(mouse.pressedPosition, gamepads.virtual.renderRadius / 20, false);
+
+        draw.vgamepad.arc(new Point(gamepads.output.axes[0] * gamepads.virtual.renderRadius, gamepads.output.axes[1] * gamepads.virtual.renderRadius).add(mouse.pressedPosition), gamepads.virtual.renderRadius / 3, false);
+      }
+
+      // Combining update and render would speed up the main renderer due to only one full loop interation instead of two
+      let spawnObstacle = () => {
+        let height = (Math.random() * 15) + 10;
+        let width = (Math.random() * 30) + 15;
+        let y = Math.random() * (swemu.screen.height - height);
+        let scrollSpeed = (Math.random() * 0.5) + 0.75;
+        buffers.obstacles.push([new Point(swemu.screen.width, y), width, height, scrollSpeed]);
+      }
+      let updateObstacles = () => {
+        for (let i=0; i<buffers.obstacles.length; i++) {
+          if (buffers.obstacles[i] === undefined) continue;
+          let [p1, width, height, scrollSpeed] = buffers.obstacles[i];
+          let localScrollSpeed = scrollSpeed.valueOf();
+
+          if (player.coins < player.finalCoins) localScrollSpeed *= 1 + ((player.coins / player.finalCoins) * (player.finalMultiplier - 1));
+          else localScrollSpeed *= player.finalMultiplier;
+
+          p1.x -= localScrollSpeed * render.deltaTime * 100;
+          let p2 = new Point(width, 0).add(p1);
+          let p3 = new Point(0, height).add(p2);
+
+          if (p2.x >= 0) buffers.obstacles[i] = [p1, width, height, scrollSpeed];
+          else delete buffers.obstacles[i];
+
+          let inX = player.position.current.x + player.radius > p1.x && player.position.current.x - player.radius < p2.x;
+          let inY = player.position.current.y + player.radius > p2.y && player.position.current.y - player.radius < p3.y;
+
+          if (inX && inY) {
+            player.life.dead = true;
+            player.life.alive = false;
+            // Maybe just use i and use the reference later?
+            player.life.killer = buffers.obstacles[i];
+            console.warn("You died");
+          }
+        }
+      }
+      let renderObstacles = () => {
+        for (let i=0; i<buffers.obstacles.length; i++) {
+          if (buffers.obstacles[i] === undefined) continue;
+          let [p1, width, height, scrollSpeed] = buffers.obstacles[i];
+
+          let p2 = new Point(width, height).add(p1);
+
+          draw.dynamic.setColor("ffffff");
+          draw.dynamic.rect(p1, p2);
+        }
+      }
+      let spawnCoin = () => {
+        let radius = 15;
+        let y = Math.random() * (swemu.screen.height - (radius * 2));
+        let scrollSpeed = (Math.random() * 0.5) + 0.5;
+        buffers.coins.push([new Point(swemu.screen.width + radius, y), radius, scrollSpeed]);
+      }
+      let updateCoins = () => {
+        for (let i=0; i<buffers.coins.length; i++) {
+          if (buffers.coins[i] === undefined) continue;
+          let [center, radius, scrollSpeed] = buffers.coins[i];
+          let localScrollSpeed = scrollSpeed.valueOf();
+
+          if (player.coins < player.finalCoins) localScrollSpeed *= 1 + ((player.coins / player.finalCoins) * (player.finalMultiplier - 1));
+          else localScrollSpeed *= player.finalMultiplier;
+
+          center.x -= localScrollSpeed * render.deltaTime * 100;
+
+          if (center.x + radius >= 0) buffers.coins[i] = [center, radius, scrollSpeed];
+          else delete buffers.coins[i];
+
+          let twoCenterVecLen = new Vector2D(player.position.current, center).length();
+          if (twoCenterVecLen < player.radius + radius) {
+            delete buffers.coins[i];
+            player.coins++;
+          }
+        }
+      }
+      let renderCoins = () => {
+        for (let i=0; i<buffers.coins.length; i++) {
+          if (buffers.coins[i] === undefined) continue;
+          let [center, radius, scrollSpeed] = buffers.coins[i];
+
+          draw.dynamic.setColor("ffff00");
+          draw.dynamic.arc(center, radius, true);
+        }
+      }
+
+      let moveToFuturePlayerPosition = () => {
+        if (!gamepads.used) return;
+
+        player.move = new Vector2D(gamepads.output.axes[0], gamepads.output.axes[1]).multiply(player.speed.current).multiply(render.deltaTime).multiply(100);
+        player.position.future = player.position.current.add_NW(player.move.point());
+
+        if (player.position.future.x - player.radius >= 0 && player.position.future.x + player.radius <= swemu.screen.width) player.position.current.x = player.position.future.x;
+        if (player.position.future.y - player.radius >= 0 && player.position.future.y + player.radius <= swemu.screen.height) player.position.current.y = player.position.future.y;
+
+        if (player.position.future.x - player.radius < 0) player.position.current.x = player.radius;
+        if (player.position.future.x + player.radius > swemu.screen.width) player.position.current.x = swemu.screen.width - player.radius;
+
+        if (player.position.future.y - player.radius < 0) player.position.current.y = player.radius;
+        if (player.position.future.y + player.radius > swemu.screen.height) player.position.current.y = swemu.screen.height - player.radius;
+      }
+      // let checkPlayerHitbox = () => {} // TODO
+      let renderPlayer = () => {
+        draw.dynamic.setColor("ffffff");
+        draw.dynamic.arc(player.position.current, player.radius);
+
+        if (gamepads.used) {
+          draw.dynamic.setColor("ff5522");
+          draw.dynamic.line(player.position.current, new Vector2D(gamepads.output.axes[0], gamepads.output.axes[1]).multiply(100).point().add(player.position.current));
+        }
+      }
+
+      // Main "idle" renderer (gamepad input, start game, ...)
+      let mainRenderer = () => {
+        context.vgamepad.clearRect(0, 0, canvas.vgamepad.width, canvas.vgamepad.height);
+        context.dynamic.clearRect(0, 0, canvas.dynamic.width, canvas.dynamic.height);
+
+        // Reset .used state every update and let getVirtualGamepadData and getGamepadData update the value manually
+        gamepads.used = false;
+        getVirtualGamepadData();
+        getGamepadData(); // Overwrite virtual data if this exists
+        renderGamepad();
+
+        if (player.paused) {
+          draw.dynamic.setColor("ffffff");
+          draw.dynamic.text("Press again to continue", new Point(swemu.screen.width / 2, swemu.screen.height / 2), 18, null, null, true);
+        } else {
+          if (player.life.alive) {
+            updateObstacles();
+            renderObstacles();
+            updateCoins();
+            renderCoins();
+
+            moveToFuturePlayerPosition(); // Update .future and push them eventually into .current
+            // checkPlayerHitbox(); // Check current and .future values and reset the latter if invalid (hitbox check === true)
+          } else {
+            draw.dynamic.setColor("ffffff");
+            draw.dynamic.text("Press A to restart", new Point(swemu.screen.width / 2, swemu.screen.height / 2), 18, null, null, true);
+          }
+          renderPlayer();
+        }
+
+        let now = Date.now();
+        render.deltaTime = (now - render.now) / 1000;
+        render.now = now;
+
+        if (render.input.verbose && render.input.updated) {
+          render.input.delay = Date.now() - render.input.now;
+          console.log(render.input.delay);
+          render.input.updated = false;
+        }
+
+        requestAnimationFrame(mainRenderer);
+      }
+
+      // Init listeners
+      window.addEventListener("gamepadconnected",    event => {gamepadHandler(event, true );}, false);
+      window.addEventListener("gamepaddisconnected", event => {gamepadHandler(event, false);}, false);
+      document.onmousemove = mouseMoveHandler;
+      document.ontouchmove = mouseMoveHandler;
+      document.onmousedown = mouseClickHandler;
+      document.ontouchdown = mouseClickHandler;
+      document.onmouseup   = mouseClickHandler;
+      document.ontouchup   = mouseClickHandler;
+
+      let spawnObstacleLoop = () => {
+        if (!player.paused && player.life.alive) spawnObstacle();
+        // scaled time, 500ms for each 360px mixed with speed up (.finalMultiplier)
+        setTimeout(() => {spawnObstacleLoop();}, (360 / (swemu.screen.height * (1 + (player.coins / player.finalCoins) * (player.finalMultiplier - 1)))) * 500);
+      }
+      let spawnCoinLoop = () => {
+        if (!player.paused && player.life.alive) spawnCoin();
+        // scaled time, 1800ms for each 360px mixed with speed up (.finalMultiplier)
+        setTimeout(() => {spawnCoinLoop();}, (360 / (swemu.screen.height * (1 + (player.coins / player.finalCoins) * (player.finalMultiplier - 1)))) * 1800);
+      }
+
+      spawnObstacleLoop();
+      spawnCoinLoop();
+      // Start main renderer
+      render.now = Date.now();
+      requestAnimationFrame(mainRenderer);
+    </script>
+  </body>
+</html>
