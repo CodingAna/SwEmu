@@ -402,10 +402,10 @@
           draw.dynamic.text("Press again to continue", new Point(swemu.screen.width / 2, swemu.screen.height / 2), 18, null, null, true);
         } else {
           if (player.life.alive) {
-            updateObstacles();
-            renderObstacles();
             updateCoins();
             renderCoins();
+            updateObstacles();
+            renderObstacles();
 
             moveToFuturePlayerPosition(); // Update .future and push them eventually into .current
             // checkPlayerHitbox(); // Check current and .future values and reset the latter if invalid (hitbox check === true)
