@@ -16,6 +16,19 @@
       import { Point, Vector2D } from "./Geometry.js";
       import { MyMath } from "./MyMath.js";
 
+      let swemu = {
+        screen: {
+          width: 630,
+          height: 360,
+          borderWidth: 50,
+          borderHeight: 20,
+        },
+        joycon: {
+          width: 130,
+          height: 400,
+        }
+      };
+
       let canvas = {
         static: document.getElementById("canvas_static"),
         dynamic: document.getElementById("canvas_dynamic"),
@@ -32,14 +45,65 @@
         vgamepad: new CustomDraw(canvas.vgamepad, context.vgamepad),
       };
 
-      let swemu = {
-        screen: {
-          width: 630,
-          height: 360,
-        }
-      };
+      // Static
+      canvas.static.width = 2*(swemu.joycon.width + swemu.screen.borderWidth) + swemu.screen.width;
+      canvas.static.height = swemu.joycon.height;
+
+      canvas.static.style.position = "absolute";
+      canvas.static.style.left = (window.innerWidth / 2) - (swemu.screen.width / 2) - 180 + "px";
+      canvas.static.style.top = (window.innerHeight / 2) - (swemu.screen.height / 2) - 20 + "px";
+
+      // Dynamic
+      canvas.dynamic.width = swemu.screen.width;
+      canvas.dynamic.height = swemu.screen.height;
+
+      canvas.dynamic.style.position = "absolute";
+      canvas.dynamic.style.left = (window.innerWidth / 2) - (swemu.screen.width / 2) + "px";
+      canvas.dynamic.style.top = (window.innerHeight / 2) - (swemu.screen.height / 2)+ "px";
+
+      // vGamepad
+      canvas.vgamepad.width = window.innerWidth;
+      canvas.vgamepad.height = window.innerHeight;
+
+      canvas.vgamepad.style.position = "absolute";
+      canvas.vgamepad.style.left = "0px";
+      canvas.vgamepad.style.top = "0px";
+
       let points = {
         zero: new Point(),
+
+        blueJoyConStart: new Point(),
+        blueJoyConMid: new Point(swemu.joycon.width / 2, 0),
+        blueJoyConEnd: new Point(swemu.joycon.width, swemu.joycon.height),
+
+        displayBorderStart: new Point(swemu.joycon.width, 0),
+        displayBorderEnd: new Point(swemu.joycon.width, 0).add(
+          new Point(swemu.screen.width, 0).add(
+            new Point(swemu.screen.borderWidth, 0).multiply(2).add(
+              new Point(0, canvas.static.height)
+            )
+          )
+        ),
+
+        redJoyConStart: new Point(swemu.joycon.width, 0).add(
+          new Point(swemu.screen.width, 0).add(
+            new Point(swemu.screen.borderWidth, 0).multiply(2)
+          )
+        ),
+        redJoyConMid: new Point(swemu.joycon.width, 0).multiply(1.5).add(
+          new Point(swemu.screen.width, 0).add(
+            new Point(swemu.screen.borderWidth, 0).multiply(2).add(
+              new Point(0, canvas.static.height)
+            )
+          )
+        ),
+        redJoyConEnd: new Point(swemu.joycon.width, 0).multiply(2).add(
+          new Point(swemu.screen.width, 0).add(
+            new Point(swemu.screen.borderWidth, 0).multiply(2).add(
+              new Point(0, canvas.static.height)
+            )
+          )
+        ),
       };
       let buffers = {
         obstacles: [],
@@ -85,7 +149,7 @@
           init: 2.25,
           max: 3,
         },
-        coins: 0,
+        coins: 8,
         finalCoins: 40,
         finalMultiplier: 1.8,
         paused: false,
@@ -101,39 +165,21 @@
         }
       }
 
-      // Static
-      canvas.static.width = 160 + 20 + swemu.screen.width + 20 + 160;
-      canvas.static.height = 20 + swemu.screen.height + 20;
+      let renderSwitch = () => {
+        // Blue JoyCon
+        draw.static.setColor("2d2dd2");
+        draw.static.roundedRect(points.blueJoyConStart, points.blueJoyConEnd, 1);
+        draw.static.rect(points.blueJoyConMid, points.blueJoyConEnd);
 
-      canvas.static.style.position = "absolute";
-      canvas.static.style.left = (window.innerWidth / 2) - (swemu.screen.width / 2) - 180 + "px";
-      canvas.static.style.top = (window.innerHeight / 2) - (swemu.screen.height / 2) - 20 + "px";
+        // Display Border
+        draw.static.setColor("2d2d2d");
+        draw.static.rect(points.displayBorderStart, points.displayBorderEnd);
 
-      // Dynamic
-      canvas.dynamic.width = swemu.screen.width;
-      canvas.dynamic.height = swemu.screen.height;
-
-      canvas.dynamic.style.position = "absolute";
-      canvas.dynamic.style.left = (window.innerWidth / 2) - (swemu.screen.width / 2) + "px";
-      canvas.dynamic.style.top = (window.innerHeight / 2) - (swemu.screen.height / 2)+ "px";
-
-      // vGamepad
-      canvas.vgamepad.width = window.innerWidth;
-      canvas.vgamepad.height = window.innerHeight;
-
-      canvas.vgamepad.style.position = "absolute";
-      canvas.vgamepad.style.left = "0px";
-      canvas.vgamepad.style.top = "0px";
-
-      // Draw static (Switch Case)
-      draw.static.setColor("2d2d2d");
-      draw.static.rect(points.zero, new Point(canvas.static.width, canvas.static.height));
-
-      draw.static.setColor("2d2dd2");
-      draw.static.rect(points.zero, new Point(160, canvas.static.height));
-
-      draw.static.setColor("d22d2d");
-      draw.static.rect(new Point(160 + 20 + swemu.screen.width + 20, 0), new Point(canvas.static.width, canvas.static.height));
+        // Red JoyCon
+        draw.static.setColor("d22d2d");
+        draw.static.roundedRect(points.redJoyConStart, points.redJoyConEnd, 1);
+        draw.static.rect(points.redJoyConStart, points.redJoyConMid);
+      }
 
       let gamepadHandler = (event, connecting) => {
         if (connecting) gamepads.real[event.gamepad.index] = navigator.getGamepads()[event.gamepad.index];
@@ -307,8 +353,10 @@
           if (buffers.coins[i] === undefined) continue;
           let [center, radius, scrollSpeed] = buffers.coins[i];
 
-          draw.dynamic.setColor("ffff00");
+          draw.dynamic.setColor("dbcb20");
           draw.dynamic.arc(center, radius, true);
+          draw.dynamic.setColor("000000");
+          draw.dynamic.text("C", new Point(-7, 8).add(center), 16)
         }
       }
 
@@ -366,6 +414,9 @@
             draw.dynamic.text("Press A to restart", new Point(swemu.screen.width / 2, swemu.screen.height / 2), 18, null, null, true);
           }
           renderPlayer();
+          // Render coin count
+          draw.dynamic.setColor("dbcb20");
+          draw.dynamic.text(player.coins + " Coins", new Point(10, 30), 20);
         }
 
         let now = Date.now();
@@ -402,8 +453,11 @@
         setTimeout(() => {spawnCoinLoop();}, (360 / (swemu.screen.height * (1 + (player.coins / player.finalCoins) * (player.finalMultiplier - 1)))) * 1800);
       }
 
+      renderSwitch();
+
       spawnObstacleLoop();
       spawnCoinLoop();
+
       // Start main renderer
       render.now = Date.now();
       requestAnimationFrame(mainRenderer);
