@@ -5,12 +5,12 @@
     <link rel="stylesheet" href="./main.css">
     <title>SwEmu</title>
   </head>
-  <body>
-    <div class="disable-select">
-      <canvas id="canvas_zoom" width="100vh" height="100vh"></canvas>
-      <canvas id="canvas_static" width="100vh" height="100vh"></canvas>
-      <canvas id="canvas_dynamic" width="100vh" height="100vh" style="background-color: black; border-radius: 10px;"></canvas>
-      <canvas id="canvas_vgamepad" width="100vh" height="100vh"></canvas>
+  <body class="disable-select">
+    <div>
+      <canvas class="disable-select" id="canvas_zoom" width="100vh" height="100vh"></canvas>
+      <canvas class="disable-select" id="canvas_static" width="100vh" height="100vh"></canvas>
+      <canvas class="disable-select" id="canvas_dynamic" width="100vh" height="100vh" style="background-color: black; border-radius: 10px;"></canvas>
+      <canvas class="disable-select" id="canvas_vgamepad" width="100vh" height="100vh"></canvas>
     </div>
     <script type="module">
       import { CustomDraw } from "./CustomDraw.js";
