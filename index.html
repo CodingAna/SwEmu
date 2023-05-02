@@ -5,53 +5,73 @@
     <link rel="stylesheet" href="./main.css">
     <title>SwEmu</title>
   </head>
-  <body class="disable-select">
-    <div>
-      <canvas class="disable-select" id="canvas_static" width="100vh" height="100vh"></canvas>
-      <canvas class="disable-select" id="canvas_dynamic" width="100vh" height="100vh" style="background-color: black;"></canvas>
-      <canvas class="disable-select" id="canvas_vgamepad" width="100vh" height="100vh"></canvas>
+  <body>
+    <div class="disable-select">
+      <canvas id="canvas_zoom" width="100vh" height="100vh"></canvas>
+      <canvas id="canvas_static" width="100vh" height="100vh"></canvas>
+      <canvas id="canvas_dynamic" width="100vh" height="100vh" style="background-color: black; border-radius: 10px;"></canvas>
+      <canvas id="canvas_vgamepad" width="100vh" height="100vh"></canvas>
     </div>
     <script type="module">
       import { CustomDraw } from "./CustomDraw.js";
       import { Point, Vector2D } from "./Geometry.js";
       import { MyMath } from "./MyMath.js";
+      import { setCookie, getCookie } from "./Cookies.js";
+
+      // TODO: Change "type" from Button to a Slider (similar to a SeekBar)
+      let zoomPressed = false;
+      let zoomf = parseFloat(getCookie("zoom"));
+      let totalZoom = [0.5, 1.0, 1.5, 2.0].includes(zoomf) ? zoomf : 2;
+
+      if (getCookie("coinHighscore") === null) setCookie("coinHighscore", 0, 7);
 
       let swemu = {
         screen: {
-          width: 630,
-          height: 360,
-          borderWidth: 50,
-          borderHeight: 20,
+          width: 630*totalZoom,
+          height: 360*totalZoom,
+          borderWidth: 50*totalZoom,
+          borderHeight: 20*totalZoom,
         },
         joycon: {
-          width: 130,
-          height: 400,
+          width: 130*totalZoom,
+          height: 400*totalZoom,
         }
       };
 
       let canvas = {
+        zoom: document.getElementById("canvas_zoom"),
         static: document.getElementById("canvas_static"),
         dynamic: document.getElementById("canvas_dynamic"),
         vgamepad: document.getElementById("canvas_vgamepad"),
       };
       let context = {
+        zoom: canvas.zoom.getContext("2d"),
         static: canvas.static.getContext("2d"),
         dynamic: canvas.dynamic.getContext("2d"),
         vgamepad: canvas.vgamepad.getContext("2d"),
       };
       let draw = {
+        zoom: new CustomDraw(canvas.zoom, context.zoom),
         static: new CustomDraw(canvas.static, context.static),
         dynamic: new CustomDraw(canvas.dynamic, context.dynamic),
         vgamepad: new CustomDraw(canvas.vgamepad, context.vgamepad),
       };
+
+      // Zoom
+      canvas.zoom.width = window.innerWidth;
+      canvas.zoom.height = window.innerHeight;
+
+      canvas.zoom.style.position = "absolute";
+      canvas.zoom.style.left = "0px";
+      canvas.zoom.style.top = "0px";
 
       // Static
       canvas.static.width = 2*(swemu.joycon.width + swemu.screen.borderWidth) + swemu.screen.width;
       canvas.static.height = swemu.joycon.height;
 
       canvas.static.style.position = "absolute";
-      canvas.static.style.left = (window.innerWidth / 2) - (swemu.screen.width / 2) - 180 + "px";
-      canvas.static.style.top = (window.innerHeight / 2) - (swemu.screen.height / 2) - 20 + "px";
+      canvas.static.style.left = (window.innerWidth / 2) - (swemu.screen.width / 2) - (swemu.joycon.width + swemu.screen.borderWidth) + "px";
+      canvas.static.style.top = (window.innerHeight / 2) - (swemu.screen.height / 2) - (swemu.screen.borderHeight) + "px";
 
       // Dynamic
       canvas.dynamic.width = swemu.screen.width;
@@ -104,6 +124,9 @@
             )
           )
         ),
+
+        zoomInteractiveFieldStart: new Point(),
+        zoomInteractiveFieldEnd: new Point(400, 65),
       };
       let buffers = {
         obstacles: [],
@@ -149,9 +172,12 @@
           init: 2.25,
           max: 3,
         },
+        newHighscore: false,
+        newHighscoreShowUntil: 0,
         coins: 0,
         finalCoins: 40,
         finalMultiplier: 1.8,
+        started: false,
         paused: false,
       };
       let render = {
@@ -213,6 +239,45 @@
         mouse.released = event.type === "mouseup";
         if (event.type === "mousedown") mouse.pressedPosition = mouse.position.valueOf();
         else if (event.type === "mouseup") mouse.releasedPosition = mouse.position.valueOf();
+      }
+
+      let getZoomInteraction = () => {
+        if (mouse.released) {
+          zoomPressed = false;
+          return;
+        }
+        if (mouse.pressedPosition.x < points.zoomInteractiveFieldStart.x || mouse.pressedPosition.y < points.zoomInteractiveFieldStart.y) return;
+        if (mouse.pressedPosition.x > points.zoomInteractiveFieldEnd.x || mouse.pressedPosition.y > points.zoomInteractiveFieldEnd.y) return;
+        if (zoomPressed) return;
+        zoomPressed = true;
+
+        let localPressedPosition = new Point(mouse.pressedPosition.x - points.zoomInteractiveFieldStart.x, mouse.pressedPosition.y - points.zoomInteractiveFieldStart.y);
+
+        // TODO: remove buttonCount in the future
+        let buttonCount = 4;
+        let buttonWidth = (points.zoomInteractiveFieldEnd.x - points.zoomInteractiveFieldStart.x) / buttonCount;
+        let pressedButtonId = parseInt(localPressedPosition.x / buttonWidth);
+
+        setCookie("zoom", ["0.5", "1.0", "1.5", "2.0"][pressedButtonId], 7);
+        location.reload();
+      }
+      let renderZoomInteraction = () => {
+        let buttonCount = 4;
+        let buttonWidth = (points.zoomInteractiveFieldEnd.x - points.zoomInteractiveFieldStart.x) / buttonCount;
+
+        for (let i=0; i<buttonCount; i++) {
+          let pi = new Point(buttonWidth*i, 0);
+          let pi1 = new Point(buttonWidth*(i+1), 0);
+
+          draw.zoom.setColor("4d4d4d");
+          draw.zoom.rect(pi, new Point(0, points.zoomInteractiveFieldEnd.y).add(pi1));
+
+          draw.zoom.setColor("ffffff")
+          draw.zoom.text(["0.5x", "1.0x", "1.5x", "2.0x"][i], new Point(buttonWidth/2, 65/2+5).add(pi), 16, null, null, true);
+
+          draw.zoom.setColor("aaaaaa");
+          if (i+1 < buttonCount) draw.zoom.line(pi1, new Point(pi1.x, points.zoomInteractiveFieldEnd.y));
+        }
       }
 
       let getVirtualGamepadData = () => {
@@ -345,6 +410,11 @@
           if (twoCenterVecLen < player.radius + radius) {
             delete buffers.coins[i];
             player.coins++;
+            if (player.coins > getCookie("coinHighscore")) {
+              if (!player.newHighscore) player.newHighscoreShowUntil = Date.now() + 1500; // Show "New Highscore!" hint for 1500ms
+              setCookie("coinHighscore", player.coins, 7);
+              player.newHighscore = true;
+            }
           }
         }
       }
@@ -357,6 +427,13 @@
           draw.dynamic.arc(center, radius, true);
           draw.dynamic.setColor("000000");
           draw.dynamic.text("C", new Point(-7, 8).add(center), 16)
+        }
+      }
+      let renderHighscore = () => {
+        let coinHighscore = getCookie("coinHighscore");
+        if (coinHighscore > 0) {
+          draw.dynamic.setColor("dbcb20");
+          draw.dynamic.text("Highscore: " + coinHighscore, new Point(10, 30), 20);
         }
       }
 
@@ -391,32 +468,53 @@
         context.vgamepad.clearRect(0, 0, canvas.vgamepad.width, canvas.vgamepad.height);
         context.dynamic.clearRect(0, 0, canvas.dynamic.width, canvas.dynamic.height);
 
+        //renderZoomInteraction();
+        getZoomInteraction();
+
         // Reset .used state every update and let getVirtualGamepadData and getGamepadData update the value manually
         gamepads.used = false;
         getVirtualGamepadData();
         getGamepadData(); // Overwrite virtual data if this exists
         renderGamepad();
 
-        if (player.paused) {
-          draw.dynamic.setColor("ffffff");
-          draw.dynamic.text("Press again to continue", new Point(swemu.screen.width / 2, swemu.screen.height / 2), 18, null, null, true);
-        } else {
-          if (player.life.alive) {
-            updateCoins();
-            renderCoins();
-            updateObstacles();
-            renderObstacles();
+        if (gamepads.output.axes[0] != 0 || gamepads.output.axes[1] != 0) player.started = true;
 
-            moveToFuturePlayerPosition(); // Update .future and push them eventually into .current
-            // checkPlayerHitbox(); // Check current and .future values and reset the latter if invalid (hitbox check === true)
-          } else {
-            draw.dynamic.setColor("ffffff");
-            draw.dynamic.text("Press A to restart", new Point(swemu.screen.width / 2, swemu.screen.height / 2), 18, null, null, true);
+        if (player.started) {
+          if (player.newHighscoreShowUntil >= Date.now()) {
+            draw.dynamic.setColor("dbcb20");
+            draw.dynamic.text("New Highscore!", new Point(swemu.screen.width/2, 30), 20, null, null, true);
           }
+
+          if (player.paused) {
+            draw.dynamic.setColor("ffffff");
+            draw.dynamic.text("Press again to continue", new Point(swemu.screen.width / 2, swemu.screen.height / 2), 18, null, null, true);
+
+            renderHighscore();
+          } else {
+            if (player.life.alive) {
+              updateCoins();
+              renderCoins();
+              updateObstacles();
+              renderObstacles();
+
+              moveToFuturePlayerPosition(); // Update .future and push them eventually into .current
+              // checkPlayerHitbox(); // Check current and .future values and reset the latter if invalid (hitbox check === true)
+            } else {
+              draw.dynamic.setColor("ffffff");
+              draw.dynamic.text("Press A to restart", new Point(swemu.screen.width / 2, swemu.screen.height / 2), 18, null, null, true);
+            }
+            renderPlayer();
+            // Render coin count
+            draw.dynamic.setColor("dbcb20");
+            draw.dynamic.text(player.coins + " Coins", new Point(10, 30), 20);
+          }
+        } else {
           renderPlayer();
-          // Render coin count
-          draw.dynamic.setColor("dbcb20");
-          draw.dynamic.text(player.coins + " Coins", new Point(10, 30), 20);
+
+          draw.dynamic.setColor("ffffff");
+          draw.dynamic.text("Move to start", new Point(swemu.screen.width / 2, swemu.screen.height / 2), 18, null, null, true);
+
+          renderHighscore();
         }
 
         let now = Date.now();
@@ -443,16 +541,21 @@
       document.ontouchup   = mouseClickHandler;
 
       let spawnObstacleLoop = () => {
-        if (!player.paused && player.life.alive) spawnObstacle();
+        if (player.started && !player.paused && player.life.alive) spawnObstacle();
         // scaled time, 500ms for each 360px mixed with speed up (.finalMultiplier)
-        setTimeout(() => {spawnObstacleLoop();}, (360 / (swemu.screen.height * (1 + (player.coins / player.finalCoins) * (player.finalMultiplier - 1)))) * 500);
+        let out_multiplier = (1 + (player.coins / player.finalCoins) * (player.finalMultiplier - 1));
+        out_multiplier = out_multiplier > player.finalMultiplier ? player.finalMultiplier : out_multiplier;
+        setTimeout(() => {spawnObstacleLoop();}, (360 / (swemu.screen.height * out_multiplier)) * 500);
       }
       let spawnCoinLoop = () => {
-        if (!player.paused && player.life.alive) spawnCoin();
+        if (player.started && !player.paused && player.life.alive) spawnCoin();
         // scaled time, 1800ms for each 360px mixed with speed up (.finalMultiplier)
-        setTimeout(() => {spawnCoinLoop();}, (360 / (swemu.screen.height * (1 + (player.coins / player.finalCoins) * (player.finalMultiplier - 1)))) * 1800);
+        let out_multiplier = (1 + (player.coins / player.finalCoins) * (player.finalMultiplier - 1));
+        out_multiplier = out_multiplier > player.finalMultiplier ? player.finalMultiplier : out_multiplier;
+        setTimeout(() => {spawnCoinLoop();}, (360 / (swemu.screen.height * out_multiplier)) * 1800);
       }
 
+      renderZoomInteraction();
       renderSwitch();
 
       spawnObstacleLoop();
