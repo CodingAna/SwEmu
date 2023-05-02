@@ -21,7 +21,7 @@
       // TODO: Change "type" from Button to a Slider (similar to a SeekBar)
       let zoomPressed = false;
       let zoomf = parseFloat(getCookie("zoom"));
-      let totalZoom = [0.5, 1.0, 1.5, 2.0].includes(zoomf) ? zoomf : 2;
+      let totalZoom = [0.5, 1.0, 1.5, 2.0].includes(zoomf) ? zoomf : 1;
 
       if (getCookie("coinHighscore") === null) setCookie("coinHighscore", 0, 7);
 
