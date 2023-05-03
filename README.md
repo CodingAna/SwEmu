@@ -19,3 +19,8 @@
 ## Gameplay
 
 *To be explained*
+
+## Known Bugs
+
+- Fetching controller data in **Firefox Browser** seems to be slower than usual (I recommend using Chromium based browsers)
+- Touch functionality completely gone
