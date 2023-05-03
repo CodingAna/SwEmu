@@ -4,39 +4,9 @@ import { setCookie, getCookie } from "../Cookies.js";
 export class CoinCollect {
   constructor(swemu) {
     this._swemu = swemu;
-
     this._terminated = false;
-
-    this._player = {
-      life: {
-        alive: true,
-        dead: false,
-        killer: [],
-        killerColors: [],
-      },
-      position: {
-        current: new Point(100, 100),
-        future: new Point(100, 100),
-      },
-      move: new Vector2D(),
-      radius: 10,
-      speed: {
-        current: 2.25,
-        init: 2.25,
-        max: 3,
-      },
-      newHighscore: false,
-      newHighscoreShowUntil: 0,
-      coins: 0,
-      finalCoins: 40,
-      finalMultiplier: 1.8,
-      started: false,
-      paused: false,
-    };
-    this._buffers = {
-      obstacles: [],
-      coins: [],
-    }
+    this._player = {};
+    this._buffers = {};
   }
 
   // Combining update and render would speed up the main renderer due to only one full loop interation instead of two
@@ -182,6 +152,37 @@ export class CoinCollect {
   }
 
   initGame = () => {
+    this._terminated = false;
+    this._player = {
+      life: {
+        alive: true,
+        dead: false,
+        killer: [],
+        killerColors: [],
+      },
+      position: {
+        current: new Point(100, 100),
+        future: new Point(100, 100),
+      },
+      move: new Vector2D(),
+      radius: 10,
+      speed: {
+        current: 2.25,
+        init: 2.25,
+        max: 3,
+      },
+      newHighscore: false,
+      newHighscoreShowUntil: 0,
+      coins: 0,
+      finalCoins: 40,
+      finalMultiplier: 1.8,
+      started: false,
+      paused: false,
+    };
+    this._buffers = {
+      obstacles: [],
+      coins: [],
+    }
     this._spawnObstacleLoop();
     this._spawnCoinLoop();
   }
@@ -194,6 +195,22 @@ export class CoinCollect {
     if (this._terminated) return;
 
     if (gamepads.output.axes[0] != 0 || gamepads.output.axes[1] != 0) this._player.started = true;
+
+    // NOTE: This gives the Application/Game full access to the gamepad actions (overwriting data => "exclusive gamepad access" for *active* app)
+    //       Maybe store gamepads.actions.* in a local variable instead of the gamepad's to ensure data access is granted to the specific application
+    // Read GamePad button data (paused, south(A))
+    if (gamepads.output.buttons.south.pressed) {
+      if (!gamepads.actions.south && this._player.life.dead)
+        location.reload();
+      gamepads.actions.south = true;
+    } else gamepads.actions.south = false;
+
+    if (gamepads.output.buttons.pause.pressed) {
+      if (!gamepads.actions.pause)
+        if(this._player.life.alive)
+          this._player.paused = !this._player.paused;
+      gamepads.actions.pause = true;
+    } else gamepads.actions.pause = false;
 
     if (this._player.started) {
       if (this._player.newHighscoreShowUntil >= Date.now()) {
