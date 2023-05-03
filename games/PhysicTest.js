@@ -10,19 +10,28 @@ export class PhysicTest {
   }
 
   _moveToFuturePlayerPosition = (draw, gamepads, render) => {
-    let lastAirActionDiff = (Date.now() - this._player.lastAirAction) / 1000;
-    let downForce = 9.81 * MyMath.exp(lastAirActionDiff, 2);
-    this._player.move.add(new Point(0, downForce).multiply(render.deltaTime));
+    let lastAirActionDiff = (Date.now() - this._player.lastAirAction) + 300;
 
-    // if (gamepads.used) this._player.move.add(new Vector2D(gamepads.output.axes[0], gamepads.output.axes[1]).multiply(this._player.speed.current).multiply(render.deltaTime).multiply(100));
+    this._player.move.x = gamepads.output.axes[0] * this._player.speed.current * render.deltaTime * 100;
+    this._player.move.y += 9.81 * (MyMath.exp(lastAirActionDiff / 1000, 2)) * render.deltaTime;
+
     if (gamepads.output.buttons.south.pressed) {
-      if (!gamepads.actions.south)
-        this._player.move.add(new Vector2D(gamepads.output.axes[0], gamepads.output.axes[1]).multiply(this._player.speed.current).multiply(render.deltaTime).multiply(100));
+      if (!gamepads.actions.south) {
+        if (this._player.jumps < this._player.jumpLimit || this._swemu.screen.height - this._player.position.current.y <= this._player.radius*2) {
+          this._player.jumps++;
+          if (this._player.move.y > 0) this._player.move.y = 0;
+          this._player.move.add(new Vector2D(0, -1).multiply(this._player.jumpForce).multiply(100).multiply(render.deltaTime));
+          this._player.lastAirAction = Date.now() - 300;
+        }
+      }
       gamepads.actions.south = true;
     } else gamepads.actions.south = false;
 
-    //this._player.move = new Vector2D(gamepads.output.axes[0], gamepads.output.axes[1]).multiply(this._player.speed.current).multiply(render.deltaTime).multiply(100);
+    if (this._player.move.y < -this._player.forceLimit) this._player.move.y = -this._player.forceLimit;
+
     this._player.position.future = this._player.position.current.add_NW(this._player.move.point());
+    //this._player.position.future.y += (9.81 * MyMath.exp(lastAirActionDiff/1000, 2)) / 2;
+    // This doesn't modify the players .move vector, I didn't like it
 
     // Update player position inside of screen
     // x & y
@@ -35,10 +44,16 @@ export class PhysicTest {
     if (this._player.position.future.x + this._player.radius > this._swemu.screen.width) this._player.position.current.x = this._swemu.screen.width - this._player.radius;
 
     // y
-    if (this._player.position.future.y - this._player.radius < 0) this._player.position.current.y = this._player.radius;
+    if (this._player.position.future.y - this._player.radius < 0) {
+      this._player.position.current.y = this._player.radius
+      //this._player.lastAirAction = Date.now();
+      this._player.move.y = -this._player.move.y;// + this._player.forceLimit;
+    };
     if (this._player.position.future.y + this._player.radius > this._swemu.screen.height) {
       this._player.position.current.y = this._swemu.screen.height - this._player.radius;
       this._player.lastAirAction = Date.now();
+      this._player.move.y = 0;
+      this._player.jumps = 0;
     }
   }
   _renderPlayer = (draw, gamepads, render) => {
@@ -62,6 +77,10 @@ export class PhysicTest {
         future: new Point(100, 100),
       },
       move: new Vector2D(),
+      jumps: 0,
+      jumpLimit: 2,
+      jumpForce: 2.25,
+      forceLimit: 3.5,
       lastAirAction: Date.now(),
       radius: 10,
       speed: {
