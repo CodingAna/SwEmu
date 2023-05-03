@@ -317,10 +317,13 @@
       renderZoomInteraction();
       renderSwitch();
 
-      //let coinCollect = new CoinCollect(swemu).initGame();
-      let physicTest = new PhysicTest(swemu).initGame();
+      let coinCollect = new CoinCollect(swemu);
+      let physicTest = new PhysicTest(swemu);
+      let currentGame = null;
 
-      let mainRenderer = () => {
+      let gameRenderer = () => {
+        if (currentGame === null) return; // requestAnimationFrame(gameRenderer);
+
         context.vgamepad.clearRect(0, 0, canvas.vgamepad.width, canvas.vgamepad.height);
         context.dynamic.clearRect(0, 0, canvas.dynamic.width, canvas.dynamic.height);
 
@@ -335,7 +338,40 @@
 
         // TODO: Run selected game code here
         //coinCollect.renderGame(draw, gamepads, render);
-        physicTest.renderGame(draw, gamepads, render);
+        //physicTest.renderGame(draw, gamepads, render);
+        currentGame.renderGame(draw, gamepads, render);
+
+        let now = Date.now();
+        render.deltaTime = (now - render.now) / 1000;
+        render.now = now;
+        if (render.input.verbose && render.input.updated) {
+          render.input.delay = Date.now() - render.input.now;
+          console.log(render.input.delay);
+          render.input.updated = false;
+        }
+
+        requestAnimationFrame(gameRenderer);
+      }
+
+      let mainRenderer = () => {
+        if (currentGame !== null) requestAnimationFrame(mainRenderer);
+
+        context.vgamepad.clearRect(0, 0, canvas.vgamepad.width, canvas.vgamepad.height);
+        context.dynamic.clearRect(0, 0, canvas.dynamic.width, canvas.dynamic.height);
+
+        // Reset .used state every update and let getVirtualGamepadData and getGamepadData update the value manually
+        gamepads.used = false;
+        gamepads.output.axes = [0, 0];
+        getVirtualGamepadData();
+        getGamepadData(); // Overwrite virtual data if this exists
+        renderGamepad();
+
+        getZoomInteraction();
+
+        // TODO: Get game selection here
+        // if game selected then
+        //    gameRenderer();
+        //
 
         let now = Date.now();
         render.deltaTime = (now - render.now) / 1000;
@@ -351,7 +387,10 @@
 
       // Start main renderer
       render.now = Date.now();
-      requestAnimationFrame(mainRenderer);
+      //requestAnimationFrame(mainRenderer); // TODO: When adding home screen, use this!
+      coinCollect.initGame();
+      currentGame = coinCollect;
+      requestAnimationFrame(gameRenderer)
     </script>
   </body>
 </html>
