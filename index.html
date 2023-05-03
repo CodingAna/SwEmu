@@ -19,6 +19,7 @@
       import { setCookie, getCookie } from "./Cookies.js";
       // Import GameModes
       import { CoinCollect } from "./games/CoinCollect.js";
+      import { PhysicTest } from "./games/PhysicTest.js";
 
       // TODO: Change "type" from Button to a Slider (similar to a SeekBar)
       let zoomPressed = false;
@@ -316,8 +317,8 @@
       renderZoomInteraction();
       renderSwitch();
 
-      let coinCollect = new CoinCollect(swemu);
-      coinCollect.initGame();
+      //let coinCollect = new CoinCollect(swemu).initGame();
+      let physicTest = new PhysicTest(swemu).initGame();
 
       let mainRenderer = () => {
         context.vgamepad.clearRect(0, 0, canvas.vgamepad.width, canvas.vgamepad.height);
@@ -332,7 +333,8 @@
         getZoomInteraction();
 
         // TODO: Run selected game code here
-        coinCollect.renderGame(draw, gamepads, render);
+        //coinCollect.renderGame(draw, gamepads, render);
+        physicTest.renderGame(draw, gamepads, render);
 
         let now = Date.now();
         render.deltaTime = (now - render.now) / 1000;
