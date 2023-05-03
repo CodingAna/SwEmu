@@ -326,6 +326,7 @@
 
         // Reset .used state every update and let getVirtualGamepadData and getGamepadData update the value manually
         gamepads.used = false;
+        gamepads.output.axes = [0, 0];
         getVirtualGamepadData();
         getGamepadData(); // Overwrite virtual data if this exists
         renderGamepad();
