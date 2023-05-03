@@ -82,6 +82,15 @@ export class Vector2D {
     return this;
   }
 
+  add = (v) => {
+    if (!(v instanceof Vector2D) && !(v instanceof Point)) return;
+    this.x += v.x;
+    this.y += v.y;
+    return this;
+  }
+
+  // add_NW = () => {} // TODO
+
   multiply = (a) => {
     this.x *= a;
     this.y *= a;
