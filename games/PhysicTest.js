@@ -99,8 +99,8 @@ export class PhysicTest {
 
   terminateGame = () => {
     this._terminated = true;
-
-    return this;
+    // this = null; // Is this even possible?
+    return null; // this
   }
 
   renderGame = (draw, gamepads, render) => {
