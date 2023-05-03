@@ -17,6 +17,7 @@ export class PhysicTest {
 
     if (gamepads.output.buttons.south.pressed) {
       if (!gamepads.actions.south) {
+        // If not above limit OR distance to ground <= player diameter (=> user doesn't have to wait to actually touch the ground)
         if (this._player.jumps < this._player.jumpLimit || this._swemu.screen.height - this._player.position.current.y <= this._player.radius*2) {
           this._player.jumps++;
           if (this._player.move.y > 0) this._player.move.y = 0;
@@ -27,6 +28,7 @@ export class PhysicTest {
       gamepads.actions.south = true;
     } else gamepads.actions.south = false;
 
+    // Clamp vertical upwards (jump) velocity
     if (this._player.move.y < -this._player.forceLimit) this._player.move.y = -this._player.forceLimit;
 
     this._player.position.future = this._player.position.current.add_NW(this._player.move.point());
@@ -46,11 +48,11 @@ export class PhysicTest {
     // y
     if (this._player.position.future.y - this._player.radius < 0) {
       this._player.position.current.y = this._player.radius
-      //this._player.lastAirAction = Date.now();
-      this._player.move.y = -this._player.move.y;// + this._player.forceLimit;
+      this._player.move.y = -this._player.move.y;
     };
     if (this._player.position.future.y + this._player.radius > this._swemu.screen.height) {
       this._player.position.current.y = this._swemu.screen.height - this._player.radius;
+      // Player touched the ground => Reset fall timer &=> gravity calculation
       this._player.lastAirAction = Date.now();
       this._player.move.y = 0;
       this._player.jumps = 0;
@@ -79,8 +81,8 @@ export class PhysicTest {
       move: new Vector2D(),
       jumps: 0,
       jumpLimit: 2,
-      jumpForce: 2.25,
-      forceLimit: 3.5,
+      jumpForce: 2.9,
+      forceLimit: 3.4,
       lastAirAction: Date.now(),
       radius: 10,
       speed: {
