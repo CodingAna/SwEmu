@@ -20,6 +20,9 @@ export class HighwayRun {
     }
   }
 
+  _updateAnimalPositions = () => {}
+  _renderAnimals = () => {}
+
   _updateCarPositions = () => {}
   _renderCars = () => {}
 
@@ -135,19 +138,31 @@ export class HighwayRun {
 
     if (gamepads.used.axes.left) this._player.started = true;
 
+    if (gamepads.output.buttons.pause.pressed) {
+      if (!gamepads.actions.pause)
+        if (this._player.started && this._player.life.alive)
+          this._player.paused = !this._player.paused;
+      gamepads.actions.pause = true;
+    } else gamepads.actions.pause = false;
+
     this._renderHighway(draw, gamepads, render);
 
     if (this._player.started) {
       if (this._player.paused) {
         draw.dynamic.setColor("ffffff");
+        draw.dynamic.text("Paused", new Point(this._swemu.screen.width / 2 - 25, this._swemu.screen.height / 2 - 70), 35, null, "bold", true);
+        draw.dynamic.setColor("b0b0b0");
         draw.dynamic.text("Press again to continue", new Point(this._swemu.screen.width / 2, this._swemu.screen.height / 2), 18, null, null, true);
       } else {
+        this._updateAnimalPositions();
+        this._renderAnimals();
+
         this._updateCarPositions();
         this._renderCars();
 
         this._updatePlayerPosition(draw, gamepads, render);
-        this._renderPlayer(draw, gamepads, render);
       }
+      this._renderPlayer(draw, gamepads, render);
     }
   }
 }

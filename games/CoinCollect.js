@@ -46,7 +46,6 @@ export class CoinCollect {
         this._player.life.alive = false;
         // Maybe just use i and use the reference later?
         this._player.life.killer = this._buffers.obstacles[i];
-        console.warn("You died");
       }
     }
   }

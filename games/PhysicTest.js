@@ -108,9 +108,28 @@ export class PhysicTest {
   renderGame = (draw, gamepads, render) => {
     if (this._terminated) return;
 
-    if (gamepads.output.axes[0] != 0 || gamepads.output.axes[1] != 0) this._player.started = true;
+    if (gamepads.used.axes.left) this._player.started = true;
 
-    this._moveToFuturePlayerPosition(draw, gamepads, render);
-    this._renderPlayer(draw, gamepads, render);
+    if (gamepads.output.buttons.pause.pressed) {
+      if (!gamepads.actions.pause)
+        if (this._player.started) {
+          this._player.paused = !this._player.paused;
+          if (!this._player.paused)
+            this._player.lastAirAction = Date.now();
+        }
+      gamepads.actions.pause = true;
+    } else gamepads.actions.pause = false;
+
+    if (this._player.started) {
+      if (this._player.paused) {
+        draw.dynamic.setColor("ffffff");
+        draw.dynamic.text("Paused", new Point(this._swemu.screen.width / 2 - 25, this._swemu.screen.height / 2 - 70), 35, null, "bold", true);
+        draw.dynamic.setColor("b0b0b0");
+        draw.dynamic.text("Press again to continue", new Point(this._swemu.screen.width / 2, this._swemu.screen.height / 2), 18, null, null, true);
+      } else {
+        this._moveToFuturePlayerPosition(draw, gamepads, render);
+      }
+      this._renderPlayer(draw, gamepads, render);
+    }
   }
 }
