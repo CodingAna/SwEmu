@@ -2,11 +2,16 @@ import { Point, Vector2D } from "../Geometry.js";
 import { setCookie, getCookie } from "../Cookies.js";
 
 export class CoinCollect {
+  static get NAME() {return "CoinCollect";}
+
   constructor(swemu) {
     this._swemu = swemu;
     this._terminated = false;
     this._player = {};
     this._buffers = {};
+
+    this._spawnObstacleLoopTimeout = setTimeout(() => {}, 1);
+    this._spawnCoinLoopTimeout = setTimeout(() => {}, 1);
   }
 
   // Combining update and render would speed up the main renderer due to only one full loop interation instead of two
@@ -109,7 +114,7 @@ export class CoinCollect {
   }
 
   _moveToFuturePlayerPosition = (draw, gamepads, render) => {
-    if (!gamepads.used) return;
+    if (!gamepads.used.axes.left) return;
 
     this._player.move = new Vector2D(gamepads.output.axes[0], gamepads.output.axes[1]).multiply(this._player.speed.current).multiply(render.deltaTime).multiply(100);
     this._player.position.future = this._player.position.current.add_NW(this._player.move.point());
@@ -128,7 +133,7 @@ export class CoinCollect {
     draw.dynamic.setColor("ffffff");
     draw.dynamic.arc(this._player.position.current, this._player.radius);
 
-    if (gamepads.used) {
+    if (gamepads.used.axes.left) {
       draw.dynamic.setColor("ff5522");
       draw.dynamic.line(this._player.position.current, new Vector2D(gamepads.output.axes[0], gamepads.output.axes[1]).multiply(100).point().add(this._player.position.current));
     }
@@ -140,7 +145,7 @@ export class CoinCollect {
     // scaled time, 500ms for each 360px mixed with speed up (.finalMultiplier)
     let out_multiplier = (1 + (this._player.coins / this._player.finalCoins) * (this._player.finalMultiplier - 1));
     out_multiplier = out_multiplier > this._player.finalMultiplier ? this._player.finalMultiplier : out_multiplier;
-    setTimeout(() => {this._spawnObstacleLoop();}, (360 / (this._swemu.screen.height * out_multiplier)) * 500);
+    this._spawnObstacleLoopTimeout = setTimeout(() => {this._spawnObstacleLoop();}, (360 / (this._swemu.screen.height * out_multiplier)) * 500);
   }
   _spawnCoinLoop = () => {
     if (this._terminated) return;
@@ -148,7 +153,7 @@ export class CoinCollect {
     // scaled time, 1800ms for each 360px mixed with speed up (.finalMultiplier)
     let out_multiplier = (1 + (this._player.coins / this._player.finalCoins) * (this._player.finalMultiplier - 1));
     out_multiplier = out_multiplier > this._player.finalMultiplier ? this._player.finalMultiplier : out_multiplier;
-    setTimeout(() => {this._spawnCoinLoop();}, (360 / (this._swemu.screen.height * out_multiplier)) * 1800);
+    this._spawnCoinLoopTimeout = setTimeout(() => {this._spawnCoinLoop();}, (360 / (this._swemu.screen.height * out_multiplier)) * 1800);
   }
 
   initGame = () => {
@@ -183,6 +188,8 @@ export class CoinCollect {
       obstacles: [],
       coins: [],
     }
+    clearTimeout(this._spawnObstacleLoopTimeout);
+    clearTimeout(this._spawnCoinLoopTimeout);
     this._spawnObstacleLoop();
     this._spawnCoinLoop();
 
@@ -198,7 +205,8 @@ export class CoinCollect {
   renderGame = (draw, gamepads, render) => {
     if (this._terminated) return;
 
-    if (gamepads.output.axes[0] != 0 || gamepads.output.axes[1] != 0) this._player.started = true;
+    //if (gamepads.output.axes[0] != 0 || gamepads.output.axes[1] != 0) this._player.started = true;
+    if (gamepads.used.axes.left) this._player.started = true;
 
     // NOTE: This gives the Application/Game full access to the gamepad actions (overwriting data => "exclusive gamepad access" for *active* app)
     //       Maybe store gamepads.actions.* in a local variable instead of the gamepad's to ensure data access is granted to the specific application
@@ -222,7 +230,7 @@ export class CoinCollect {
 
     if (gamepads.output.buttons.pause.pressed) {
       if (!gamepads.actions.pause)
-        if(this._player.life.alive)
+        if (this._player.started && this._player.life.alive)
           this._player.paused = !this._player.paused;
       gamepads.actions.pause = true;
     } else gamepads.actions.pause = false;
@@ -235,6 +243,8 @@ export class CoinCollect {
 
       if (this._player.paused) {
         draw.dynamic.setColor("ffffff");
+        draw.dynamic.text("Paused", new Point(this._swemu.screen.width / 2 - 25, this._swemu.screen.height / 2 - 70), 35, null, "bold", true);
+        draw.dynamic.setColor("b0b0b0");
         draw.dynamic.text("Press again to continue", new Point(this._swemu.screen.width / 2, this._swemu.screen.height / 2), 18, null, null, true);
 
         this._renderHighscore(draw, gamepads, render);
@@ -249,6 +259,8 @@ export class CoinCollect {
           // checkPlayerHitbox(); // Check current and .future values and reset the latter if invalid (hitbox check === true)
         } else {
           draw.dynamic.setColor("ffffff");
+          draw.dynamic.text("Game over", new Point(this._swemu.screen.width / 2 - 25, this._swemu.screen.height / 2 - 70), 35, null, "bold", true);
+          draw.dynamic.setColor("b0b0b0");
           draw.dynamic.text("Press A to restart", new Point(this._swemu.screen.width / 2, this._swemu.screen.height / 2), 18, null, null, true);
         }
         this._renderPlayer(draw, gamepads, render);
