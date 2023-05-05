@@ -2,7 +2,7 @@
 
 ## Important Notes
 
-- Currently there's just a virtual JoyStick but for starting and/or quitting a game you need to press controller buttons (A, B on Xbox) and optionally the pause button to pause the CoinCollect-game.
+- Currently there's a virtual JoyStick but for starting and/or quitting a game you need to press controller buttons (A, B on Xbox) and optionally the pause button to pause the CoinCollect-game.
 
 ## Controls
 
@@ -18,7 +18,7 @@
 
 (*Labels are for Xbox Controller*)
 
-- JoyStick
+- JoyStick (Left & Right)
 - Pause
 - A button (south)
 - B Button (east)
