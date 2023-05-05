@@ -24,7 +24,7 @@ export class HighwayRun {
   _renderCars = () => {}
 
   _updatePlayerPosition = (draw, gamepads, render) => {
-    if (!gamepads.used) return;
+    if (!gamepads.used.axes.left) return;
 
     this._player.move = new Vector2D(gamepads.output.axes[0], 0).multiply(this._player.speed.current).multiply(render.deltaTime).multiply(100);
     this._player.position.future.x = this._player.position.current.add_NW(this._player.move.point()).x;
@@ -82,7 +82,7 @@ export class HighwayRun {
     draw.dynamic.setColor("ffffff");
     draw.dynamic.arc(this._player.position.current, this._player.radius);
 
-    if (gamepads.used) {
+    if (gamepads.used.axes.left) {
       draw.dynamic.setColor("ff5522");
       draw.dynamic.line(this._player.position.current, new Vector2D(gamepads.output.axes[0], 0).multiply(100).point().add(this._player.position.current));
     }
@@ -133,7 +133,7 @@ export class HighwayRun {
   renderGame = (draw, gamepads, render) => {
     if (this._terminated) return;
 
-    if (gamepads.output.axes[0] != 0 || gamepads.output.axes[1] != 0) this._player.started = true;
+    if (gamepads.used.axes.left) this._player.started = true;
 
     this._renderHighway(draw, gamepads, render);
 
