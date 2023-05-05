@@ -261,11 +261,15 @@ export class CoinCollect {
           draw.dynamic.text("Game over", new Point(this._swemu.screen.width / 2 - 25, this._swemu.screen.height / 2 - 70), 35, null, "bold", true);
           draw.dynamic.setColor("b0b0b0");
           draw.dynamic.text("Press A to restart", new Point(this._swemu.screen.width / 2, this._swemu.screen.height / 2), 18, null, null, true);
+
+          draw.dynamic.setColor("ffa8a8");
+          let [p1, width, height, scrollSpeed] = this._player.life.killer;
+          draw.dynamic.rect(p1, new Point(width, height).add(p1));
         }
         this._renderPlayer(draw, gamepads, render);
         // Render coin count
         draw.dynamic.setColor("dbcb20");
-        draw.dynamic.text(this._player.coins + " Coins", new Point(10, 30), 20);
+        draw.dynamic.text(this._player.coins + " Coin" + (this._player.coins === 1 ? "" : "s"), new Point(10, 30), 20);
       }
     } else {
       this._renderPlayer(draw, gamepads, render);
