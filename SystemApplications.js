@@ -46,6 +46,22 @@ export class HomeScreen {
       else if (this._highlightedApp < 0) this._highlightedApp = 0;
     }
 
+    if (gamepads.output.buttons.dpad.right.pressed) {
+      if (!gamepads.actions.dpad.right)
+        this._highlightedApp++;
+      gamepads.actions.dpad.right = true;
+    } else {
+      gamepads.actions.dpad.right = false;
+    }
+
+    if (gamepads.output.buttons.dpad.left.pressed) {
+      if (!gamepads.actions.dpad.left)
+        this._highlightedApp--;
+      gamepads.actions.dpad.left = true;
+    } else {
+      gamepads.actions.dpad.left = false;
+    }
+
     let i = 0;
     Object.entries(this._internals.applications.external).forEach((g) => {
       let [gameName, gameClass] = g;
