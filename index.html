@@ -23,6 +23,7 @@
       // Import Games
       import { CoinCollect } from "./games/CoinCollect.js";
       import { PhysicTest } from "./games/PhysicTest.js";
+      import { HighwayRun } from "./games/HighwayRun.js";
       // Import SystemApplications
       import { HomeScreen } from "./SystemApplications.js"
 
@@ -145,10 +146,11 @@
           external: {
             coinCollect: CoinCollect,
             physicTest: PhysicTest,
-            physicTest2: PhysicTest,
+            highwayRun: HighwayRun,
             coinCollect2: CoinCollect,
-            physicTest3: PhysicTest,
+            highwayRun2: HighwayRun,
             coinCollect3: CoinCollect,
+            physicTest2: PhysicTest,
           }
         }
       }
@@ -161,13 +163,22 @@
         releasedPosition: new Point(),
       };
       let gamepads = {
+        used: {
+          any: false,
+          axes: {
+            any: false,
+            left: false,
+            right: false,
+          },
+          buttons: false,
+        },
         virtual: {
           axes: [0, 0],
           renderRadius: 120
         },
         real: {},
         output: {
-          axes: [0, 0],
+          axes: [0, 0, 0, 0],
           buttons: {
             south: {pressed: false},
             east: {pressed: false},
@@ -286,7 +297,8 @@
 
       let getVirtualGamepadData = () => {
         if (mouse.released) return;
-        gamepads.used = true;
+        gamepads.used.any = true;
+        gamepads.used.axes = {any: true, left: true, right: false};
 
         // Calculate vector from starting to current position and normalize
         gamepads.virtual.dragVector = new Vector2D(mouse.position, mouse.pressedPosition);
@@ -311,10 +323,22 @@
         if (gamepad === undefined || gamepad === null) return;
 
         let deadzone = 0.065;
-        if (MyMath.abs(gamepad.axes[0]) >= deadzone || MyMath.abs(gamepad.axes[1]) >= deadzone) {
-          gamepads.used = true;
-          gamepads.output.axes = gamepad.axes;
-        }
+        for (let i=0; i<gamepad.axes.length; i++)
+          if (MyMath.abs(gamepad.axes[i]) >= deadzone) {
+            gamepads.used.any = true;
+            gamepads.used.axes.any = true;
+            if (i === 0 || i === 1) gamepads.used.axes.left = true;
+            if (i === 2 || i === 3) gamepads.used.axes.right = true;
+          }
+
+        let gobl = Object.entries(gamepads.output.buttons).length;
+        for (let i=0; i<gamepad.buttons.length; i++)
+          if (gamepad.buttons[i].pressed || (i < gobl && gamepad.buttons[i].pressed !== Object.entries(gamepads.output.buttons)[i][1].pressed)) {
+            gamepads.used.any = true;
+            gamepads.used.buttons = true;
+          }
+
+        gamepads.output.axes = gamepad.axes;
 
         gamepads.output.buttons.south = gamepad.buttons[0];
         gamepads.output.buttons.east = gamepad.buttons[1];
@@ -323,7 +347,32 @@
         gamepads.output.buttons.pause = gamepad.buttons[9];
       }
       let renderGamepad = () => {
-        if (!gamepads.used) return;
+        let joyStickRadius = swemu.joycon.width/5;
+        // Left JoyCon
+        let joyStickCenterLeft = new Point((swemu.joycon.width/2), (swemu.joycon.height/4));
+        let joyStickPositionLeft = new Point(joyStickRadius*0.8*gamepads.output.axes[0], joyStickRadius*0.8*gamepads.output.axes[1]).add(joyStickCenterLeft);
+
+        draw.static.setColor("2d2dd2");
+        draw.static.rect(new Point(-joyStickRadius*2, -joyStickRadius*2).add(joyStickCenterLeft), new Point(joyStickRadius*2, joyStickRadius*2).add(joyStickCenterLeft));
+        draw.static.setColor("000000");
+        draw.static.arc(joyStickCenterLeft, joyStickRadius-10, false);
+        draw.static.arc(joyStickCenterLeft, joyStickRadius-12, false);
+        draw.static.arc(joyStickCenterLeft, joyStickRadius-14, false);
+        draw.static.arc(joyStickPositionLeft, joyStickRadius);
+
+        // Right JoyCon
+        let joyStickCenterRight = new Point((swemu.joycon.width/2), (swemu.joycon.height/2)).add(points.redJoyConStart);
+        let joyStickPositionRight = new Point(joyStickRadius*0.8*gamepads.output.axes[2], joyStickRadius*0.8*gamepads.output.axes[3]).add(joyStickCenterRight);
+
+        draw.static.setColor("d22d2d");
+        draw.static.rect(new Point(-joyStickRadius*2, -joyStickRadius*2).add(joyStickCenterRight), new Point(joyStickRadius*2, joyStickRadius*2).add(joyStickCenterRight));
+        draw.static.setColor("000000");
+        draw.static.arc(joyStickCenterRight, joyStickRadius-10, false);
+        draw.static.arc(joyStickCenterRight, joyStickRadius-12, false);
+        draw.static.arc(joyStickCenterRight, joyStickRadius-14, false);
+        draw.static.arc(joyStickPositionRight, joyStickRadius);
+
+        if (!gamepads.used.any) return;
         if (mouse.released) return; // return for now === only draw vgamepad (mouse pressed)
 
         draw.vgamepad.setColor("ffffff");
@@ -354,8 +403,8 @@
         context.dynamic.clearRect(0, 0, canvas.dynamic.width, canvas.dynamic.height);
 
         // Reset .used state every update and let getVirtualGamepadData and getGamepadData update the value manually
-        gamepads.used = false;
-        gamepads.output.axes = [0, 0];
+        gamepads.used = {any: false, axes: {any: false, left: false, right: false}, buttons: false};
+        gamepads.output.axes = [0, 0, 0, 0];
         getVirtualGamepadData();
         getGamepadData(); // Overwrite virtual data if this exists
         renderGamepad();
