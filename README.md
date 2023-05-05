@@ -22,6 +22,9 @@
 - Pause
 - A button (south)
 - B Button (east)
+- X button (west)
+- Y button (north)
+- Dpad (Up, Right, Left, Down)
 
 ## Gameplay
 
