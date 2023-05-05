@@ -185,6 +185,12 @@
             west: {pressed: false},
             north: {pressed: false},
             pause: {pressed: false},
+            dpad: {
+              up: {pressed: false},
+              right: {pressed: false},
+              left: {pressed: false},
+              down: {pressed: false},
+            }
           },
         },
         actions: {
@@ -193,6 +199,12 @@
           west: false,
           north: false,
           pause: false,
+          dpad: {
+            up: false,
+            right: false,
+            left: false,
+            down: false,
+          }
         }
       };
       let render = {
@@ -329,6 +341,8 @@
             gamepads.used.axes.any = true;
             if (i === 0 || i === 1) gamepads.used.axes.left = true;
             if (i === 2 || i === 3) gamepads.used.axes.right = true;
+
+            gamepads.output.axes = gamepad.axes;
           }
 
         let gobl = Object.entries(gamepads.output.buttons).length;
@@ -338,27 +352,46 @@
             gamepads.used.buttons = true;
           }
 
-        gamepads.output.axes = gamepad.axes;
-
         gamepads.output.buttons.south = gamepad.buttons[0];
         gamepads.output.buttons.east = gamepad.buttons[1];
         gamepads.output.buttons.west = gamepad.buttons[2];
         gamepads.output.buttons.north = gamepad.buttons[3];
         gamepads.output.buttons.pause = gamepad.buttons[9];
+
+        gamepads.output.buttons.dpad.up = gamepad.buttons[12];
+        gamepads.output.buttons.dpad.right = gamepad.buttons[15];
+        gamepads.output.buttons.dpad.left = gamepad.buttons[14];
+        gamepads.output.buttons.dpad.down = gamepad.buttons[13];
       }
       let renderGamepad = () => {
         let joyStickRadius = swemu.joycon.width/5;
+        let buttonRadius = swemu.joycon.width/10;
+        let pressedShrinkRadius = 2.5;
+
         // Left JoyCon
         let joyStickCenterLeft = new Point((swemu.joycon.width/2), (swemu.joycon.height/4));
         let joyStickPositionLeft = new Point(joyStickRadius*0.8*gamepads.output.axes[0], joyStickRadius*0.8*gamepads.output.axes[1]).add(joyStickCenterLeft);
 
         draw.static.setColor("2d2dd2");
         draw.static.rect(new Point(-joyStickRadius*2, -joyStickRadius*2).add(joyStickCenterLeft), new Point(joyStickRadius*2, joyStickRadius*2).add(joyStickCenterLeft));
+
         draw.static.setColor("000000");
         draw.static.arc(joyStickCenterLeft, joyStickRadius-10, false);
         draw.static.arc(joyStickCenterLeft, joyStickRadius-12, false);
         draw.static.arc(joyStickCenterLeft, joyStickRadius-14, false);
         draw.static.arc(joyStickPositionLeft, joyStickRadius);
+
+        // Left Buttons
+        let buttonCenterLeft = new Point((swemu.joycon.width/2), (swemu.joycon.height/2));
+
+        draw.static.setColor("2d2dd2");
+        draw.static.rect(new Point(-buttonRadius*3, -buttonRadius*3).add(buttonCenterLeft), new Point(buttonRadius*3, buttonRadius*3).add(buttonCenterLeft));
+
+        draw.static.setColor("111111");
+        draw.static.arc(new Point(0, -buttonRadius*2).add(buttonCenterLeft), buttonRadius-(gamepads.output.buttons.dpad.up.pressed ? pressedShrinkRadius : 0));
+        draw.static.arc(new Point(buttonRadius*2, 0).add(buttonCenterLeft), buttonRadius-(gamepads.output.buttons.dpad.right.pressed ? pressedShrinkRadius : 0));
+        draw.static.arc(new Point(0, buttonRadius*2).add(buttonCenterLeft), buttonRadius-(gamepads.output.buttons.dpad.down.pressed ? pressedShrinkRadius : 0));
+        draw.static.arc(new Point(-buttonRadius*2, 0).add(buttonCenterLeft), buttonRadius-(gamepads.output.buttons.dpad.left.pressed ? pressedShrinkRadius : 0));
 
         // Right JoyCon
         let joyStickCenterRight = new Point((swemu.joycon.width/2), (swemu.joycon.height/2)).add(points.redJoyConStart);
@@ -366,11 +399,33 @@
 
         draw.static.setColor("d22d2d");
         draw.static.rect(new Point(-joyStickRadius*2, -joyStickRadius*2).add(joyStickCenterRight), new Point(joyStickRadius*2, joyStickRadius*2).add(joyStickCenterRight));
+
         draw.static.setColor("000000");
         draw.static.arc(joyStickCenterRight, joyStickRadius-10, false);
         draw.static.arc(joyStickCenterRight, joyStickRadius-12, false);
         draw.static.arc(joyStickCenterRight, joyStickRadius-14, false);
         draw.static.arc(joyStickPositionRight, joyStickRadius);
+
+        // Right Buttons
+        let buttonCenterRight = new Point((swemu.joycon.width/2), (swemu.joycon.height/4)).add(points.redJoyConStart);
+
+        draw.static.setColor("d22d2d");
+        draw.static.rect(new Point(-buttonRadius*3, -buttonRadius*3).add(buttonCenterRight), new Point(buttonRadius*3, buttonRadius*3).add(buttonCenterRight));
+
+        draw.static.setColor("111111");
+        draw.static.arc(new Point(0, -buttonRadius*2).add(buttonCenterRight), buttonRadius-(gamepads.output.buttons.north.pressed ? pressedShrinkRadius : 0));
+        draw.static.arc(new Point(buttonRadius*2, 0).add(buttonCenterRight), buttonRadius-(gamepads.output.buttons.east.pressed ? pressedShrinkRadius : 0));
+        draw.static.arc(new Point(0, buttonRadius*2).add(buttonCenterRight), buttonRadius-(gamepads.output.buttons.south.pressed ? pressedShrinkRadius : 0));
+        draw.static.arc(new Point(-buttonRadius*2, 0).add(buttonCenterRight), buttonRadius-(gamepads.output.buttons.west.pressed ? pressedShrinkRadius : 0));
+
+        draw.static.setColor("dada34");
+        draw.static.arc(new Point(0, -buttonRadius*2).add(buttonCenterRight), buttonRadius-2-(gamepads.output.buttons.north.pressed ? pressedShrinkRadius : 0));
+        draw.static.setColor("da3434");
+        draw.static.arc(new Point(buttonRadius*2, 0).add(buttonCenterRight), buttonRadius-2-(gamepads.output.buttons.east.pressed ? pressedShrinkRadius : 0));
+        draw.static.setColor("34da34");
+        draw.static.arc(new Point(0, buttonRadius*2).add(buttonCenterRight), buttonRadius-2-(gamepads.output.buttons.south.pressed ? pressedShrinkRadius : 0));
+        draw.static.setColor("3434da");
+        draw.static.arc(new Point(-buttonRadius*2, 0).add(buttonCenterRight), buttonRadius-2-(gamepads.output.buttons.west.pressed ? pressedShrinkRadius : 0));
 
         if (!gamepads.used.any) return;
         if (mouse.released) return; // return for now === only draw vgamepad (mouse pressed)
