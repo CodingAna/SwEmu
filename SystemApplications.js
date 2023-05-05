@@ -47,12 +47,23 @@ export class HomeScreen {
     }
 
     let i = 0;
-    Object.entries(this._internals.applications.external).forEach((gameName, gameClass) => {
+    Object.entries(this._internals.applications.external).forEach((g) => {
+      let [gameName, gameClass] = g;
       // Multi colors for testing
       //let unselectedColors = ["875a5a", "87875a", "5a8787", "5a5a87", "764976", "767687"];
       //let selectedColors = ["d7aaaa", "d7d7aa", "aad7d7", "aaaad7", "c699c6", "c6c6d7"];
-      let unselectedColors = ["87875a", "5a8787", "5a8787", "87875a", "5a8787", "87875a"];
-      let selectedColors = ["d7d7aa", "aad7d7", "aad7d7", "d7d7aa", "aad7d7", "d7d7aa"];
+      let unselectedColors = {
+        "CoinCollect": "87875a",
+        "PhysicTest": "5a8787",
+        "HighwayRun": "764976",
+      }
+      let selectedColors = {
+        "CoinCollect": "d7d7aa",
+        "PhysicTest": "aad7d7",
+        "HighwayRun": "c699c6",
+      }
+      //let unselectedColors = [, "", "5a8787", "87875a", "5a8787", "87875a"];
+      //let selectedColors = ["d7d7aa", "aad7d7", "aad7d7", "d7d7aa", "aad7d7", "d7d7aa"];
 
       let appCountOffset = (i - this._appScrollOffset) * (this._appIconSize + 25);
 
@@ -61,20 +72,20 @@ export class HomeScreen {
       let app1text = new Point(app1start.x, app1end.y);
 
       if (i === this._highlightedApp) {
-        draw.dynamic.setColor(selectedColors[i]);
+        draw.dynamic.setColor(selectedColors[gameClass.NAME]);
         draw.dynamic.rect(app1start, app1end);
         draw.dynamic.setColor("ffffff");
-        draw.dynamic.text((""+gameName).search("coinCollect") >= 0 ? "CoinCollect" : "PhysicTest", new Point(0, 18+10).add(app1text), 18);
+        draw.dynamic.text(gameClass.NAME, new Point(0, 18+10).add(app1text), 18);
         if (app1end.x >= this._swemu.screen.width) {
           this._appScrollOffset++;
         } else if (app1start.x <= 0) {
           this._appScrollOffset--;
         }
       } else {
-        draw.dynamic.setColor(unselectedColors[i]);
+        draw.dynamic.setColor(unselectedColors[gameClass.NAME]);
         draw.dynamic.rect(app1start, app1end);
         draw.dynamic.setColor("a9a9a9");
-        draw.dynamic.text((""+gameName).search("coinCollect") >= 0 ? "CoinCollect" : "PhysicTest", new Point(0, 16+10).add(app1text), 16);
+        draw.dynamic.text(gameClass.NAME, new Point(0, 16+10).add(app1text), 16);
       }
       i++;
     });
