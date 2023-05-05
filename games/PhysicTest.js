@@ -3,6 +3,8 @@ import { Point, Vector2D } from "../Geometry.js";
 import { setCookie, getCookie } from "../Cookies.js";
 
 export class PhysicTest {
+  static get NAME() {return "PhysicTest";}
+
   constructor(swemu) {
     this._swemu = swemu;
     this._terminated = false;
@@ -62,7 +64,7 @@ export class PhysicTest {
     draw.dynamic.setColor("ffffff");
     draw.dynamic.arc(this._player.position.current, this._player.radius);
 
-    if (gamepads.used) {
+    if (gamepads.used.axes.left) {
       draw.dynamic.setColor("ff5522");
       draw.dynamic.line(this._player.position.current, new Vector2D(gamepads.output.axes[0], gamepads.output.axes[1]).multiply(100).point().add(this._player.position.current));
     }
