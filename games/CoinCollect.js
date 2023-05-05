@@ -203,7 +203,7 @@ export class CoinCollect {
     // NOTE: This gives the Application/Game full access to the gamepad actions (overwriting data => "exclusive gamepad access" for *active* app)
     //       Maybe store gamepads.actions.* in a local variable instead of the gamepad's to ensure data access is granted to the specific application
     // Read GamePad button data (paused, south(A), east (B))
-    
+
     /*
     // Either do this for each game individually (and maybe different buttons / in-game actions) or via main?
     if (gamepads.output.buttons.east.pressed) {
@@ -215,7 +215,8 @@ export class CoinCollect {
 
     if (gamepads.output.buttons.south.pressed) {
       if (!gamepads.actions.south && this._player.life.dead)
-        location.reload();
+        this.initGame();
+        //location.reload();
       gamepads.actions.south = true;
     } else gamepads.actions.south = false;
 
