@@ -17,9 +17,11 @@
       import { Point, Vector2D } from "./Geometry.js";
       import { MyMath } from "./MyMath.js";
       import { setCookie, getCookie } from "./Cookies.js";
-      // Import GameModes
+      // Import Games
       import { CoinCollect } from "./games/CoinCollect.js";
       import { PhysicTest } from "./games/PhysicTest.js";
+      // Import SystemApplications
+      import { HomeScreen } from "./SystemApplications.js"
 
       // TODO: Change "type" from Button to a Slider (similar to a SeekBar)
       let zoomPressed = false;
@@ -132,6 +134,22 @@
         zoomInteractiveFieldEnd: new Point(400, 65),
       };
 
+      let internals = {
+        applications: {
+          system: {
+            homeScreen: HomeScreen,
+          },
+          external: {
+            coinCollect: CoinCollect,
+            physicTest: PhysicTest,
+            physicTest2: PhysicTest,
+            coinCollect2: CoinCollect,
+            physicTest3: PhysicTest,
+            coinCollect3: CoinCollect,
+          }
+        }
+      }
+
       let mouse = {
         position: new Point(),
         pressed: false,
@@ -149,11 +167,17 @@
           axes: [0, 0],
           buttons: {
             south: {pressed: false},
+            east: {pressed: false},
+            west: {pressed: false},
+            north: {pressed: false},
             pause: {pressed: false},
           },
         },
         actions: {
           south: false,
+          east: false,
+          west: false,
+          north: false,
           pause: false,
         }
       };
@@ -290,6 +314,9 @@
         }
 
         gamepads.output.buttons.south = gamepad.buttons[0];
+        gamepads.output.buttons.east = gamepad.buttons[1];
+        gamepads.output.buttons.west = gamepad.buttons[2];
+        gamepads.output.buttons.north = gamepad.buttons[3];
         gamepads.output.buttons.pause = gamepad.buttons[9];
       }
       let renderGamepad = () => {
@@ -317,12 +344,8 @@
       renderZoomInteraction();
       renderSwitch();
 
-      let coinCollect = new CoinCollect(swemu);
-      let physicTest = new PhysicTest(swemu);
-      let currentGame = null;
-
-      let gameRenderer = () => {
-        if (currentGame === null) return; // requestAnimationFrame(gameRenderer);
+      let mainRenderer = () => {
+        //if (currentGame !== null) requestAnimationFrame(mainRenderer);
 
         context.vgamepad.clearRect(0, 0, canvas.vgamepad.width, canvas.vgamepad.height);
         context.dynamic.clearRect(0, 0, canvas.dynamic.width, canvas.dynamic.height);
@@ -336,42 +359,17 @@
 
         getZoomInteraction();
 
-        // TODO: Run selected game code here
-        //coinCollect.renderGame(draw, gamepads, render);
-        //physicTest.renderGame(draw, gamepads, render);
-        currentGame.renderGame(draw, gamepads, render);
+        if (homeScreen._currentGame !== null) {
+          if (homeScreen._paused) homeScreen._currentGame.renderGame(draw, gamepads, render);
 
-        let now = Date.now();
-        render.deltaTime = (now - render.now) / 1000;
-        render.now = now;
-        if (render.input.verbose && render.input.updated) {
-          render.input.delay = Date.now() - render.input.now;
-          console.log(render.input.delay);
-          render.input.updated = false;
+          if (gamepads.output.buttons.east.pressed) {
+            if (!gamepads.actions.east)
+              homeScreen._currentGame.terminateGame();
+            gamepads.actions.east = true;
+          } else gamepads.actions.east = false;
         }
 
-        requestAnimationFrame(gameRenderer);
-      }
-
-      let mainRenderer = () => {
-        if (currentGame !== null) requestAnimationFrame(mainRenderer);
-
-        context.vgamepad.clearRect(0, 0, canvas.vgamepad.width, canvas.vgamepad.height);
-        context.dynamic.clearRect(0, 0, canvas.dynamic.width, canvas.dynamic.height);
-
-        // Reset .used state every update and let getVirtualGamepadData and getGamepadData update the value manually
-        gamepads.used = false;
-        gamepads.output.axes = [0, 0];
-        getVirtualGamepadData();
-        getGamepadData(); // Overwrite virtual data if this exists
-        renderGamepad();
-
-        getZoomInteraction();
-
-        // TODO: Get game selection here
-        // if game selected then
-        //    gameRenderer();
-        //
+        homeScreen.render(draw, gamepads, render);
 
         let now = Date.now();
         render.deltaTime = (now - render.now) / 1000;
@@ -385,12 +383,11 @@
         requestAnimationFrame(mainRenderer);
       }
 
-      // Start main renderer
+      let homeScreen = new HomeScreen(swemu);
+      homeScreen.init(internals);
+
       render.now = Date.now();
-      //requestAnimationFrame(mainRenderer); // TODO: When adding home screen, use this!
-      coinCollect.initGame();
-      currentGame = coinCollect;
-      requestAnimationFrame(gameRenderer)
+      requestAnimationFrame(mainRenderer);
     </script>
   </body>
 </html>
