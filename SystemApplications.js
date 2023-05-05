@@ -42,8 +42,6 @@ export class HomeScreen {
         this._highlightedApp--;
         this._gamepad_swiped = true;
       }
-      if (this._highlightedApp > this._appCount - 1) this._highlightedApp = this._appCount - 1;
-      else if (this._highlightedApp < 0) this._highlightedApp = 0;
     }
 
     if (gamepads.output.buttons.dpad.right.pressed) {
@@ -61,6 +59,9 @@ export class HomeScreen {
     } else {
       gamepads.actions.dpad.left = false;
     }
+
+    if (this._highlightedApp > this._appCount - 1) this._highlightedApp = this._appCount - 1;
+    else if (this._highlightedApp < 0) this._highlightedApp = 0;
 
     let i = 0;
     Object.entries(this._internals.applications.external).forEach((g) => {

@@ -223,7 +223,6 @@ export class CoinCollect {
     if (gamepads.output.buttons.south.pressed) {
       if (!gamepads.actions.south && this._player.life.dead)
         this.initGame();
-        //location.reload();
       gamepads.actions.south = true;
     } else gamepads.actions.south = false;
 
