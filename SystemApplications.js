@@ -1,6 +1,6 @@
-import { MyMath } from "../MyMath.js";
-import { Point, Vector2D } from "../Geometry.js";
-import { setCookie, getCookie } from "../Cookies.js";
+import { MyMath } from "./MyMath.js";
+import { Point, Vector2D } from "./Geometry.js";
+import { setCookie, getCookie } from "./Cookies.js";
 
 export class HomeScreen {
   constructor(swemu) {
