@@ -188,8 +188,8 @@ export class HomeScreen {
 
     i = 0;
     this._internals.users.forEach((user) => {
-      let unselectedColors = ["5a8787", "00827a"];
-      let selectedColors = ["aad7d7", "20b2aa"];
+      let unselectedColors = ["5a8787", "00827a", "c05050"];
+      let selectedColors = ["aad7d7", "20b2aa", "f08080"];
 
       let userRadius = 18;
       let userOffset = i * (userRadius * 2 + 6);
