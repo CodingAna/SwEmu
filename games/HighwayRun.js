@@ -26,16 +26,37 @@ export class HighwayRun {
   _renderAnimals = () => {}
 
   _spawnCar = () => {
+    let carType = Math.random() <= 0.8 ? "Normal" : "SUV";
+
+    let localWidth;
+    let localLength;
+    let speed = (Math.random() * 0.5) + 0.75; // 0.75 .. 1.25
+    let fatalCrash; // fatalProbability = 1 - ((crashSpeed - minSpeed) / (maxSpeed - minSpeed))
+
+    switch (carType) {
+      case "Normal":
+        localWidth = this._highwayLaneWidth * 0.55;
+        localLength = this._highwayLaneWidth;
+        speed -= 0.2; // 0.55 .. 1.05
+        fatalCrash = speed >= 0.62; // 86%
+        break;
+      case "SUV":
+        localWidth = this._highwayLaneWidth * 0.92;
+        localLength = this._highwayLaneWidth * 1.65;
+        speed += 0.1; // 0.85 .. 1.35
+        fatalCrash = speed >= 0.88; // 94%
+        break;
+      default:
+        return;
+    }
+
     let lane = parseInt(Math.random() * this._highwayLanes);
     while (lane === this._carsLastLane)
       lane = parseInt(Math.random() * this._highwayLanes);
     this._carsLastLane = lane;
-    let carType = Math.random() >= 0.8 ? "SUV" : "Normal";
-    let scrollSpeed = (Math.random() * 0.5) + 0.75;
-    let fatalSpeed = carType === "SUV" ? 0.8 : (carType === "Normal" ? 1 : 0);
-    let fatalCrash = scrollSpeed >= fatalSpeed;
-    if (!fatalCrash) if (Math.random() > 0.6) fatalCrash = true;
-    this._buffers.cars.push([this._swemu.screen.width, lane, carType, scrollSpeed, fatalCrash]);
+
+    if (this._buffers.cars[lane] === undefined) this._buffers.cars[lane] = [];
+    this._buffers.cars[lane].push([this._swemu.screen.width, localWidth, localLength, speed, fatalCrash]);
   }
   _spawnCarLoop = () => {
     if (this._terminated) return;
@@ -46,49 +67,51 @@ export class HighwayRun {
     this._spawnCarLoopTimeout = setTimeout(() => {this._spawnCarLoop();}, (360 / (this._swemu.screen.height * out_multiplier)) * 1000);
   }
   _updateCarPositions = (draw, gamepads, render) => {
-    for (let i=0; i<this._buffers.cars.length; i++) {
-      if (this._buffers.cars[i] === undefined) continue;
-      let [x, lane, carType, scrollSpeed, fatalCrash] = this._buffers.cars[i];
-      //let y = (this._swemu.screen.height / this._highwayLanes) * lane + ((this._swemu.screen.height / this._highwayLanes) / 2);
-      let localScrollSpeed = scrollSpeed.valueOf();
-      let width = carType === "SUV" ? this._highwayLaneWidth*1.65 : (carType === "Normal" ? this._highwayLaneWidth : 200);
+    for (let lane=0; lane<this._highwayLanes; lane++) {
+      if (this._buffers.cars[lane] === undefined) continue;
+      for (let i=0; i<this._buffers.cars[lane].length; i++) {
+        if (this._buffers.cars[lane][i] === undefined) continue;
+        let [x, localWidth, localLength, speed, fatalCrash] = this._buffers.cars[lane][i];
+        let localSpeed = speed.valueOf();
 
-      if (this._player.savedAnimals < this._player.finalAnimals) localScrollSpeed *= 1 + ((this._player.savedAnimals / this._player.finalAnimals) * (this._player.finalMultiplier - 1));
-      else localScrollSpeed *= this._player.finalMultiplier;
+        if (this._player.savedAnimals < this._player.finalAnimals) localSpeed *= 1 + ((this._player.savedAnimals / this._player.finalAnimals) * (this._player.finalMultiplier - 1));
+        else localSpeed *= this._player.finalMultiplier;
 
-      x -= localScrollSpeed * render.deltaTime * 100;
-      let x2 = x + width;
+        x -= localSpeed * render.deltaTime * 100;
+        let x2 = x + localLength;
 
-      if (x2 >= 0) this._buffers.cars[i] = [x, lane, carType, scrollSpeed, fatalCrash];
-      else delete this._buffers.cars[i];
+        if (x2 >= 0) this._buffers.cars[lane][i] = [x, localWidth, localLength, speed, fatalCrash];
+        else delete this._buffers.cars[lane][i];
 
-      if (fatalCrash) {
-        let inX = this._player.position.current.x + this._player.radius > x && this._player.position.current.x - this._player.radius < x2;
-        let inY = this._player.position.lane === lane;
+        if (fatalCrash) {
+          let inX = this._player.position.current.x + this._player.radius > x && this._player.position.current.x - this._player.radius < x2;
+          let inY = this._player.position.lane === lane;
 
-        if (inX && inY) {
-          this._player.life.dead = true;
-          this._player.life.alive = false;
-          // Maybe just use i and use the reference later?
-          this._player.life.killer = this._buffers.cars[i];
-        }
-      }
-    }
+          if (inX && inY) {
+            this._player.life.dead = true;
+            this._player.life.alive = false;
+            // Maybe just use i and use the reference later?
+            this._player.life.killer = this._buffers.cars[lane][i];
+          } // inX && inY
+        } // fatalCrash
+      } // for i
+    } // for lane
   }
   _renderCars = (draw, gamepads, render) => {
-    for (let i=0; i<this._buffers.cars.length; i++) {
-      if (this._buffers.cars[i] === undefined) continue;
-      let [x, lane, carType, scrollSpeed] = this._buffers.cars[i];
-      let y = (this._swemu.screen.height / this._highwayLanes) * lane + ((this._swemu.screen.height / this._highwayLanes) / 2);
-      let width = carType === "SUV" ? this._highwayLaneWidth*1.65 : (carType === "Normal" ? this._highwayLaneWidth : 200);
-      let height = carType === "SUV" ? this._highwayLaneWidth*0.92 : (carType === "Normal" ? this._highwayLaneWidth*0.55 : 120);
+    for (let lane=0; lane<this._highwayLanes; lane++) {
+      if (this._buffers.cars[lane] === undefined) continue;
+      for (let i=0; i<this._buffers.cars[lane].length; i++) {
+        if (this._buffers.cars[lane][i] === undefined) continue;
+        let [x, localWidth, localLength, speed, fatalCrash] = this._buffers.cars[lane][i];
+        let y = (this._swemu.screen.height / this._highwayLanes) * lane + ((this._swemu.screen.height / this._highwayLanes) / 2);
 
-      let p1 = new Point(x, y-(height / 2));
-      let p2 = new Point(width, height).add(p1);
+        let p1 = new Point(x, y-(localWidth / 2));
+        let p2 = new Point(localLength, localWidth).add(p1);
 
-      draw.dynamic.setColor("ffffff");
-      draw.dynamic.rect(p1, p2);
-    }
+        draw.dynamic.setColor("ffffff");
+        draw.dynamic.rect(p1, p2);
+      } // for i
+    } // for lane
   }
 
   _updatePlayerPosition = (draw, gamepads, render) => {
