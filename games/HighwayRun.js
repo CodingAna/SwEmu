@@ -14,7 +14,7 @@ export class HighwayRun {
 
   _renderHighway = (draw, gamepads, render) => {
     draw.dynamic.setColor("ffffff");
-    for (let i=0; i<=this._highwayLanes; i++) {
+    for (let i=1; i<this._highwayLanes; i++) {
       let y = (this._swemu.screen.height / this._highwayLanes) * i;
       if (i === 0) y += 1;
       if (i === this._highwayLanes) y -= 1;
@@ -77,23 +77,17 @@ export class HighwayRun {
         if (this._player.savedAnimals < this._player.finalAnimals) localSpeed *= 1 + ((this._player.savedAnimals / this._player.finalAnimals) * (this._player.finalMultiplier - 1));
         else localSpeed *= this._player.finalMultiplier;
 
-        x -= localSpeed * render.deltaTime * 100;
-        let x2 = x + localLength;
+        let moveDistance = localSpeed * render.deltaTime * 100;
+        let distanceToCar = 15;
+        // Cars cannot crash into each other
+        if (i > 0 && this._buffers.cars[lane][i-1] !== undefined) {
+          let [px, plocalWidth, plocalLength, pspeed, pfatalCrash] = this._buffers.cars[lane][i-1];
+          if (x - moveDistance > px + plocalLength + distanceToCar)
+            x -= moveDistance
+        } else x -= moveDistance;
 
-        if (x2 >= 0) this._buffers.cars[lane][i] = [x, localWidth, localLength, speed, fatalCrash];
+        if (x + localLength >= 0) this._buffers.cars[lane][i] = [x, localWidth, localLength, speed, fatalCrash];
         else delete this._buffers.cars[lane][i];
-
-        if (fatalCrash) {
-          let inX = this._player.position.current.x + this._player.radius > x && this._player.position.current.x - this._player.radius < x2;
-          let inY = this._player.position.lane === lane;
-
-          if (inX && inY) {
-            this._player.life.dead = true;
-            this._player.life.alive = false;
-            // Maybe just use i and use the reference later?
-            this._player.life.killer = this._buffers.cars[lane][i];
-          } // inX && inY
-        } // fatalCrash
       } // for i
     } // for lane
   }
@@ -108,7 +102,8 @@ export class HighwayRun {
         let p1 = new Point(x, y-(localWidth / 2));
         let p2 = new Point(localLength, localWidth).add(p1);
 
-        draw.dynamic.setColor("ffffff");
+        if (fatalCrash) draw.dynamic.setColor("ff4444");
+        else draw.dynamic.setColor("ffffff");
         draw.dynamic.rect(p1, p2);
       } // for i
     } // for lane
@@ -118,7 +113,8 @@ export class HighwayRun {
     if (!gamepads.used.axes.left && !gamepads.used.buttons) return;
 
     this._player.move = new Vector2D(gamepads.output.axes[0], 0).multiply(this._player.speed.current).multiply(render.deltaTime).multiply(100);
-    this._player.position.future.x = this._player.position.current.add_NW(this._player.move.point()).x;
+    //this._player.position.future.x = this._player.position.current.add_NW(this._player.move.point()).x;
+    this._player.position.future.x += this._player.move.x;
 
     // Commented code is for joystick up/down control, kinda funky tho => use of buttons (Y north, A south) instead (in renderGame)
     /*
@@ -142,19 +138,37 @@ export class HighwayRun {
     }
     */
 
-    if (this._player.position.lane > this._highwayLanes - 1) this._player.position.lane = this._highwayLanes - 1;
-    else if (this._player.position.lane < 0) this._player.position.lane = 0;
-
     this._player.position.future.y = (this._swemu.screen.height / this._highwayLanes) * this._player.position.lane + ((this._swemu.screen.height / this._highwayLanes) / 2);
+    this._player.position.current.y = this._player.position.future.y;
 
-    if (this._player.position.future.x - this._player.radius >= 0 && this._player.position.future.x + this._player.radius <= this._swemu.screen.width) this._player.position.current.x = this._player.position.future.x;
-    if (this._player.position.future.y - this._player.radius >= 0 && this._player.position.future.y + this._player.radius <= this._swemu.screen.height) this._player.position.current.y = this._player.position.future.y;
+    for (let i=0; this._buffers.cars[this._player.position.lane] !== undefined && i<this._buffers.cars[this._player.position.lane].length; i++) {
+      if (this._buffers.cars[this._player.position.lane][i] === undefined) continue;
+      let [x, localWidth, localLength, speed, fatalCrash] = this._buffers.cars[this._player.position.lane][i];
 
-    if (this._player.position.future.x - this._player.radius < 0) this._player.position.current.x = this._player.radius;
-    if (this._player.position.future.x + this._player.radius > this._swemu.screen.width) this._player.position.current.x = this._swemu.screen.width - this._player.radius;
+      let inX = this._player.position.future.x + this._player.radius > x && this._player.position.future.x - this._player.radius < x + localLength;
 
-    if (this._player.position.future.y - this._player.radius < 0) this._player.position.current.y = this._player.radius;
-    if (this._player.position.future.y + this._player.radius > this._swemu.screen.height) this._player.position.current.y = this._swemu.screen.height - this._player.radius;
+      if (fatalCrash) {
+        if (inX) {
+          if (this._player.move.x < 0 && this._player.position.current.x - this._player.radius > x + localLength) {
+            this._player.position.future.x = this._player.position.current.x;
+          } else {
+            this._player.life.dead = true;
+            this._player.life.alive = false;
+            // Maybe just use i and use the reference later?
+            this._player.life.killer = this._buffers.cars[this._player.position.lane][i];
+          }
+        }
+      } else if (inX) {
+        if (this._player.position.lane === this._highwayLanes - 1) this._player.position.lane--;
+        else if (this._player.position.lane === 0) this._player.position.lane++;
+        else this._player.position.lane += Math.random() >= 0.5 ? 1 : -1;
+      }
+    }
+
+    if (this._player.position.future.x + this._player.radius <= this._swemu.screen.width)
+      this._player.position.current.x = this._player.position.future.x;
+    if (this._player.position.future.x - this._player.radius < 0)
+      this._player.position.current.x = this._player.radius;
   }
   _renderPlayer = (draw, gamepads, render) => {
     draw.dynamic.setColor("ffffff");
@@ -178,16 +192,16 @@ export class HighwayRun {
         killerColors: [],
       },
       position: {
-        lane: 0,
+        lane: parseInt((this._highwayLanes - 1) / 2),
         current: new Point(100, 100),
         future: new Point(100, 100),
       },
       move: new Vector2D(),
       radius: 10,
       speed: {
-        current: 2.25,
-        init: 2.25,
-        max: 3,
+        current: 0.8,
+        init: 0.8,
+        max: 2,
       },
       newHighscore: false,
       newHighscoreShowUntil: 0,
@@ -240,6 +254,9 @@ export class HighwayRun {
       }
       gamepads.actions.south = true;
     } else gamepads.actions.south = false;
+
+    if (this._player.position.lane > this._highwayLanes - 1) this._player.position.lane = this._highwayLanes - 1;
+    else if (this._player.position.lane < 0) this._player.position.lane = 0;
 
     if (gamepads.output.buttons.pause.pressed) {
       if (!gamepads.actions.pause)
