@@ -359,10 +359,16 @@ export class Settings {
     if (this._terminated) return;
 
     let reachedUserLimit = this._internals.users.length >= 5;
+    let choseName = true;
+    for (let i=0; i<this._nameSelection.length; i++) {
+      // Name has to start at letter position 0
+      if (this._nameSelection[i] === 0) choseName = false;
+      else break;
+    }
 
     if (gamepads.output.buttons.south.pressed) {
       if (!gamepads.actions.south) {
-        if (!reachedUserLimit) {
+        if (!reachedUserLimit && choseName) {
           let name = "";
           for (let i=0; i<this._nameSelection.length; i++)
             if (this._nameSelection[i] !== 0) name += String.fromCharCode((i === 0 ? 65 : 97) + this._nameSelection[i]-1);
@@ -377,7 +383,7 @@ export class Settings {
     if (gamepads.output.buttons.dpad.up.pressed) {
       if (!gamepads.actions.dpad.up) {
         if (this._position < this._nameSelection.length) this._nameSelection[this._position]++;
-        else this._backgroundColorSelection++;
+        else if (this._position === this._nameSelection.length) this._backgroundColorSelection++;
       }
       gamepads.actions.dpad.up = true;
     } else gamepads.actions.dpad.up = false;
@@ -385,7 +391,7 @@ export class Settings {
     if (gamepads.output.buttons.dpad.down.pressed) {
       if (!gamepads.actions.dpad.down) {
         if (this._position < this._nameSelection.length) this._nameSelection[this._position]--;
-        else this._backgroundColorSelection--;
+        else if (this._position === this._nameSelection.length) this._backgroundColorSelection--;
       }
       gamepads.actions.dpad.down = true;
     } else gamepads.actions.dpad.down = false;
@@ -433,12 +439,6 @@ export class Settings {
         draw.dynamic.line(new Point(-4, 16).add(relSelP), new Point(16, 16).add(relSelP));
       }
       else draw.dynamic.text(this._backgroundColorSelection, relSelP);
-    }
-    let choseName = true;
-    for (let i=0; i<this._nameSelection.length; i++) {
-      // Name has to start at letter position 0
-      if (this._nameSelection[i] === 0) choseName = false;
-      else break;
     }
     let i = 9;
     let relSelP = new Point(150 + i*(25 + 10), 150);
