@@ -3,6 +3,7 @@
 ## Important Notes
 
 - Currently there's a virtual JoyStick but for starting and/or quitting a game you need to press controller buttons (A, B on Xbox) and optionally the pause button to pause the CoinCollect-game.
+- The menu movement with the JoyStick is "whack". It's recommended to use the D-pad for navigation and the JoyStick in-game.
 
 ## Controls
 
@@ -24,7 +25,7 @@
 - B Button (east)
 - X button (west)
 - Y button (north)
-- Dpad (Up, Right, Left, Down)
+- D-pad (Up, Right, Left, Down)
 
 ## Gameplay
 
