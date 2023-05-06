@@ -85,9 +85,10 @@ export class CoinCollect {
       if (twoCenterVecLen < this._player.radius + radius) {
         delete this._buffers.coins[i];
         this._player.coins++;
-        if (this._player.coins > getCookie("coinHighscore")) {
-          if (!this._player.newHighscore) this._player.newHighscoreShowUntil = Date.now() + 1500; // Show "New Highscore!" hint for 1500ms
-          setCookie("coinHighscore", this._player.coins, 7);
+        if (this._player.coins > getCookie("coinHighscore_" + this._user.uid)) {
+          if (!this._player.newHighscore)
+            this._player.newHighscoreShowUntil = Date.now() + 1500; // Show "New Highscore!" hint for 1500ms
+          setCookie("coinHighscore_" + this._user.uid, this._player.coins, 7);
           this._player.newHighscore = true;
         }
       }
@@ -105,7 +106,7 @@ export class CoinCollect {
     }
   }
   _renderHighscore = (draw, gamepads, render) => {
-    let coinHighscore = getCookie("coinHighscore");
+    let coinHighscore = getCookie("coinHighscore_" + this._user.uid);
     if (coinHighscore > 0) {
       draw.dynamic.setColor("dbcb20");
       draw.dynamic.text("Highscore: " + coinHighscore, new Point(10, 30), 20);
@@ -155,8 +156,9 @@ export class CoinCollect {
     this._spawnCoinLoopTimeout = setTimeout(() => {this._spawnCoinLoop();}, (360 / (this._swemu.screen.height * out_multiplier)) * 1800);
   }
 
-  initGame = () => {
+  init = (user) => {
     this._terminated = false;
+    this._user = user;
     this._player = {
       life: {
         alive: true,
@@ -195,13 +197,13 @@ export class CoinCollect {
     return this;
   }
 
-  terminateGame = () => {
+  terminate = () => {
     this._terminated = true;
 
     return this;
   }
 
-  renderGame = (draw, gamepads, render) => {
+  render = (draw, gamepads, render) => {
     if (this._terminated) return;
 
     //if (gamepads.output.axes[0] != 0 || gamepads.output.axes[1] != 0) this._player.started = true;
@@ -215,14 +217,14 @@ export class CoinCollect {
     // Either do this for each game individually (and maybe different buttons / in-game actions) or via main?
     if (gamepads.output.buttons.east.pressed) {
       if (!gamepads.actions.east)
-        this.terminateGame();
+        this.terminate();
       gamepads.actions.east = true;
     } else gamepads.actions.east = false;
     */
 
     if (gamepads.output.buttons.south.pressed) {
       if (!gamepads.actions.south && this._player.life.dead)
-        this.initGame();
+        this.init(this._user);
       gamepads.actions.south = true;
     } else gamepads.actions.south = false;
 
