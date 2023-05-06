@@ -116,7 +116,7 @@ export class HighwayRun {
     //this._player.position.future.x = this._player.position.current.add_NW(this._player.move.point()).x;
     this._player.position.future.x += this._player.move.x;
 
-    // Commented code is for joystick up/down control, kinda funky tho => use of buttons (Y north, A south) instead (in renderGame)
+    // Commented code is for joystick up/down control, kinda funky tho => use of buttons (Y north, A south) instead (in render)
     /*
     let gpOx = gamepads.output.axes[1];
     let gpOxTresh = 0.35;
@@ -180,8 +180,9 @@ export class HighwayRun {
     }
   }
 
-  initGame = () => {
+  init = (user) => {
     this._terminated = false;
+    this._user = user;
     this._highwayLanes = 7;
     this._highwayLaneWidth = (this._swemu.screen.height / this._highwayLanes);
     this._player = {
@@ -227,13 +228,13 @@ export class HighwayRun {
     return this;
   }
 
-  terminateGame = () => {
+  terminate = () => {
     this._terminated = true;
 
     return this;
   }
 
-  renderGame = (draw, gamepads, render) => {
+  render = (draw, gamepads, render) => {
     if (this._terminated) return;
 
     if (gamepads.used.axes.left) this._player.started = true;
@@ -249,7 +250,7 @@ export class HighwayRun {
     if (gamepads.output.buttons.south.pressed) {
       if (!gamepads.actions.south) {
         if (this._player.life.dead)
-          this.initGame();
+          this.init();
         else if (this._player.started) this._player.position.lane++;
       }
       gamepads.actions.south = true;

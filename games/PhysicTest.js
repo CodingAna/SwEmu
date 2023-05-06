@@ -69,8 +69,9 @@ export class PhysicTest {
       draw.dynamic.line(this._player.position.current, new Vector2D(gamepads.output.axes[0], gamepads.output.axes[1]).multiply(100).point().add(this._player.position.current));
     }
   }
-  initGame = () => {
+  init = (user) => {
     this._terminated = false;
+    this._user = user;
     this._player = {
       life: {
         alive: true,
@@ -99,13 +100,13 @@ export class PhysicTest {
     return this;
   }
 
-  terminateGame = () => {
+  terminate = () => {
     this._terminated = true;
     // this = null; // Is this even possible?
     return null; // this
   }
 
-  renderGame = (draw, gamepads, render) => {
+  render = (draw, gamepads, render) => {
     if (this._terminated) return;
 
     if (gamepads.used.axes.left) this._player.started = true;
