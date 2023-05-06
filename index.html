@@ -30,8 +30,6 @@
       let zoomf = parseFloat(getCookie("zoom"));
       let totalZoom = [1.0, 1.5, 2.0].includes(zoomf) ? zoomf : 1;
 
-      //if (getCookie("coinHighscore") === null) setCookie("coinHighscore", 0, 7);
-
       let swemu = {
         screen: {
           width: 630*totalZoom,
@@ -65,8 +63,8 @@
       };
 
       // Zoom
-      canvas.zoom.width = 400;//window.innerWidth;
-      canvas.zoom.height = 65;//window.innerHeight;
+      canvas.zoom.width = 400;
+      canvas.zoom.height = 65;
 
       canvas.zoom.style.position = "absolute";
       canvas.zoom.style.left = "0px";
