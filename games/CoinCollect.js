@@ -29,10 +29,12 @@ export class CoinCollect {
 
   // Combining update and render would speed up the main renderer due to only one full loop interation instead of two
   _spawnObstacle = () => {
-    let height = (Math.random() * 15) + 10;
-    let width = (Math.random() * 30) + 15;
+    let scrollSpeed = (Math.random() * 0.5) + 0.75; // 0.25 .. 1.25
+    //let height = (Math.random() * 15) + 10;
+    let height = 10 + (10 * (scrollSpeed - 0.25)) + (5 * Math.random());
+    //let width = (Math.random() * 30) + 15;
+    let width = 15 + (20 * (scrollSpeed - 0.25)) + (10 * Math.random());
     let y = Math.random() * (this._swemu.screen.height - height);
-    let scrollSpeed = (Math.random() * 0.5) + 0.75;
     this._buffers.obstacles.push([new Point(this._swemu.screen.width, y), width, height, scrollSpeed]);
   }
   _updateObstacles = (draw, gamepads, render) => {
