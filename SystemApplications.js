@@ -88,6 +88,13 @@ export class HomeScreen {
     this._actionOpen = -1;
     this._actionClick = 0;
     this._appSelectedUser = 0;
+    this._dpadTimeoutDuration = {f: 425, s: 145}; // f=first, s=second(and all following)
+    this._dpadTimeouts = {
+      up: {f: true, t: setTimeout(() => {}, 1)}, // f=first(-bool), t=timeout(-object)
+      down: {f: true, t: setTimeout(() => {}, 1)},
+      right: {f: true, t: setTimeout(() => {}, 1)},
+      left: {f: true, t: setTimeout(() => {}, 1)},
+    }
 
     return this;
   }
@@ -135,28 +142,76 @@ export class HomeScreen {
     }
 
     if (gamepads.output.buttons.dpad.up.pressed) {
-      if (!gamepads.actions.dpad.up)
+      if (!gamepads.actions.dpad.up) {
+        let td = this._dpadTimeoutDuration.s;
+        if (this._dpadTimeouts.up.f) {
+          td = this._dpadTimeoutDuration.f;
+          this._dpadTimeouts.up.f = false;
+        }
+        clearTimeout(this._dpadTimeouts.up.t);
+        this._dpadTimeouts.up.t = setTimeout(() => {gamepads.actions.dpad.up = false;}, td);
+
         this._actionGoUp();
+      }
       gamepads.actions.dpad.up = true;
-    } else gamepads.actions.dpad.up = false;
+    } else {
+      gamepads.actions.dpad.up = false;
+      this._dpadTimeouts.up.f = true;
+    }
 
     if (gamepads.output.buttons.dpad.down.pressed) {
-      if (!gamepads.actions.dpad.down)
+      if (!gamepads.actions.dpad.down) {
+        let td = this._dpadTimeoutDuration.s;
+        if (this._dpadTimeouts.down.f) {
+          td = this._dpadTimeoutDuration.f;
+          this._dpadTimeouts.down.f = false;
+        }
+        clearTimeout(this._dpadTimeouts.down.t);
+        this._dpadTimeouts.down.t = setTimeout(() => {gamepads.actions.dpad.down = false;}, td);
+
         this._actionGoDown();
+      }
       gamepads.actions.dpad.down = true;
-    } else gamepads.actions.dpad.down = false;
+    } else {
+      gamepads.actions.dpad.down = false;
+      this._dpadTimeouts.down.f = true;
+    }
 
     if (gamepads.output.buttons.dpad.right.pressed) {
-      if (!gamepads.actions.dpad.right)
+      if (!gamepads.actions.dpad.right) {
+        let td = this._dpadTimeoutDuration.s;
+        if (this._dpadTimeouts.right.f) {
+          td = this._dpadTimeoutDuration.f;
+          this._dpadTimeouts.right.f = false;
+        }
+        clearTimeout(this._dpadTimeouts.right.t);
+        this._dpadTimeouts.right.t = setTimeout(() => {gamepads.actions.dpad.right = false;}, td);
+
         this._actionGoRight();
+      }
       gamepads.actions.dpad.right = true;
-    } else gamepads.actions.dpad.right = false;
+    } else {
+      gamepads.actions.dpad.right = false;
+      this._dpadTimeouts.right.f = true;
+    }
 
     if (gamepads.output.buttons.dpad.left.pressed) {
-      if (!gamepads.actions.dpad.left)
+      if (!gamepads.actions.dpad.left) {
+        let td = this._dpadTimeoutDuration.s;
+        if (this._dpadTimeouts.left.f) {
+          td = this._dpadTimeoutDuration.f;
+          this._dpadTimeouts.left.f = false;
+        }
+        clearTimeout(this._dpadTimeouts.left.t);
+        this._dpadTimeouts.left.t = setTimeout(() => {gamepads.actions.dpad.left = false;}, td);
+
         this._actionGoLeft();
+      }
       gamepads.actions.dpad.left = true;
-    } else gamepads.actions.dpad.left = false;
+    } else {
+      gamepads.actions.dpad.left = false;
+      this._dpadTimeouts.left.f = true;
+    }
 
     let date = new Date();
     draw.dynamic.setColor("ffffff")
@@ -345,6 +400,13 @@ export class Settings {
     this._position = 0;
     this._nameSelection = [0, 0, 0, 0, 0, 0, 0, 0];
     this._backgroundColorSelection = 0;
+    this._dpadTimeoutDuration = {f: 425, s: 145}; // f=first, s=second(and all following)
+    this._dpadTimeouts = {
+      up: {f: true, t: setTimeout(() => {}, 1)}, // f=first(-bool), t=timeout(-object)
+      down: {f: true, t: setTimeout(() => {}, 1)},
+      right: {f: true, t: setTimeout(() => {}, 1)},
+      left: {f: true, t: setTimeout(() => {}, 1)},
+    }
 
     return this;
   }
@@ -368,6 +430,7 @@ export class Settings {
 
     if (gamepads.output.buttons.south.pressed) {
       if (!gamepads.actions.south) {
+        // && this._position === 9 ? => only create via green button, making it slower for default color id and short names
         if (!reachedUserLimit && choseName) {
           let name = "";
           for (let i=0; i<this._nameSelection.length; i++)
@@ -380,35 +443,80 @@ export class Settings {
       gamepads.actions.south = true;
     } else gamepads.actions.south = false;
 
+    // TODO: Make this a system-wide feature (in index) and fire event (i.e. dpad.up = () => {...}) in each class (*Game, HomeScreen, Settings)
     if (gamepads.output.buttons.dpad.up.pressed) {
       if (!gamepads.actions.dpad.up) {
+        let td = this._dpadTimeoutDuration.s;
+        if (this._dpadTimeouts.up.f) {
+          td = this._dpadTimeoutDuration.f;
+          this._dpadTimeouts.up.f = false;
+        }
+        clearTimeout(this._dpadTimeouts.up.t);
+        this._dpadTimeouts.up.t = setTimeout(() => {gamepads.actions.dpad.up = false;}, td);
+
         if (this._position < this._nameSelection.length) this._nameSelection[this._position]++;
         else if (this._position === this._nameSelection.length) this._backgroundColorSelection++;
       }
       gamepads.actions.dpad.up = true;
-    } else gamepads.actions.dpad.up = false;
+    } else {
+      gamepads.actions.dpad.up = false;
+      this._dpadTimeouts.up.f = true;
+    }
 
     if (gamepads.output.buttons.dpad.down.pressed) {
       if (!gamepads.actions.dpad.down) {
+        let td = this._dpadTimeoutDuration.s;
+        if (this._dpadTimeouts.down.f) {
+          td = this._dpadTimeoutDuration.f;
+          this._dpadTimeouts.down.f = false;
+        }
+        clearTimeout(this._dpadTimeouts.down.t);
+        this._dpadTimeouts.down.t = setTimeout(() => {gamepads.actions.dpad.down = false;}, td);
+
         if (this._position < this._nameSelection.length) this._nameSelection[this._position]--;
         else if (this._position === this._nameSelection.length) this._backgroundColorSelection--;
       }
       gamepads.actions.dpad.down = true;
-    } else gamepads.actions.dpad.down = false;
+    } else {
+      gamepads.actions.dpad.down = false;
+      this._dpadTimeouts.down.f = true;
+    }
 
     if (gamepads.output.buttons.dpad.right.pressed) {
       if (!gamepads.actions.dpad.right) {
+        let td = this._dpadTimeoutDuration.s;
+        if (this._dpadTimeouts.right.f) {
+          td = this._dpadTimeoutDuration.f;
+          this._dpadTimeouts.right.f = false;
+        }
+        clearTimeout(this._dpadTimeouts.right.t);
+        this._dpadTimeouts.right.t = setTimeout(() => {gamepads.actions.dpad.right = false;}, td);
+
         this._position++;
       }
       gamepads.actions.dpad.right = true;
-    } else gamepads.actions.dpad.right = false;
+    } else {
+      gamepads.actions.dpad.right = false;
+      this._dpadTimeouts.right.f = true;
+    }
 
     if (gamepads.output.buttons.dpad.left.pressed) {
       if (!gamepads.actions.dpad.left) {
+        let td = this._dpadTimeoutDuration.s;
+        if (this._dpadTimeouts.left.f) {
+          td = this._dpadTimeoutDuration.f;
+          this._dpadTimeouts.left.f = false;
+        }
+        clearTimeout(this._dpadTimeouts.left.t);
+        this._dpadTimeouts.left.t = setTimeout(() => {gamepads.actions.dpad.left = false;}, td);
+
         this._position--;
       }
       gamepads.actions.dpad.left = true;
-    } else gamepads.actions.dpad.left = false;
+    } else {
+      gamepads.actions.dpad.left = false;
+      this._dpadTimeouts.left.f = true;
+    }
 
     if (this._position < 0) this._position = 0;
     else if (this._position >= this._nameSelection.length + 1) this._position = this._nameSelection.length + 1;
