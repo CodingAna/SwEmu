@@ -304,7 +304,7 @@ export class HomeScreen {
     } else if (this._actionOpen === 2) {
       // On app (system)
       let systemApp = new (Object.entries(this._internals.applications.system)[this._highlightedSystemApp][1])(this._swemu);
-      this._currentGame = systemApp.init();
+      this._currentGame = systemApp.init(this._internals);
       this._paused = true;
       this._actionClick = 0;
     }
@@ -329,10 +329,22 @@ export class Settings {
     this._internals = {};
   }
 
+  _generateUID = () => {
+    let uid = "";
+    for (let i=1; i<=8+4+4+4+12; i++) {
+      uid += parseInt(Math.random() * 16).toString(16);
+      if (i === 8 || i === 8+4 || i === 8+4+4 || i === 8+4+4+4) uid += "-";
+    }
+    return uid;
+  }
+
   init = (internals) => {
     this._terminated = false;
     this._paused = false;
     this._internals = internals;
+    this._position = 0;
+    this._nameSelection = [0, 0, 0, 0, 0, 0, 0, 0];
+    this._backgroundColorSelection = 0;
 
     return this;
   }
@@ -344,5 +356,90 @@ export class Settings {
   }
 
   render = (draw, gamepads, render) => {
+    if (this._terminated) return;
+
+    let reachedUserLimit = this._internals.users.length >= 5;
+
+    if (gamepads.output.buttons.south.pressed) {
+      if (!gamepads.actions.south) {
+        if (!reachedUserLimit) {
+          let name = "";
+          for (let i=0; i<this._nameSelection.length; i++)
+            if (this._nameSelection[i] !== 0) name += String.fromCharCode((i === 0 ? 65 : 97) + this._nameSelection[i]-1);
+          this._internals.users.push({uid: this._generateUID(), name: name, icon: {background: this._backgroundColorSelection}});
+          setCookie("users", JSON.stringify(this._internals.users));
+          this.terminate();
+        }
+      }
+      gamepads.actions.south = true;
+    } else gamepads.actions.south = false;
+
+    if (gamepads.output.buttons.dpad.up.pressed) {
+      if (!gamepads.actions.dpad.up) {
+        if (this._position < this._nameSelection.length) this._nameSelection[this._position]++;
+        else this._backgroundColorSelection++;
+      }
+      gamepads.actions.dpad.up = true;
+    } else gamepads.actions.dpad.up = false;
+
+    if (gamepads.output.buttons.dpad.down.pressed) {
+      if (!gamepads.actions.dpad.down) {
+        if (this._position < this._nameSelection.length) this._nameSelection[this._position]--;
+        else this._backgroundColorSelection--;
+      }
+      gamepads.actions.dpad.down = true;
+    } else gamepads.actions.dpad.down = false;
+
+    if (gamepads.output.buttons.dpad.right.pressed) {
+      if (!gamepads.actions.dpad.right) {
+        this._position++;
+      }
+      gamepads.actions.dpad.right = true;
+    } else gamepads.actions.dpad.right = false;
+
+    if (gamepads.output.buttons.dpad.left.pressed) {
+      if (!gamepads.actions.dpad.left) {
+        this._position--;
+      }
+      gamepads.actions.dpad.left = true;
+    } else gamepads.actions.dpad.left = false;
+
+    if (this._position < 0) this._position = 0;
+    else if (this._position >= this._nameSelection.length + 1) this._position = this._nameSelection.length + 1;
+
+    if (this._nameSelection[this._position] < 0) this._nameSelection[this._position] = 26;
+    else if (this._nameSelection[this._position] > 26) this._nameSelection[this._position] = 0;
+
+    if (this._backgroundColorSelection < 0) this._backgroundColorSelection = 2;
+    else if (this._backgroundColorSelection > 2) this._backgroundColorSelection = 0;
+
+    if (reachedUserLimit) {
+      draw.dynamic.setColor("ffffff");
+      draw.dynamic.text("You've reached the user limit.", new Point(20, 30), 14);
+      draw.dynamic.text("Please clear your cookies to reset.", new Point(20, 55), 14);
+    }
+
+    for (let i=0; i<this._nameSelection.length + 1; i++) {
+      let relSelP = new Point(150 + i*(25 + 10), 150);
+      draw.dynamic.setColor("ffffff");
+      if (i === 0 || i === 8) draw.dynamic.text(i === 0 ? "Name" : "Color", new Point(-4, -30).add(relSelP));
+      if (i === this._position) draw.dynamic.rect(new Point(-4, -18).add(relSelP), new Point(16, 6).add(relSelP), false);
+      if (i < this._nameSelection.length) {
+        draw.dynamic.text(this._nameSelection[i] === 0 ? " " : String.fromCharCode((i === 0 ? 65 : 97) + this._nameSelection[i]-1), new Point(0, 0).add(relSelP));
+        draw.dynamic.line(new Point(-4, 16).add(relSelP), new Point(16, 16).add(relSelP));
+      }
+      else draw.dynamic.text(this._backgroundColorSelection, relSelP);
+    }
+    let choseName = true;
+    for (let i=0; i<this._nameSelection.length; i++) {
+      // Name has to start at letter position 0
+      if (this._nameSelection[i] === 0) choseName = false;
+      else break;
+    }
+    let i = 9;
+    let relSelP = new Point(150 + i*(25 + 10), 150);
+    if (i === this._position) draw.dynamic.setColor(reachedUserLimit || !choseName ? "ac143c" : "40ae40"); // DC143C
+    else draw.dynamic.setColor(reachedUserLimit || !choseName ? "7c040c" : "107e10");
+    draw.dynamic.roundedRect(new Point(-4, -16).add(relSelP), new Point(16, 4).add(relSelP));
   }
 }
