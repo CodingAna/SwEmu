@@ -32,7 +32,7 @@
       let zoomf = parseFloat(getCookie("zoom"));
       let totalZoom = [1.0, 1.5, 2.0].includes(zoomf) ? zoomf : 1;
 
-      if (getCookie("coinHighscore") === null) setCookie("coinHighscore", 0, 7);
+      //if (getCookie("coinHighscore") === null) setCookie("coinHighscore", 0, 7);
 
       let swemu = {
         screen: {
@@ -139,19 +139,19 @@
       };
 
       let internals = {
-        users: [
+        /*users: [
           {
             uid: "6468adbc-aa33-4884-99a4-a0eb4bc7e083",
             name: "User 0",
             icon: {
-              background: 1,
+              background: 0,
             },
           },
           {
             uid: "11b2bd00-44df-4b15-93c0-b2759565b9fc",
             name: "User 1",
             icon: {
-              background: 0,
+              background: 1,
             },
           },
           {
@@ -161,7 +161,8 @@
               background: 2,
             },
           },
-        ],
+        ],*/
+        users: [],
         applications: {
           system: {
             settings: Settings,
@@ -502,9 +503,10 @@
         }
 
         if (gamepads.output.buttons.east.pressed) {
-          if (!gamepads.actions.east)
-            if (homeScreen._currentGame === null) homeScreen._actionClick--;
+          if (!gamepads.actions.east) {
+            if (homeScreen._currentGame === null) homeScreen._actionClick = (homeScreen._actionClick === 0 ? 0 : homeScreen._actionClick - 1);
             else homeScreen._currentGame.terminate();
+          }
           gamepads.actions.east = true;
         } else gamepads.actions.east = false;
 
@@ -522,8 +524,18 @@
         requestAnimationFrame(mainRenderer);
       }
 
+      if (getCookie("users") === null) setCookie("users", JSON.stringify(internals.users));
+      internals.users = JSON.parse(getCookie("users"));
+
       let homeScreen = new HomeScreen(swemu);
       homeScreen.init(internals);
+
+      if (internals.users.length === 0) {
+        let settings = new Settings(swemu);
+        homeScreen._currentGame = settings.init(internals);
+        homeScreen._paused = true;
+        homeScreen._actionClick = 0;
+      }
 
       render.now = Date.now();
       requestAnimationFrame(mainRenderer);
