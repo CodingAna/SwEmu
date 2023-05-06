@@ -2,6 +2,7 @@
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
+    <meta http-equiv="Permissions-Policy" content="interest-cohort=()"> <!-- https://stackoverflow.com/questions/69619035/error-with-permissions-policy-header-unrecognized-feature-interest-cohort -->
     <link rel="stylesheet" href="./main.css">
     <title>SwEmu</title>
   </head>
@@ -13,9 +14,6 @@
       <canvas class="disable-select" id="canvas_vgamepad" width="100vh" height="100vh"></canvas>
     </div>
     <script type="module">
-      // Whatever this warning is, I got it?
-      // Error with Permissions-Policy header: Origin trial controlled feature not enabled: 'interest-cohort'.
-
       import { CustomDraw } from "./CustomDraw.js";
       import { Point, Vector2D } from "./Geometry.js";
       import { MyMath } from "./MyMath.js";
@@ -25,7 +23,7 @@
       import { PhysicTest } from "./games/PhysicTest.js";
       import { HighwayRun } from "./games/HighwayRun.js";
       // Import SystemApplications
-      import { Settings, HomeScreen } from "./SystemApplications.js"
+      import { Settings, HomeScreen } from "./SystemApplications.js";
 
       // TODO: Change "type" from Button to a Slider (similar to a SeekBar)
       let zoomPressed = false;
