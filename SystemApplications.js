@@ -140,7 +140,7 @@ export class HomeScreen {
 
     let date = new Date();
     draw.dynamic.setColor("ffffff")
-    draw.dynamic.text(Utils.fillStart(date.getHours(), "0", 2) + ":" + Utils.fillStart(date.getMinutes(), "0", 2), new Point(this._swemu.screen.width - (30 + 14), 30), 14, null, null, true);
+    draw.dynamic.text(Utils.fillStart(""+date.getHours(), "0", 2) + ":" + Utils.fillStart(""+date.getMinutes(), "0", 2), new Point(this._swemu.screen.width - (30 + 14), 30), 14, null, null, true);
 
     let i = 0;
     Object.entries(this._internals.applications.external).forEach((g) => {
