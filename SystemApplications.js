@@ -417,6 +417,10 @@ export class Settings {
       draw.dynamic.setColor("ffffff");
       draw.dynamic.text("You've reached the user limit.", new Point(20, 30), 14);
       draw.dynamic.text("Please clear your cookies to reset.", new Point(20, 55), 14);
+    } else {
+      draw.dynamic.setColor("ffffff");
+      draw.dynamic.text("Please create a user for your Switch.", new Point(20, 30), 14);
+      draw.dynamic.text("For this, please use the D-pad controls.", new Point(20, 55), 14);
     }
 
     for (let i=0; i<this._nameSelection.length + 1; i++) {
