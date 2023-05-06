@@ -25,7 +25,7 @@
       import { PhysicTest } from "./games/PhysicTest.js";
       import { HighwayRun } from "./games/HighwayRun.js";
       // Import SystemApplications
-      import { HomeScreen } from "./SystemApplications.js"
+      import { Settings, HomeScreen } from "./SystemApplications.js"
 
       // TODO: Change "type" from Button to a Slider (similar to a SeekBar)
       let zoomPressed = false;
@@ -164,6 +164,12 @@
         ],
         applications: {
           system: {
+            settings: Settings,
+            settings2: Settings,
+            settings3: Settings,
+            settings4: Settings,
+            settings5: Settings,
+            settings6: Settings,
             homeScreen: HomeScreen,
           },
           external: {
@@ -492,14 +498,15 @@
         getZoomInteraction();
 
         if (homeScreen._currentGame !== null) {
-          if (homeScreen._paused) homeScreen._currentGame.renderGame(draw, gamepads, render);
-
-          if (gamepads.output.buttons.east.pressed) {
-            if (!gamepads.actions.east)
-              homeScreen._currentGame.terminateGame();
-            gamepads.actions.east = true;
-          } else gamepads.actions.east = false;
+          if (homeScreen._paused) homeScreen._currentGame.render(draw, gamepads, render);
         }
+
+        if (gamepads.output.buttons.east.pressed) {
+          if (!gamepads.actions.east)
+            if (homeScreen._currentGame === null) homeScreen._actionClick--;
+            else homeScreen._currentGame.terminate();
+          gamepads.actions.east = true;
+        } else gamepads.actions.east = false;
 
         homeScreen.render(draw, gamepads, render);
 
