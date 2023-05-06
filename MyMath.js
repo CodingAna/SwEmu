@@ -11,6 +11,7 @@ export let MyMath = {
     return (a > b) ? a : b;
   },
 
+  // === Math.pow(a, e);
   exp: (a, e) => {
     let o = a;
     for (let i=1; i<e; i++) {
