@@ -12,6 +12,28 @@ export class HighwayRun {
     this._spawnCarLoopTimeout = setTimeout(() => {}, 1);
   }
 
+  buttons_north = () => {
+    if (this._player.life.dead)
+      ;
+    else if (this._player.started) this._player.position.lane--;
+  }
+
+  buttons_south = () => {
+    if (this._player.life.dead)
+      this.init();
+    else if (this._player.started) this._player.position.lane++;
+  }
+
+  buttons_east = () => {
+    if (this._player.started) this.init(this._user);
+    else this.terminate();
+  }
+
+  buttons_pause = () => {
+    if (this._player.started && this._player.life.alive)
+      this._player.paused = !this._player.paused;
+  }
+
   _renderHighway = (draw, gamepads, render) => {
     draw.dynamic.setColor("ffffff");
     for (let i=1; i<this._highwayLanes; i++) {
@@ -239,32 +261,8 @@ export class HighwayRun {
 
     if (gamepads.used.axes.left) this._player.started = true;
 
-    if (gamepads.output.buttons.north.pressed) {
-      if (!gamepads.actions.north)
-        if (this._player.life.dead)
-          ;
-        else if (this._player.started) this._player.position.lane--;
-      gamepads.actions.north = true;
-    } else gamepads.actions.north = false;
-
-    if (gamepads.output.buttons.south.pressed) {
-      if (!gamepads.actions.south) {
-        if (this._player.life.dead)
-          this.init();
-        else if (this._player.started) this._player.position.lane++;
-      }
-      gamepads.actions.south = true;
-    } else gamepads.actions.south = false;
-
     if (this._player.position.lane > this._highwayLanes - 1) this._player.position.lane = this._highwayLanes - 1;
     else if (this._player.position.lane < 0) this._player.position.lane = 0;
-
-    if (gamepads.output.buttons.pause.pressed) {
-      if (!gamepads.actions.pause)
-        if (this._player.started && this._player.life.alive)
-          this._player.paused = !this._player.paused;
-      gamepads.actions.pause = true;
-    } else gamepads.actions.pause = false;
 
     this._renderHighway(draw, gamepads, render);
 

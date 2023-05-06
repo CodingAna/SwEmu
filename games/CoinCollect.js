@@ -14,6 +14,19 @@ export class CoinCollect {
     this._spawnCoinLoopTimeout = setTimeout(() => {}, 1);
   }
 
+  buttons_south = () => {
+    if (this._player.life.dead) this.init(this._user);
+  }
+
+  buttons_east = () => {
+    if (this._player.started) this.init(this._user);
+    else this.terminate();
+  }
+
+  buttons_pause = () => {
+    if (this._player.life.alive) this._player.paused = !this._player.paused;
+  }
+
   // Combining update and render would speed up the main renderer due to only one full loop interation instead of two
   _spawnObstacle = () => {
     let height = (Math.random() * 15) + 10;
@@ -206,34 +219,7 @@ export class CoinCollect {
   render = (draw, gamepads, render) => {
     if (this._terminated) return;
 
-    //if (gamepads.output.axes[0] != 0 || gamepads.output.axes[1] != 0) this._player.started = true;
     if (gamepads.used.axes.left) this._player.started = true;
-
-    // NOTE: This gives the Application/Game full access to the gamepad actions (overwriting data => "exclusive gamepad access" for *active* app)
-    //       Maybe store gamepads.actions.* in a local variable instead of the gamepad's to ensure data access is granted to the specific application
-    // Read GamePad button data (paused, south(A), east (B))
-
-    /*
-    // Either do this for each game individually (and maybe different buttons / in-game actions) or via main?
-    if (gamepads.output.buttons.east.pressed) {
-      if (!gamepads.actions.east)
-        this.terminate();
-      gamepads.actions.east = true;
-    } else gamepads.actions.east = false;
-    */
-
-    if (gamepads.output.buttons.south.pressed) {
-      if (!gamepads.actions.south && this._player.life.dead)
-        this.init(this._user);
-      gamepads.actions.south = true;
-    } else gamepads.actions.south = false;
-
-    if (gamepads.output.buttons.pause.pressed) {
-      if (!gamepads.actions.pause)
-        if (this._player.started && this._player.life.alive)
-          this._player.paused = !this._player.paused;
-      gamepads.actions.pause = true;
-    } else gamepads.actions.pause = false;
 
     if (this._player.started) {
       if (this._player.newHighscoreShowUntil >= Date.now()) {

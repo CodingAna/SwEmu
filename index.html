@@ -145,20 +145,6 @@
               background: 0,
             },
           },
-          {
-            uid: "11b2bd00-44df-4b15-93c0-b2759565b9fc",
-            name: "User 1",
-            icon: {
-              background: 1,
-            },
-          },
-          {
-            uid: "186af111-e680-4bb4-83a9-edbc7766b4bc",
-            name: "User 2",
-            icon: {
-              background: 2,
-            },
-          },
         ],*/
         users: [],
         applications: {
@@ -235,6 +221,13 @@
           }
         }
       };
+      let dpadTimeoutDuration = {f: 425, s: 145}; // f=first, s=second(and all following)
+      let dpadTimeouts = {
+        up: {f: true, t: setTimeout(() => {}, 1)}, // f=first(-bool), t=timeout(-object)
+        down: {f: true, t: setTimeout(() => {}, 1)},
+        right: {f: true, t: setTimeout(() => {}, 1)},
+        left: {f: true, t: setTimeout(() => {}, 1)},
+      }
       let render = {
         deltaTime: Date.now(),
         now: Date.now(),
@@ -496,17 +489,105 @@
 
         getZoomInteraction();
 
-        if (homeScreen._currentGame !== null) {
-          if (homeScreen._paused) homeScreen._currentGame.render(draw, gamepads, render);
+        if (gamepads.output.buttons.dpad.up.pressed) {
+          if (!gamepads.actions.dpad.up) {
+            let td = dpadTimeoutDuration.s;
+            if (dpadTimeouts.up.f) {
+              td = dpadTimeoutDuration.f;
+              dpadTimeouts.up.f = false;
+            }
+            clearTimeout(dpadTimeouts.up.t);
+            dpadTimeouts.up.t = setTimeout(() => {gamepads.actions.dpad.up = false;}, td);
+            homeScreen.dpad_up(); // Maybe this need's some parameters. Not yet tho.
+          }
+          gamepads.actions.dpad.up = true;
+        } else {
+          gamepads.actions.dpad.up = false;
+          dpadTimeouts.up.f = true;
         }
 
-        if (gamepads.output.buttons.east.pressed) {
-          if (!gamepads.actions.east) {
-            if (homeScreen._currentGame === null) homeScreen._actionClick = (homeScreen._actionClick === 0 ? 0 : homeScreen._actionClick - 1);
-            else homeScreen._currentGame.terminate();
+        if (gamepads.output.buttons.dpad.down.pressed) {
+          if (!gamepads.actions.dpad.down) {
+            let td = dpadTimeoutDuration.s;
+            if (dpadTimeouts.down.f) {
+              td = dpadTimeoutDuration.f;
+              dpadTimeouts.down.f = false;
+            }
+            clearTimeout(dpadTimeouts.down.t);
+            dpadTimeouts.down.t = setTimeout(() => {gamepads.actions.dpad.down = false;}, td);
+            homeScreen.dpad_down(); // Maybe this need's some parameters. Not yet tho.
           }
+          gamepads.actions.dpad.down = true;
+        } else {
+          gamepads.actions.dpad.down = false;
+          dpadTimeouts.down.f = true;
+        }
+
+        if (gamepads.output.buttons.dpad.right.pressed) {
+          if (!gamepads.actions.dpad.right) {
+            let td = dpadTimeoutDuration.s;
+            if (dpadTimeouts.right.f) {
+              td = dpadTimeoutDuration.f;
+              dpadTimeouts.right.f = false;
+            }
+            clearTimeout(dpadTimeouts.right.t);
+            dpadTimeouts.right.t = setTimeout(() => {gamepads.actions.dpad.right = false;}, td);
+            homeScreen.dpad_right(); // Maybe this need's some parameters. Not yet tho.
+          }
+          gamepads.actions.dpad.right = true;
+        } else {
+          gamepads.actions.dpad.right = false;
+          dpadTimeouts.right.f = true;
+        }
+
+        if (gamepads.output.buttons.dpad.left.pressed) {
+          if (!gamepads.actions.dpad.left) {
+            let td = dpadTimeoutDuration.s;
+            if (dpadTimeouts.left.f) {
+              td = dpadTimeoutDuration.f;
+              dpadTimeouts.left.f = false;
+            }
+            clearTimeout(dpadTimeouts.left.t);
+            dpadTimeouts.left.t = setTimeout(() => {gamepads.actions.dpad.left = false;}, td);
+            homeScreen.dpad_left(); // Maybe this need's some parameters. Not yet tho.
+          }
+          gamepads.actions.dpad.left = true;
+        } else {
+          gamepads.actions.dpad.left = false;
+          dpadTimeouts.left.f = true;
+        }
+
+        if (gamepads.output.buttons.north.pressed) {
+          if (!gamepads.actions.north)
+            homeScreen.buttons_north();
+          gamepads.actions.north = true;
+        } else gamepads.actions.north = false;
+
+        if (gamepads.output.buttons.south.pressed) {
+          if (!gamepads.actions.south)
+            homeScreen.buttons_south();
+          gamepads.actions.south = true;
+        } else gamepads.actions.south = false;
+
+        if (gamepads.output.buttons.east.pressed) {
+          if (!gamepads.actions.east)
+            homeScreen.buttons_east();
+            //if (homeScreen._currentGame === null) homeScreen._actionClick = (homeScreen._actionClick === 0 ? 0 : homeScreen._actionClick - 1);
+            //else homeScreen._currentGame.terminate();
           gamepads.actions.east = true;
         } else gamepads.actions.east = false;
+
+        if (gamepads.output.buttons.west.pressed) {
+          if (!gamepads.actions.west)
+            homeScreen.buttons_west();
+          gamepads.actions.west = true;
+        } else gamepads.actions.west = false;
+
+        if (gamepads.output.buttons.pause.pressed) {
+          if (!gamepads.actions.pause)
+            homeScreen.buttons_pause();
+          gamepads.actions.pause = true;
+        } else gamepads.actions.pause = false;
 
         homeScreen.render(draw, gamepads, render);
 

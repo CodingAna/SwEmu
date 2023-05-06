@@ -11,6 +11,18 @@ export class PhysicTest {
     this._player = {};
   }
 
+  buttons_east = () => {
+    this.terminate();
+  }
+
+  buttons_pause = () => {
+    if (this._player.started) {
+      this._player.paused = !this._player.paused;
+      if (!this._player.paused)
+        this._player.lastAirAction = Date.now();
+    }
+  }
+
   _moveToFuturePlayerPosition = (draw, gamepads, render) => {
     let lastAirActionDiff = (Date.now() - this._player.lastAirAction) + 300;
 
@@ -69,6 +81,7 @@ export class PhysicTest {
       draw.dynamic.line(this._player.position.current, new Vector2D(gamepads.output.axes[0], gamepads.output.axes[1]).multiply(100).point().add(this._player.position.current));
     }
   }
+
   init = (user) => {
     this._terminated = false;
     this._user = user;
@@ -110,16 +123,6 @@ export class PhysicTest {
     if (this._terminated) return;
 
     if (gamepads.used.axes.left) this._player.started = true;
-
-    if (gamepads.output.buttons.pause.pressed) {
-      if (!gamepads.actions.pause)
-        if (this._player.started) {
-          this._player.paused = !this._player.paused;
-          if (!this._player.paused)
-            this._player.lastAirAction = Date.now();
-        }
-      gamepads.actions.pause = true;
-    } else gamepads.actions.pause = false;
 
     if (this._player.started) {
       if (this._player.paused) {
