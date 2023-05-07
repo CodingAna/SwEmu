@@ -19,4 +19,10 @@ export let MyMath = {
     }
     return o;
   },
+
+  clamp: (n, a, b) => {
+    if (a === undefined || a === null) a = 0;
+    if (b === undefined || b === null) [a, b] = [0, a];
+    return a > n ? a : (b < n ? b : n);
+  }
 }
