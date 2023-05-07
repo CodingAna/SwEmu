@@ -441,7 +441,7 @@ export class Settings {
       }
     } else {
       if (this._inSidebar) this._inSidebar = false;
-      else if (this._sidebarSelection === 0 && this._vertical === 1) this._showUserCreation = true;
+      else if (this._sidebarSelection === 0 && this._vertical === 1 && this._horizontal === 0) this._showUserCreation = true;
     }
   }
 
@@ -471,7 +471,9 @@ export class Settings {
       this._inSidebar = true;
       this._horizontal = 0;
     } else {
-      if (this._sidebarSelection === 0) {if (this._horizontal > 0) this._horizontal = 0;}
+      if (this._sidebarSelection === 0) {
+        if (this._vertical === 1 && this._horizontal > this._userCount) this._horizontal = this._userCount;  // Not -1 because of the Dummy "Add"
+      }
       else if (this._sidebarSelection === 1) {if (this._horizontal > 0) this._horizontal = 0;}
       else if (this._sidebarSelection === 2) {if (this._horizontal > 0) this._horizontal = 0;}
     }
@@ -505,6 +507,7 @@ export class Settings {
     this._validName = false;
 
     this._appCount = Object.entries(this._internals.applications.external).length;
+    this._userCount = this._internals.users.length;
     // Now this
     this._sidebarSelection = 0;
     this._sidebarElements = ["General", "Online", "Debug"];
@@ -643,7 +646,7 @@ export class Settings {
         pHeight = height + 14;
 
         // (60 for icon) + (2*12 for text) + (10 to bottom)
-        height += 14 + 60 + 24 + 10;
+        height += 14 + 60 + 24 + 20;
         let width = (60 + 10) * this._appCount;
         if (offset + width > this._swemu.screen.width - offset) width = this._swemu.screen.width - offset - 10;
         draw.dynamic.setColor(tSel ? "2a2a2a" : "242424");
@@ -659,11 +662,40 @@ export class Settings {
         pHeight = height + 14;
 
         // (40 for icon) + (2*12 for text) + (10 to bottom)
-        height += 14 + 40 + 24 + 10;
+        height += 14 + 40 + 24 + 20;
         width = (60 + 10) * this._appCount;
         if (offset + width > this._swemu.screen.width - offset) width = this._swemu.screen.width - offset - 10;
         draw.dynamic.setColor(tSel ? "2a2a2a" : "242424");
         draw.dynamic.rect(new Point(offset, pHeight), new Point(offset + width, height));
+
+        // "First" user => "Add user"; But apply this to the user list + use this._horizontal to maybe add a light background (rounded)rect
+        for (let i=0; i<this._internals.users.length + 1; i++) {
+          let crossCenter = new Point(offset + 20 + 15 + (15 + 40) * i, pHeight + 35);
+
+          if (this._vertical === 1 && this._horizontal === i) {
+            draw.dynamic.setColor("3a3a3a");
+            draw.dynamic.roundedRect(new Point(-25-4, -25-4).add(crossCenter), new Point(25+4, 37+4).add(crossCenter), 0.25);
+          }
+
+          let user = null;
+          if (i > 0) user = this._internals.users[i - 1];
+          let unselectedColors = ["5a8787", "00827a", "c05050"];
+          let selectedColors = ["aad7d7", "20b2aa", "f08080"];
+
+          if (i === 0) draw.dynamic.setColor(tSel ? "4a4a4a" : "3a3a3a");
+          else draw.dynamic.setColor(tSel ? selectedColors[user.icon.background] : unselectedColors[user.icon.background]);
+          draw.dynamic.arc(crossCenter, 20);
+
+          draw.dynamic.setColor(tSel ? "ffffff" : "dadada");
+          let name = i === 0 ? "Add" : user.name;
+          draw.dynamic.text(name, new Point(-4, 12+20+4).add(crossCenter), 12, null, null, true);
+
+          if (i === 0) {
+            draw.dynamic.line(new Point(-10, 0).add(crossCenter), new Point(10, 0).add(crossCenter));
+            draw.dynamic.line(new Point(0, -10).add(crossCenter), new Point(0, 10).add(crossCenter));
+          }
+        }
+
         pHeight = height;
 
 
