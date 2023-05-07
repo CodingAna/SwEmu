@@ -23,7 +23,7 @@
       import { PhysicTest } from "./games/PhysicTest.js";
       import { HighwayRun } from "./games/HighwayRun.js";
       // Import SystemApplications
-      import { Settings, HomeScreen } from "./SystemApplications.js";
+      import { HomeScreen, NewsApp, AddOnStore, Gallery, ControllerManager, Settings } from "./SystemApplications.js";
 
       // TODO: Change "type" from Button to a Slider (similar to a SeekBar)
       let zoomPressed = false;
@@ -144,15 +144,15 @@
             },
           },
         ],*/
+        uid: null,
         users: [],
         applications: {
           system: {
+            newsApp: NewsApp,
+            addOnStore: AddOnStore,
+            gallery: Gallery,
+            controllerManager: ControllerManager,
             settings: Settings,
-            settings2: Settings,
-            settings3: Settings,
-            settings4: Settings,
-            settings5: Settings,
-            settings6: Settings,
             homeScreen: HomeScreen,
           },
           external: {
@@ -235,6 +235,15 @@
           now: 0,
           updated: false,
         }
+      }
+
+      let generateUID = () => {
+        let uid = "";
+        for (let i=1; i<=8+4+4+4+12; i++) {
+          uid += parseInt(Math.random() * 16).toString(16);
+          if (i === 8 || i === 8+4 || i === 8+4+4 || i === 8+4+4+4) uid += "-";
+        }
+        return uid;
       }
 
       let renderSwitch = () => {
@@ -603,6 +612,9 @@
 
       if (getCookie("users") === null) setCookie("users", JSON.stringify(internals.users));
       internals.users = JSON.parse(getCookie("users"));
+
+      if (getCookie("s-uid") === null) setCookie("s-uid", generateUID());
+      internals.uid = getCookie("s-uid");
 
       let homeScreen = new HomeScreen(swemu);
       homeScreen.init(internals);
