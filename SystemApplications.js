@@ -370,53 +370,111 @@ export class Settings {
   }
 
   dpad_up = () => {
-    //this._verticalPosition--;
-    //return;
-    if (this._position < this._nameSelection.length) this._nameSelection[this._position]++;
-    else if (this._position === this._nameSelection.length) this._backgroundColorSelection++;
+    if (this._showUserCreation) {
+      if (this._position < this._nameSelection.length) this._nameSelection[this._position]++;
+      else if (this._position === this._nameSelection.length) this._backgroundColorSelection++;
+    }
+    else {
+      if (this._inSidebar) {
+        this._sidebarSelection--;
+        this._vertical = 0;
+        this._horizontal = 0;
+      } else this._vertical--;
+
+      this._checkSelection();
+    }
   }
 
   dpad_down = () => {
-    //this._verticalPosition++;
-    //return;
-    if (this._position < this._nameSelection.length) this._nameSelection[this._position]--;
-    else if (this._position === this._nameSelection.length) this._backgroundColorSelection--;
+    if (this._showUserCreation) {
+      if (this._position < this._nameSelection.length) this._nameSelection[this._position]--;
+      else if (this._position === this._nameSelection.length) this._backgroundColorSelection--;
+    } else {
+      if (this._inSidebar) {
+        this._sidebarSelection++;
+        this._vertical = 0;
+        this._horizontal = 0;
+      } else this._vertical++;
+
+      this._checkSelection();
+    }
   }
 
   dpad_right = () => {
-    //this._horizontalPosition++;
-    //return;
-    this._position++;
+    if (this._showUserCreation) {
+      this._position++;
+    } else {
+      if (this._inSidebar) this._inSidebar = false;
+      else this._horizontal++;
+
+      this._checkSelection();
+    }
   }
 
   dpad_left = () => {
-    //this._horizontalPosition--;
-    //return;
-    this._position--;
+    if (this._showUserCreation) {
+      this._position--;
+    } else {
+      if (!this._inSidebar) this._horizontal--;
+
+      this._checkSelection();
+    }
   }
 
   buttons_south = () => {
-    if (this._reachedUserLimit) {
-      if (!this._pressedToReset) {
-        this._internals.users = [];
-        setCookie("users", JSON.stringify(this._internals.users));
-        this._pressedToReset = true;
+    if (this._showUserCreation) {
+      if (this._reachedUserLimit) {
+        if (!this._pressedToReset) {
+          this._internals.users = [];
+          setCookie("users", JSON.stringify(this._internals.users));
+          this._pressedToReset = true;
+        }
+      } else {
+        if (this._choseName && this._validName && this._position === 9) {
+          let name = "";
+          for (let i=0; i<this._nameSelection.length; i++)
+            if (this._nameSelection[i] !== 0) name += String.fromCharCode((i === 0 ? 65 : 97) + this._nameSelection[i]-1);
+          this._internals.users.push({uid: this._generateUID(), name: name, icon: {background: this._backgroundColorSelection}});
+          setCookie("users", JSON.stringify(this._internals.users));
+          this.terminate();
+        }
       }
     } else {
-      if (this._choseName && this._validName && this._position === 9) {
-        let name = "";
-        for (let i=0; i<this._nameSelection.length; i++)
-          if (this._nameSelection[i] !== 0) name += String.fromCharCode((i === 0 ? 65 : 97) + this._nameSelection[i]-1);
-        this._internals.users.push({uid: this._generateUID(), name: name, icon: {background: this._backgroundColorSelection}});
-        setCookie("users", JSON.stringify(this._internals.users));
-        this.terminate();
-      }
+      if (this._inSidebar) this._inSidebar = false;
+      else if (this._sidebarSelection === 0 && this._vertical === 1) this._showUserCreation = true;
     }
   }
 
   buttons_east = () => {
     this._firstUser = this._internals.users.length === 0;
-    if (!this._firstUser) this.terminate();
+    if (!this._firstUser) {
+      if (this._showUserCreation) this._showUserCreation = false;
+      else {
+        if (this._inSidebar) this.terminate();
+        else this._inSidebar = true;
+      }
+    }
+  }
+
+  _checkSelection = () => {
+    if (this._sidebarSelection < 0) this._sidebarSelection = 0;
+    else if (this._sidebarSelection >= this._sidebarElements.length) this._sidebarSelection = this._sidebarElements.length - 1;
+
+    if (this._vertical < 0) this._vertical = 0;
+    else {
+      if (this._sidebarSelection === 0) {if (this._vertical > 1) this._vertical = 1;}
+      else if (this._sidebarSelection === 1) {if (this._vertical > 1) this._vertical = 1;}
+      else if (this._sidebarSelection === 2) {if (this._vertical > 0) this._vertical = 0;}
+    }
+
+    if (this._horizontal < 0) {
+      this._inSidebar = true;
+      this._horizontal = 0;
+    } else {
+      if (this._sidebarSelection === 0) {if (this._horizontal > 0) this._horizontal = 0;}
+      else if (this._sidebarSelection === 1) {if (this._horizontal > 0) this._horizontal = 0;}
+      else if (this._sidebarSelection === 2) {if (this._horizontal > 0) this._horizontal = 0;}
+    }
   }
 
   _generateUID = () => {
@@ -446,6 +504,15 @@ export class Settings {
     this._choseName = false;
     this._validName = false;
 
+    this._appCount = Object.entries(this._internals.applications.external).length;
+    // Now this
+    this._sidebarSelection = 0;
+    this._sidebarElements = ["General", "Online", "Debug"];
+    this._inSidebar = true;
+    this._vertical = 0;
+    this._horizontal = 0;
+    this._showUserCreation = this._firstUser;
+
     return this;
   }
 
@@ -458,129 +525,201 @@ export class Settings {
   render = (draw, gamepads, render) => {
     if (this._terminated) return;
 
-    /*
-    this._horizontalPosition = MyMath.clamp(this._horizontalPosition, 0, this._horizontalPosition);
-    this._verticalPosition = MyMath.clamp(this._verticalPosition, 0, this._verticalPosition);
-
-    let sidebarWidth = 125;
-    let sidebarColor = "222222";
-    let sidebarTexts = ["General", "Internet", "Debug"];
-
-    switch (this._horizontalPosition) {
-      case 0:
-        this._verticalPosition = MyMath.clamp(this._verticalPosition, sidebarTexts.length - 1);
-        sidebarWidth = 180;
-        sidebarColor = "2a2a2a";
-        break;
-      case 1:
-        switch (this._sidebarSelection) {
-          case 0:
-
-            break;
-          default: break;
-        }
-        break;
-      default: break;
-    }
-
-    draw.dynamic.setColor(sidebarColor);
-    draw.dynamic.rect(new Point(), new Point(sidebarWidth, this._swemu.screen.height));
-    for (let i=0; i<sidebarTexts.length; i++) {
-      draw.dynamic.setColor("373737");
-      if (i === this._verticalPosition) draw.dynamic.setColor("505050");;
-      let h = 45;
-      let o = 25;
-      let p = new Point(0, o + i*(h + o));
-      draw.dynamic.rect(p, new Point(sidebarWidth, h).add(p));
-      draw.dynamic.setColor("d0d0d0");
-      if (i === this._verticalPosition) draw.dynamic.setColor("ffffff");
-      draw.dynamic.text(sidebarTexts[i], new Point(15, 6 + h/2).add(p), 14, null, null, false);
-    }
-    */
-
-    this._choseName = true;
-    for (let i=0; i<this._nameSelection.length; i++) {
-      // Name has to start at letter position 0
-      if (this._nameSelection[i] === 0) this._choseName = false;
-      else break;
-    }
-
-    if (this._position < 0) this._position = 0;
-    else if (this._position >= this._nameSelection.length + 1) this._position = this._nameSelection.length + 1;
-
-    if (this._nameSelection[this._position] < 0) this._nameSelection[this._position] = 26;
-    else if (this._nameSelection[this._position] > 26) this._nameSelection[this._position] = 0;
-
-    if (this._backgroundColorSelection < 0) this._backgroundColorSelection = 2;
-    else if (this._backgroundColorSelection > 2) this._backgroundColorSelection = 0;
-
-    if (this._reachedUserLimit) {
-      draw.dynamic.setColor("ffffff");
-      draw.dynamic.text("You've reached the user limit (5).", new Point(16, 28));
-      if (this._pressedToReset) {
-        draw.dynamic.setColor("b22222");
-        draw.dynamic.text("Restarting...", new Point(this._swemu.screen.width/2, this._swemu.screen.height/2), 16, null, null, true);
-        if (!this._resetTimeout) setTimeout(() => {location.reload();}, 750);
-        this._resetTimeout = true;
-      } else {
-        draw.dynamic.setColor("b22222");
-        draw.dynamic.text("Press A to reset your Switch", new Point(this._swemu.screen.width/2-18, this._swemu.screen.height/2+9), 18, null, "bold", true);
+    if (this._showUserCreation) {
+      this._choseName = true;
+      for (let i=0; i<this._nameSelection.length; i++) {
+        // Name has to start at letter position 0
+        if (this._nameSelection[i] === 0) this._choseName = false;
+        else break;
       }
-    } else {
-      draw.dynamic.setColor("ffffff");
-      draw.dynamic.text("Create a user for your Switch. Use the D-pad control to navigate.", new Point(16, 28));
-      if (!this._firstUser) draw.dynamic.text("Note: You can only add up to 5 users.", new Point(16, 52));
-    }
 
-    // User preview (name + icon) & Check name
-    let selectedColors = ["aad7d7", "20b2aa", "f08080"];
-    let preRadius = 20;
-    let preMid = new Point(this._swemu.screen.width / 2, this._swemu.screen.height - (this._swemu.screen.height / 3) + preRadius);
-    let name = "";
-    for (let i=0; i<this._nameSelection.length; i++)
-      if (this._nameSelection[i] === 0) name += " ";
-      else name += String.fromCharCode((i === 0 ? 65 : 97) + this._nameSelection[i]-1);
-    name = name.trim();
+      if (this._position < 0) this._position = 0;
+      else if (this._position >= this._nameSelection.length + 1) this._position = this._nameSelection.length + 1;
 
-    let v = true;
-    for (let i=0; i<this._internals.users.length; i++) {
-      if (this._internals.users[i].name === name) {
-        v = false;
-        break;
-      }
-    }
-    this._validName = v;
+      if (this._nameSelection[this._position] < 0) this._nameSelection[this._position] = 26;
+      else if (this._nameSelection[this._position] > 26) this._nameSelection[this._position] = 0;
 
-    // Render "user creation tool"
-    if (!this._reachedUserLimit) {
-      for (let i=0; i<this._nameSelection.length + 1; i++) {
-        let relSelP = new Point(150 + i*(25 + 10), 150);
+      if (this._backgroundColorSelection < 0) this._backgroundColorSelection = 2;
+      else if (this._backgroundColorSelection > 2) this._backgroundColorSelection = 0;
+
+      if (this._reachedUserLimit) {
         draw.dynamic.setColor("ffffff");
-        if (i === 0 || i === 8) draw.dynamic.text(i === 0 ? "Name" : "Color", new Point(-4, -30).add(relSelP));
-        if (i === this._position) draw.dynamic.rect(new Point(-4, -18).add(relSelP), new Point(16, 6).add(relSelP), false);
-        if (i < this._nameSelection.length) {
-          draw.dynamic.text(this._nameSelection[i] === 0 ? " " : String.fromCharCode((i === 0 ? 65 : 97) + this._nameSelection[i]-1), new Point(0, 0).add(relSelP));
-          draw.dynamic.line(new Point(-4, 16).add(relSelP), new Point(16, 16).add(relSelP));
+        draw.dynamic.text("You've reached the user limit (5).", new Point(16, 28));
+        if (this._pressedToReset) {
+          draw.dynamic.setColor("b22222");
+          draw.dynamic.text("Restarting...", new Point(this._swemu.screen.width/2, this._swemu.screen.height/2), 16, null, null, true);
+          if (!this._resetTimeout) setTimeout(() => {location.reload();}, 750);
+          this._resetTimeout = true;
+        } else {
+          draw.dynamic.setColor("b22222");
+          draw.dynamic.text("Press A to reset your Switch", new Point(this._swemu.screen.width/2-18, this._swemu.screen.height/2+7), 14, null, "bold", true);
         }
-        else draw.dynamic.text(this._backgroundColorSelection, relSelP);
+      } else {
+        draw.dynamic.setColor("ffffff");
+        draw.dynamic.text("Create a user for your Switch. Use the D-pad control to navigate.", new Point(16, 28));
+        if (!this._firstUser) draw.dynamic.text("Note: You can only add up to 5 users.", new Point(16, 52));
       }
-      let i = 9;
-      let relSelP = new Point(150 + i*(25 + 10), 150);
-      if (i === this._position) draw.dynamic.setColor(this._reachedUserLimit || !this._choseName || !this._validName ? "ac143c" : "40ae40"); // DC143C
-      else draw.dynamic.setColor(this._reachedUserLimit || !this._choseName || !this._validName ? "7c040c" : "107e10");
-      draw.dynamic.roundedRect(new Point(-4, -16).add(relSelP), new Point(16, 4).add(relSelP));
 
-      // Render preview
-      draw.dynamic.setColor(selectedColors[this._backgroundColorSelection]);
-      draw.dynamic.arc(preMid, preRadius);
+      // User preview (name + icon) & Check name
+      let selectedColors = ["aad7d7", "20b2aa", "f08080"];
+      let preRadius = 20;
+      let preMid = new Point(this._swemu.screen.width / 2, this._swemu.screen.height - (this._swemu.screen.height / 3) + preRadius);
+      let name = "";
+      for (let i=0; i<this._nameSelection.length; i++)
+        if (this._nameSelection[i] === 0) name += " ";
+        else name += String.fromCharCode((i === 0 ? 65 : 97) + this._nameSelection[i]-1);
+      name = name.trim();
+
+      let v = true;
+      for (let i=0; i<this._internals.users.length; i++) {
+        if (this._internals.users[i].name === name) {
+          v = false;
+          break;
+        }
+      }
+      this._validName = v;
+
+      // Render "user creation tool"
+      if (!this._reachedUserLimit) {
+        for (let i=0; i<this._nameSelection.length + 1; i++) {
+          let relSelP = new Point(150 + i*(25 + 10), 150);
+          draw.dynamic.setColor("ffffff");
+          if (i === 0 || i === 8) draw.dynamic.text(i === 0 ? "Name" : "Color", new Point(-4, -30).add(relSelP));
+          if (i === this._position) draw.dynamic.rect(new Point(-4, -18).add(relSelP), new Point(16, 6).add(relSelP), false);
+          if (i < this._nameSelection.length) {
+            draw.dynamic.text(this._nameSelection[i] === 0 ? " " : String.fromCharCode((i === 0 ? 65 : 97) + this._nameSelection[i]-1), new Point(0, 0).add(relSelP));
+            draw.dynamic.line(new Point(-4, 16).add(relSelP), new Point(16, 16).add(relSelP));
+          }
+          else draw.dynamic.text(this._backgroundColorSelection, relSelP);
+        }
+        let i = 9;
+        let relSelP = new Point(150 + i*(25 + 10), 150);
+        if (i === this._position) draw.dynamic.setColor(this._reachedUserLimit || !this._choseName || !this._validName ? "ac143c" : "40ae40"); // DC143C
+        else draw.dynamic.setColor(this._reachedUserLimit || !this._choseName || !this._validName ? "7c040c" : "107e10");
+        draw.dynamic.roundedRect(new Point(-4, -16).add(relSelP), new Point(16, 4).add(relSelP));
+
+        // Render preview
+        draw.dynamic.setColor(selectedColors[this._backgroundColorSelection]);
+        draw.dynamic.arc(preMid, preRadius);
+        draw.dynamic.setColor("ffffff");
+        draw.dynamic.text("Preview", new Point(-preRadius*2-("Preview".length*7)-14, 7).add(preMid), 14);
+        draw.dynamic.text(name, new Point(-4, 14+preRadius+4).add(preMid), 14, null, null, true);
+      }
+
+      // Render debug infos
       draw.dynamic.setColor("ffffff");
-      draw.dynamic.text("Preview", new Point(-preRadius*2-("Preview".length*7)-14, 7).add(preMid), 14);
-      draw.dynamic.text(name, new Point(-4, 14+preRadius+4).add(preMid), 14, null, null, true);
-    }
+      draw.dynamic.text("S-UID: " + this._internals.uid, new Point(10, this._swemu.screen.height - 12), 9);
 
-    // Render debug infos
-    draw.dynamic.setColor("ffffff");
-    draw.dynamic.text("S-UID: " + this._internals.uid, new Point(10, this._swemu.screen.height - 12), 9);
+    } else {
+      let sidebarWidth = this._inSidebar ? 160 : 120;
+
+      draw.dynamic.setColor(this._inSidebar ? "2a2a2a" : "242424");
+      draw.dynamic.rect(new Point(), new Point(sidebarWidth, this._swemu.screen.height));
+
+      for (let i=0; i<this._sidebarElements.length; i++) {
+        let h = 50;
+        let o = 25;
+
+        if (this._inSidebar) draw.dynamic.setColor(this._sidebarSelection === i ? "4a4a4a" : "3a3a3a");
+        else draw.dynamic.setColor(this._sidebarSelection === i ? "424242" : "323232");
+        draw.dynamic.rect(new Point(0, o + (o + h) * i), new Point(sidebarWidth, (o + h) * (i + 1)));
+
+        if (this._inSidebar) draw.dynamic.setColor(this._sidebarSelection === i ? "ffffff" : "bbbbbb");
+        else draw.dynamic.setColor(this._sidebarSelection === i ? "f8f8f8" : "b1b1b1");
+        draw.dynamic.text(this._sidebarElements[i], new Point(15, 32 + o + (o + h) * i), 14)
+      }
+
+      let offset = sidebarWidth + 15;
+      let tSel = false;
+      let height = 0;
+      let pHeight = 0;
+
+      if (this._sidebarSelection === 0) {
+        tSel = !this._inSidebar && this._vertical === 0;
+
+        height += 15 + 14;
+        draw.dynamic.setColor(tSel ? "ffffff" : "dadada");
+        draw.dynamic.text("Installed apps", new Point(offset, height), 14);
+        pHeight = height + 14;
+
+        // (60 for icon) + (2*12 for text) + (10 to bottom)
+        height += 14 + 60 + 24 + 10;
+        let width = (60 + 10) * this._appCount;
+        if (offset + width > this._swemu.screen.width - offset) width = this._swemu.screen.width - offset - 10;
+        draw.dynamic.setColor(tSel ? "2a2a2a" : "242424");
+        draw.dynamic.rect(new Point(offset, pHeight), new Point(offset + width, height));
+        pHeight = height;
+
+
+        tSel = !this._inSidebar && this._vertical === 1;
+
+        height += 15 + 14;
+        draw.dynamic.setColor(tSel ? "ffffff" : "dadada");
+        draw.dynamic.text("Local users", new Point(offset, height), 14);
+        pHeight = height + 14;
+
+        // (40 for icon) + (2*12 for text) + (10 to bottom)
+        height += 14 + 40 + 24 + 10;
+        width = (60 + 10) * this._appCount;
+        if (offset + width > this._swemu.screen.width - offset) width = this._swemu.screen.width - offset - 10;
+        draw.dynamic.setColor(tSel ? "2a2a2a" : "242424");
+        draw.dynamic.rect(new Point(offset, pHeight), new Point(offset + width, height));
+        pHeight = height;
+
+
+      } else if (this._sidebarSelection === 1) {
+        tSel = !this._inSidebar && this._vertical === 0;
+
+        height += 15 + 14;
+        draw.dynamic.setColor(tSel ? "ffffff" : "dadada");
+        draw.dynamic.text("Selected server", new Point(offset, height), 14);
+        pHeight = height + 14;
+
+        // (30 for dropdown (to be implemented)) + (10 to bottom)
+        height += 14 + 30 + 10;
+        draw.dynamic.setColor(tSel ? "2a2a2a" : "242424");
+        draw.dynamic.rect(new Point(offset, pHeight), new Point(offset + 140, height));
+        // 140 ~ 13 chars ?
+        draw.dynamic.setColor("ffffff");
+        draw.dynamic.text("DE-Essen-1", new Point(offset + 10, pHeight + 14 + 12), 14);
+        pHeight = height;
+
+
+        tSel = !this._inSidebar && this._vertical === 1;
+
+        height += 15 + 14;
+        draw.dynamic.setColor(tSel ? "ffffff" : "dadada");
+        draw.dynamic.text("Online account", new Point(offset, height), 14);
+        pHeight = height + 14;
+
+        // (30 for dropdown) + (10 to bottom)
+        height += 14 + 30 + 10;
+        draw.dynamic.setColor(tSel ? "2a2a2a" : "242424");
+        draw.dynamic.rect(new Point(offset, pHeight), new Point(offset + 280, height));
+        // 280 ~ 27 chars ?
+        draw.dynamic.setColor("ffffff");
+        draw.dynamic.text("john.doe@email.com", new Point(offset + 10, pHeight + 14 + 12), 14);
+        pHeight = height;
+
+
+      } else if (this._sidebarSelection === 2) {
+        tSel = !this._inSidebar && this._vertical === 0;
+
+        height += 15 + 14;
+        draw.dynamic.setColor(tSel ? "ffffff" : "dadada");
+        draw.dynamic.text("Switch UID", new Point(offset, height), 14);
+        pHeight = height + 14;
+
+        // (30 for dropdown (to be implemented)) + (10 to bottom)
+        height += 14 + 30 + 10;
+        draw.dynamic.setColor(tSel ? "2a2a2a" : "242424");
+        draw.dynamic.rect(new Point(offset, pHeight), new Point(offset + 370, height));
+        // 370 ~ 36 chars
+        draw.dynamic.setColor("ffffff");
+        draw.dynamic.text(this._internals.uid, new Point(offset + 10, pHeight + 14 + 12), 14);
+        pHeight = height;
+      }
+    }
   }
 }
 
