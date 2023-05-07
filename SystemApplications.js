@@ -13,54 +13,63 @@ export class HomeScreen {
   }
 
   dpad_up = () => {
-    if (this._paused && this._currentGame !== null && !this._currentGame._terminated && this._currentGame.dpad_up) this._currentGame.dpad_up();
-    else this._actionGoUp();
+    if (this._paused && this._currentGame !== null && !this._currentGame._terminated) {
+      if (this._currentGame.dpad_up) this._currentGame.dpad_up();
+    } else this._actionGoUp();
   }
 
   dpad_down = () => {
-    if (this._paused && this._currentGame !== null && !this._currentGame._terminated && this._currentGame.dpad_down) this._currentGame.dpad_down();
-    else this._actionGoDown();
+    if (this._paused && this._currentGame !== null && !this._currentGame._terminated) {
+      if (this._currentGame.dpad_down) this._currentGame.dpad_down();
+    } else this._actionGoDown();
   }
 
   dpad_right = () => {
-    if (this._paused && this._currentGame !== null && !this._currentGame._terminated && this._currentGame.dpad_right) this._currentGame.dpad_right();
-    else this._actionGoRight();
+    if (this._paused && this._currentGame !== null && !this._currentGame._terminated) {
+      if (this._currentGame.dpad_right) this._currentGame.dpad_right();
+    } else this._actionGoRight();
   }
 
   dpad_left = () => {
-    if (this._paused && this._currentGame !== null && !this._currentGame._terminated && this._currentGame.dpad_left) this._currentGame.dpad_left();
-    else this._actionGoLeft();
+    if (this._paused && this._currentGame !== null && !this._currentGame._terminated) {
+      if (this._currentGame.dpad_left)  this._currentGame.dpad_left();
+    } else this._actionGoLeft();
   }
 
   buttons_north = () => {
-    if (this._paused && this._currentGame !== null && !this._currentGame._terminated && this._currentGame.buttons_north) this._currentGame.buttons_north();
-    else {
+    if (this._paused && this._currentGame !== null && !this._currentGame._terminated) {
+      if (this._currentGame.buttons_north) this._currentGame.buttons_north();
+    } else {
     }
   }
 
   buttons_south = () => {
-    if (this._paused && this._currentGame !== null && !this._currentGame._terminated && this._currentGame.buttons_south) this._currentGame.buttons_south();
-    else {
+    if (this._paused && this._currentGame !== null && !this._currentGame._terminated) {
+      if (this._currentGame.buttons_south) this._currentGame.buttons_south();
+    } else {
       this._actionOpen = this._currentRow.valueOf();
       this._actionClick++;
     }
   }
 
   buttons_east = () => {
-    if (this._paused && this._currentGame !== null && !this._currentGame._terminated && this._currentGame.buttons_east) this._currentGame.buttons_east();
-    else {
+    if (this._paused && this._currentGame !== null && !this._currentGame._terminated) {
+      if (this._currentGame.buttons_east) this._currentGame.buttons_east();
+    } else {
     }
   }
 
   buttons_west = () => {
-    if (this._paused && this._currentGame !== null && !this._currentGame._terminated && this._currentGame.buttons_west) this._currentGame.buttons_west();
-    else {
+    if (this._paused && this._currentGame !== null && !this._currentGame._terminated) {
+      if (this._currentGame.buttons_west) this._currentGame.buttons_west();
+    } else {
     }
   }
 
   buttons_pause = () => {
-    if (this._paused && this._currentGame !== null && !this._currentGame._terminated && this._currentGame.buttons_pause) this._currentGame.buttons_pause();
-    else {
+    if (this._paused && this._currentGame !== null && !this._currentGame._terminated) {
+      if (this._currentGame.buttons_pause) this._currentGame.buttons_pause();
+    } else {
     }
   }
 
@@ -243,9 +252,17 @@ export class HomeScreen {
         //let unselectedColors = ["875a5a", "87875a", "5a8787", "5a5a87", "764976", "767687"];
         //let selectedColors = ["d7aaaa", "d7d7aa", "aad7d7", "aaaad7", "c699c6", "c6c6d7"];
         let unselectedColors = {
+          "NewsApp": "a45410",
+          "AddOnStore": "a45410",
+          "Gallery": "a45410",
+          "ControllerManager": "a45410",
           "Settings": "a45410",
         };
         let selectedColors = {
+          "NewsApp": "f4a460",
+          "AddOnStore": "f4a460",
+          "Gallery": "f4a460",
+          "ControllerManager": "f4a460",
           "Settings": "f4a460",
         };
         //let unselectedColors = [, "", "5a8787", "87875a", "5a8787", "87875a"];
@@ -381,7 +398,8 @@ export class Settings {
   }
 
   buttons_east = () => {
-    this.terminate();
+    this._firstUser = this._internals.users.length === 0;
+    if (!this._firstUser) this.terminate();
   }
 
   _generateUID = () => {
@@ -400,6 +418,7 @@ export class Settings {
     this._position = 0;
     this._nameSelection = [0, 0, 0, 0, 0, 0, 0, 0];
     this._backgroundColorSelection = 0;
+    this._firstUser = this._internals.users.length === 0;
     this._reachedUserLimit = this._internals.users.length >= 5;
     this._choseName = false;
 
@@ -457,5 +476,148 @@ export class Settings {
     if (i === this._position) draw.dynamic.setColor(this._reachedUserLimit || !this._choseName ? "ac143c" : "40ae40"); // DC143C
     else draw.dynamic.setColor(this._reachedUserLimit || !this._choseName ? "7c040c" : "107e10");
     draw.dynamic.roundedRect(new Point(-4, -16).add(relSelP), new Point(16, 4).add(relSelP));
+
+    // Draw user preview
+    let selectedColors = ["aad7d7", "20b2aa", "f08080"];
+    let preRadius = 20;
+    let preMid = new Point(this._swemu.screen.width / 2, this._swemu.screen.height - (this._swemu.screen.height / 3) + preRadius);
+    let name = "";
+    for (let i=0; i<this._nameSelection.length; i++)
+      if (this._nameSelection[i] === 0) name += " ";
+      else name += String.fromCharCode((i === 0 ? 65 : 97) + this._nameSelection[i]-1);
+    name = name.trim();
+    draw.dynamic.setColor(selectedColors[this._backgroundColorSelection]);
+    draw.dynamic.arc(preMid, preRadius);
+    draw.dynamic.setColor("ffffff");
+    draw.dynamic.text("Preview", new Point(-preRadius*2-("Preview".length*7)-14, 7).add(preMid), 14);
+    draw.dynamic.text(name, new Point(-4, 14+preRadius+4).add(preMid), 14, null, null, true);
+  }
+}
+
+export class ControllerManager {
+  static get NAME() {return "ControllerManager";}
+
+  constructor(swemu) {
+    this._swemu = swemu;
+    this._terminated = false;
+    this._internals = {};
+  }
+
+  buttons_east = () => {
+    this.terminate();
+  }
+
+  init = (internals) => {
+    this._terminated = false;
+    this._paused = false;
+    this._internals = internals;
+
+    return this;
+  }
+
+  terminate = () => {
+    this._terminated = true;
+
+    return this;
+  }
+
+  render = (draw, gamepads, render) => {
+    if (this._terminated) return;
+  }
+}
+
+export class Gallery {
+  static get NAME() {return "Gallery";}
+
+  constructor(swemu) {
+    this._swemu = swemu;
+    this._terminated = false;
+    this._internals = {};
+  }
+
+  buttons_east = () => {
+    this.terminate();
+  }
+
+  init = (internals) => {
+    this._terminated = false;
+    this._paused = false;
+    this._internals = internals;
+
+    return this;
+  }
+
+  terminate = () => {
+    this._terminated = true;
+
+    return this;
+  }
+
+  render = (draw, gamepads, render) => {
+    if (this._terminated) return;
+  }
+}
+
+export class AddOnStore {
+  static get NAME() {return "AddOnStore";}
+
+  constructor(swemu) {
+    this._swemu = swemu;
+    this._terminated = false;
+    this._internals = {};
+  }
+
+  buttons_east = () => {
+    this.terminate();
+  }
+
+  init = (internals) => {
+    this._terminated = false;
+    this._paused = false;
+    this._internals = internals;
+
+    return this;
+  }
+
+  terminate = () => {
+    this._terminated = true;
+
+    return this;
+  }
+
+  render = (draw, gamepads, render) => {
+    if (this._terminated) return;
+  }
+}
+
+export class NewsApp {
+  static get NAME() {return "NewsApp";}
+
+  constructor(swemu) {
+    this._swemu = swemu;
+    this._terminated = false;
+    this._internals = {};
+  }
+
+  buttons_east = () => {
+    this.terminate();
+  }
+
+  init = (internals) => {
+    this._terminated = false;
+    this._paused = false;
+    this._internals = internals;
+
+    return this;
+  }
+
+  terminate = () => {
+    this._terminated = true;
+
+    return this;
+  }
+
+  render = (draw, gamepads, render) => {
+    if (this._terminated) return;
   }
 }
