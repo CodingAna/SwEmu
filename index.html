@@ -157,12 +157,14 @@
           },
           external: {
             coinCollect: CoinCollect,
+            //coinCollect9: CoinCollect,
+            //coinCollect8: CoinCollect,
             physicTest: PhysicTest,
             highwayRun: HighwayRun,
-            coinCollect2: CoinCollect,
-            highwayRun2: HighwayRun,
-            coinCollect3: CoinCollect,
-            physicTest2: PhysicTest,
+            //coinCollect2: CoinCollect,
+            //highwayRun2: HighwayRun,
+            //coinCollect3: CoinCollect,
+            //physicTest2: PhysicTest,
           }
         }
       }
@@ -610,10 +612,10 @@
         requestAnimationFrame(mainRenderer);
       }
 
-      if (getCookie("users") === null) setCookie("users", JSON.stringify(internals.users));
+      if (getCookie("users") === null) setCookie("users", JSON.stringify(internals.users), 30);
       internals.users = JSON.parse(getCookie("users"));
 
-      if (getCookie("s-uid") === null) setCookie("s-uid", generateUID());
+      if (getCookie("s-uid") === null) setCookie("s-uid", generateUID(), 30);
       internals.uid = getCookie("s-uid");
 
       let homeScreen = new HomeScreen(swemu);
