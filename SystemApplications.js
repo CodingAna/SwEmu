@@ -451,10 +451,16 @@ export class Settings {
       else {
         if (this._sidebarSelection === 0 && this._vertical === 1 && this._horizontal === this._internals.users.length) this._showUserCreation = true;
 
-        // && this._horizontal === 0 (standard tho, but add this if there are two horizontal buttons in v=1)
-        if (this._sidebarSelection === 2 && this._vertical === 1 && !this._pressedToReset) {
+        if (this._sidebarSelection === 2 && this._vertical === 1) {
+          this._internals.settings.debug = !this._internals.settings.debug;
+          setCookie("settings", JSON.stringify(this._internals.settings), 30);
+        }
+        // && this._horizontal === 0 (standard tho, but add this if there are two horizontal buttons in v=2)
+        if (this._sidebarSelection === 2 && this._vertical === 2 && !this._pressedToReset) {
           this._internals.users = [];
+          this._internals.settings = {debug: false};
           setCookie("users", JSON.stringify(this._internals.users), 30);
+          setCookie("settings", JSON.stringify(this._internals.settings), 30);
           this._pressedToReset = true;
         }
       }
@@ -480,7 +486,7 @@ export class Settings {
     else {
       if (this._sidebarSelection === 0) {if (this._vertical > 1) this._vertical = 1;}
       else if (this._sidebarSelection === 1) {if (this._vertical > 1) this._vertical = 1;}
-      else if (this._sidebarSelection === 2) {if (this._vertical > 1) this._vertical = 1;}
+      else if (this._sidebarSelection === 2) {if (this._vertical > 2) this._vertical = 2;}
     }
 
     if (this._horizontal < 0) {
@@ -794,6 +800,24 @@ export class Settings {
 
         height += 15 + 14;
         draw.dynamic.setColor(tSel ? "ffffff" : "dadada");
+        draw.dynamic.text("Show input delay & FPS", new Point(offset, height), 14);
+        pHeight = height + 14;
+
+        // (30 for button) + (10 to bottom)
+        height += 14 + 30 + 10;
+        draw.dynamic.setColor(tSel ? "2a2a2a" : "242424");
+        draw.dynamic.roundedRect(new Point(offset, pHeight), new Point(offset + 170, height), 0.25);
+        // 170 ~ 17 chars
+        let rstTxtPos = new Point(offset + 10, pHeight + 14 + 12);
+        draw.dynamic.setColor(tSel ? "ffffff" : "dadada");
+        draw.dynamic.text(this._internals.settings.debug ? "Hide" : "Show", rstTxtPos, 14);
+        pHeight = height;
+
+
+        tSel = !this._inSidebar && this._vertical === 2;
+
+        height += 15 + 14;
+        draw.dynamic.setColor(tSel ? "ffffff" : "dadada");
         draw.dynamic.text("Factory reset", new Point(offset, height), 14);
         pHeight = height + 14;
 
@@ -802,7 +826,7 @@ export class Settings {
         draw.dynamic.setColor(tSel ? "ab2222" : "660202");
         draw.dynamic.roundedRect(new Point(offset, pHeight), new Point(offset + 170, height), 0.25);
         // 170 ~ 17 chars
-        let rstTxtPos = new Point(offset + 10, pHeight + 14 + 12);
+        rstTxtPos = new Point(offset + 10, pHeight + 14 + 12);
         draw.dynamic.setColor(tSel ? "ffffff" : "dadada");
         if (this._pressedToReset) {
           draw.dynamic.text("Resetting...", rstTxtPos, 14);
