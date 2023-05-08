@@ -166,6 +166,9 @@
             //coinCollect3: CoinCollect,
             //physicTest2: PhysicTest,
           }
+        },
+        settings: {
+          debug: false,
         }
       }
 
@@ -232,10 +235,16 @@
         deltaTime: Date.now(),
         now: Date.now(),
         input: { // Used for debugging, if verbose === true: print delay (in ms) between (mousedown or mouseup or mousemove) and finished render
-          verbose: false,
+          verbose: true,
           delay: 0, // debug output (01.05.2023 22:50 => ~10ms (before obstacles and coins))
           now: 0,
           updated: false,
+        },
+        delayed: {
+          deltaTime: Date.now(),
+          input: {
+            delay: 0,
+          },
         }
       }
 
@@ -364,15 +373,25 @@
         let gamepad = navigator.getGamepads()[0];
         if (gamepad === undefined || gamepad === null) return;
 
+        if (render.input.verbose && !render.input.updated) {
+          render.input.updated = true;
+          render.input.now = Date.now();
+        }
+
         let deadzone = 0.065;
-        for (let i=0; i<gamepad.axes.length; i++)
-          if (MyMath.abs(gamepad.axes[i]) >= deadzone) {
+        for (let i=0; i<gamepad.axes.length; i+=2)
+          if (MyMath.abs(gamepad.axes[i]) >= deadzone || MyMath.abs(gamepad.axes[i+1]) >= deadzone) {
+            let v = new Vector2D(gamepad.axes[i], gamepad.axes[i+1]).normalize();
+            let s = new Vector2D(gamepad.axes[i], gamepad.axes[i+1]).length();
+            s = MyMath.clamp(s, 0, 1);
+
             gamepads.used.any = true;
             gamepads.used.axes.any = true;
-            if (i === 0 || i === 1) gamepads.used.axes.left = true;
-            if (i === 2 || i === 3) gamepads.used.axes.right = true;
+            if (i === 0) gamepads.used.axes.left = true;
+            if (i === 2) gamepads.used.axes.right = true;
 
-            gamepads.output.axes = gamepad.axes;
+            gamepads.output.axes[i] = v.x * s;
+            gamepads.output.axes[i+1] = v.y * s;
           }
 
         let gobl = Object.entries(gamepads.output.buttons).length;
@@ -600,12 +619,20 @@
         render.now = now;
         if (render.input.verbose && render.input.updated) {
           render.input.delay = Date.now() - render.input.now;
-          console.log(render.input.delay);
+          //console.log(render.input.delay);
+          if (internals.settings.debug) {
+            draw.dynamic.setColor("ffffff");
+            draw.dynamic.text(""+render.delayed.input.delay+"ms", new Point(10+3, swemu.screen.height-10-7), 14);
+            draw.dynamic.text(""+parseInt(1/render.delayed.deltaTime)+"fps", new Point(10+3+56, swemu.screen.height-10-7), 14);
+          }
           render.input.updated = false;
         }
 
         requestAnimationFrame(mainRenderer);
       }
+
+      if (getCookie("settings") === null) setCookie("settings", JSON.stringify(internals.settings), 30);
+      internals.settings = JSON.parse(getCookie("settings"));
 
       if (getCookie("users") === null) setCookie("users", JSON.stringify(internals.users), 30);
       internals.users = JSON.parse(getCookie("users"));
@@ -622,6 +649,11 @@
         homeScreen._paused = true;
         homeScreen._actionClick = 0;
       }
+
+      setInterval(() => {
+        render.delayed.input.delay = render.input.delay;
+        render.delayed.deltaTime = render.deltaTime;
+      }, 100);
 
       render.now = Date.now();
       requestAnimationFrame(mainRenderer);
