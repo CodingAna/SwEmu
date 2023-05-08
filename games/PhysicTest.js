@@ -11,6 +11,10 @@ export class PhysicTest {
     this._player = {};
   }
 
+  buttons_a = () => {
+    this._jump = true;
+  }
+
   buttons_b = () => {
     this.terminate();
   }
@@ -28,19 +32,6 @@ export class PhysicTest {
 
     this._player.move.x = gamepads.output.axes[0] * this._player.speed.current * render.deltaTime * 100;
     this._player.move.y += 9.81 * (MyMath.exp(lastAirActionDiff / 1000, 2)) * render.deltaTime;
-
-    if (gamepads.output.buttons.south.pressed) {
-      if (!gamepads.actions.south) {
-        // If not above limit OR distance to ground <= player diameter (=> user doesn't have to wait to actually touch the ground)
-        if (this._player.jumps < this._player.jumpLimit || this._swemu.screen.height - this._player.position.current.y <= this._player.radius*2) {
-          this._player.jumps++;
-          if (this._player.move.y > 0) this._player.move.y = 0;
-          this._player.move.add(new Vector2D(0, -1).multiply(this._player.jumpForce).multiply(100).multiply(render.deltaTime));
-          this._player.lastAirAction = Date.now() - 300;
-        }
-      }
-      gamepads.actions.south = true;
-    } else gamepads.actions.south = false;
 
     // Clamp vertical upwards (jump) velocity
     if (this._player.move.y < -this._player.forceLimit) this._player.move.y = -this._player.forceLimit;
@@ -109,6 +100,7 @@ export class PhysicTest {
       started: false,
       paused: false,
     };
+    this._jump = false;
 
     return this;
   }
@@ -123,6 +115,17 @@ export class PhysicTest {
     if (this._terminated) return;
 
     if (gamepads.used.axes.left) this._player.started = true;
+
+    if (this._jump) {
+      // If not above limit OR distance to ground <= player diameter (=> user doesn't have to wait to actually touch the ground)
+      if (this._player.jumps < this._player.jumpLimit || this._swemu.screen.height - this._player.position.current.y <= this._player.radius*2) {
+        this._player.jumps++;
+        if (this._player.move.y > 0) this._player.move.y = 0;
+        this._player.move.add(new Vector2D(0, -1).multiply(this._player.jumpForce).multiply(100).multiply(render.deltaTime));
+        this._player.lastAirAction = Date.now() - 300;
+      }
+      this._jump = false;
+    }
 
     if (this._player.started) {
       if (this._player.paused) {

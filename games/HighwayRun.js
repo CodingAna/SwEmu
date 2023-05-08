@@ -12,16 +12,17 @@ export class HighwayRun {
     this._spawnCarLoopTimeout = setTimeout(() => {}, 1);
   }
 
-  buttons_y = () => {
-    if (this._player.life.dead)
-      ;
-    else if (this._player.started) this._player.position.lane--;
+  dpad_up = () => {
+    if (!this._player.life.dead && this._player.started) this._player.position.lane--;
+  }
+
+  dpad_down = () => {
+    if (!this._player.life.dead && this._player.started) this._player.position.lane++;
   }
 
   buttons_a = () => {
     if (this._player.life.dead)
       this.init();
-    else if (this._player.started) this._player.position.lane++;
   }
 
   buttons_b = () => {
@@ -134,7 +135,7 @@ export class HighwayRun {
   _updatePlayerPosition = (draw, gamepads, render) => {
     if (!gamepads.used.axes.left && !gamepads.used.buttons) return;
 
-    this._player.move = new Vector2D(gamepads.output.axes[0], 0).multiply(this._player.speed.current).multiply(render.deltaTime).multiply(100);
+    this._player.move = new Vector2D(gamepads.output.axes[2], 0).multiply(this._player.speed.current).multiply(render.deltaTime).multiply(100);
     //this._player.position.future.x = this._player.position.current.add_NW(this._player.move.point()).x;
     this._player.position.future.x += this._player.move.x;
 
@@ -196,9 +197,9 @@ export class HighwayRun {
     draw.dynamic.setColor("ffffff");
     draw.dynamic.arc(this._player.position.current, this._player.radius);
 
-    if (gamepads.used.axes.left) {
+    if (gamepads.used.axes.right) {
       draw.dynamic.setColor("ff5522");
-      draw.dynamic.line(this._player.position.current, new Vector2D(gamepads.output.axes[0], 0).multiply(100).point().add(this._player.position.current));
+      draw.dynamic.line(this._player.position.current, new Vector2D(gamepads.output.axes[2], 0).multiply(100).point().add(this._player.position.current));
     }
   }
 
@@ -259,7 +260,7 @@ export class HighwayRun {
   render = (draw, gamepads, render) => {
     if (this._terminated) return;
 
-    if (gamepads.used.axes.left) this._player.started = true;
+    if (gamepads.used.axes.right) this._player.started = true;
 
     if (this._player.position.lane > this._highwayLanes - 1) this._player.position.lane = this._highwayLanes - 1;
     else if (this._player.position.lane < 0) this._player.position.lane = 0;
