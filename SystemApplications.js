@@ -36,33 +36,33 @@ export class HomeScreen {
     } else this._actionGoLeft();
   }
 
-  buttons_north = () => {
+  buttons_y = () => {
     if (this._paused && this._currentGame !== null && !this._currentGame._terminated) {
-      if (this._currentGame.buttons_north) this._currentGame.buttons_north();
+      if (this._currentGame.buttons_y) this._currentGame.buttons_y();
     } else {
     }
   }
 
-  buttons_south = () => {
+  buttons_a = () => {
     if (this._paused && this._currentGame !== null && !this._currentGame._terminated) {
-      if (this._currentGame.buttons_south) this._currentGame.buttons_south();
+      if (this._currentGame.buttons_a) this._currentGame.buttons_a();
     } else {
       this._actionOpen = this._currentRow.valueOf();
       this._actionClick++;
     }
   }
 
-  buttons_east = () => {
+  buttons_b = () => {
     if (this._paused && this._currentGame !== null && !this._currentGame._terminated) {
-      if (this._currentGame.buttons_east) this._currentGame.buttons_east();
+      if (this._currentGame.buttons_b) this._currentGame.buttons_b();
     } else {
       if (this._actionClick > 0) this._actionClick--;
     }
   }
 
-  buttons_west = () => {
+  buttons_x = () => {
     if (this._paused && this._currentGame !== null && !this._currentGame._terminated) {
-      if (this._currentGame.buttons_west) this._currentGame.buttons_west();
+      if (this._currentGame.buttons_x) this._currentGame.buttons_x();
     } else {
     }
   }
@@ -253,18 +253,18 @@ export class HomeScreen {
         //let unselectedColors = ["875a5a", "87875a", "5a8787", "5a5a87", "764976", "767687"];
         //let selectedColors = ["d7aaaa", "d7d7aa", "aad7d7", "aaaad7", "c699c6", "c6c6d7"];
         let unselectedColors = {
-          "NewsApp": "a45410",
-          "AddOnStore": "a45410",
-          "Gallery": "a45410",
-          "ControllerManager": "a45410",
-          "Settings": "a45410",
+          "News": "BB1900",
+          "Store": "BE6C00",
+          "Gallery": "0061AF",
+          "Controller": "9F9F9F",
+          "Settings": "9F9F9F",
         };
         let selectedColors = {
-          "NewsApp": "f4a460",
-          "AddOnStore": "f4a460",
-          "Gallery": "f4a460",
-          "ControllerManager": "f4a460",
-          "Settings": "f4a460",
+          "News": "FB593A",
+          "Store": "FEAC0A",
+          "Gallery": "17A1FF",
+          "Controller": "DFDFDF",
+          "Settings": "DFDFDF",
         };
         //let unselectedColors = [, "", "5a8787", "87875a", "5a8787", "87875a"];
         //let selectedColors = ["d7d7aa", "aad7d7", "aad7d7", "d7d7aa", "aad7d7", "d7d7aa"];
@@ -378,8 +378,9 @@ export class Settings {
       if (this._inSidebar) {
         this._sidebarSelection--;
         this._vertical = 0;
-        this._horizontal = 0;
       } else this._vertical--;
+
+      this._horizontal = 0;
 
       this._checkSelection();
     }
@@ -393,8 +394,9 @@ export class Settings {
       if (this._inSidebar) {
         this._sidebarSelection++;
         this._vertical = 0;
-        this._horizontal = 0;
       } else this._vertical++;
+
+      this._horizontal = 0;
 
       this._checkSelection();
     }
@@ -421,7 +423,7 @@ export class Settings {
     }
   }
 
-  buttons_south = () => {
+  buttons_a = () => {
     if (this._showUserCreation) {
       if (this._choseName && this._validName && this._position === 9) {
         let name = "";
@@ -459,7 +461,7 @@ export class Settings {
     }
   }
 
-  buttons_east = () => {
+  buttons_b = () => {
     this._firstUser = this._internals.users.length === 0;
     if (!this._firstUser) {
       if (this._showUserCreation) this._showUserCreation = false;
@@ -558,23 +560,9 @@ export class Settings {
       if (this._backgroundColorSelection < 0) this._backgroundColorSelection = 2;
       else if (this._backgroundColorSelection > 2) this._backgroundColorSelection = 0;
 
-      if (this._reachedUserLimit) {
-        draw.dynamic.setColor("ffffff");
-        draw.dynamic.text("You've reached the user limit (5).", new Point(16, 28));
-        if (this._pressedToReset) {
-          draw.dynamic.setColor("b22222");
-          draw.dynamic.text("Restarting...", new Point(this._swemu.screen.width/2, this._swemu.screen.height/2), 16, null, null, true);
-          if (!this._resetTimeout) setTimeout(() => {location.reload();}, 750);
-          this._resetTimeout = true;
-        } else {
-          draw.dynamic.setColor("b22222");
-          draw.dynamic.text("Press A to reset your Switch", new Point(this._swemu.screen.width/2-18, this._swemu.screen.height/2+7), 14, null, "bold", true);
-        }
-      } else {
-        draw.dynamic.setColor("ffffff");
-        draw.dynamic.text("Create a user for your Switch. Use the D-pad control to navigate.", new Point(16, 28));
-        if (!this._firstUser) draw.dynamic.text("Note: You can only add up to 5 users.", new Point(16, 52));
-      }
+      draw.dynamic.setColor("ffffff");
+      draw.dynamic.text("Create " + (this._firstUser ? "the first" : "another") + " user for your Switch. Use the D-pad control to navigate.", new Point(16, 28));
+      if (!this._firstUser) draw.dynamic.text("Note: You can only add up to 5 users.", new Point(16, 52));
 
       // User preview (name + icon) & Check name
       let selectedColors = ["aad7d7", "20b2aa", "f08080"];
@@ -618,13 +606,9 @@ export class Settings {
         draw.dynamic.setColor(selectedColors[this._backgroundColorSelection]);
         draw.dynamic.arc(preMid, preRadius);
         draw.dynamic.setColor("ffffff");
-        draw.dynamic.text("Preview", new Point(-preRadius*2-("Preview".length*7)-14, 7).add(preMid), 14);
+        draw.dynamic.text("User preview", new Point(-preRadius*2-(("User preview".length+1)*7)-14, 7).add(preMid), 14);
         draw.dynamic.text(name, new Point(-4, 14+preRadius+4).add(preMid), 14, null, null, true);
       }
-
-      // Render debug infos
-      draw.dynamic.setColor("ffffff");
-      draw.dynamic.text("S-UID: " + this._internals.uid, new Point(10, this._swemu.screen.height - 12), 9);
 
     } else {
       let sidebarWidth = this._inSidebar ? 160 : 120;
@@ -660,7 +644,7 @@ export class Settings {
 
         // (60 for icon) + (2*12 for text) + (10 to bottom)
         height += 14 + 60 + 24 + 20;
-        let width = (60 + 10) * this._appCount;
+        let width = (5 + 60 + 15) * this._appCount;
         if (offset + width > this._swemu.screen.width - offset) width = this._swemu.screen.width - offset - 10;
         draw.dynamic.setColor(tSel ? "2a2a2a" : "242424");
         draw.dynamic.roundedRect(new Point(offset, pHeight), new Point(offset + width, height), 0.25);
@@ -695,7 +679,7 @@ export class Settings {
             else right.x = width + offset;
           }
 
-          draw.dynamic.setColor(tSel ? selectedColors[appClass.NAME] : unselectedColors[appClass.NAME]);
+          draw.dynamic.setColor(tSel && this._horizontal === i ? selectedColors[appClass.NAME] : unselectedColors[appClass.NAME]);
           draw.dynamic.roundedRect(left, right, 0.25);
 
           if (this._vertical === 0 && this._horizontal === i) {
@@ -715,7 +699,7 @@ export class Settings {
 
         // (40 for icon) + (2*12 for text) + (10 to bottom)
         height += 14 + 40 + 24 + 20;
-        width = (60 + 10) * this._appCount;
+        width = (8 + 40 + 15) * (this._userCount + 1);
         if (offset + width > this._swemu.screen.width - offset) width = this._swemu.screen.width - offset - 10;
         draw.dynamic.setColor(tSel ? "2a2a2a" : "242424");
         draw.dynamic.roundedRect(new Point(offset, pHeight), new Point(offset + width, height), 0.25);
@@ -728,7 +712,7 @@ export class Settings {
 
           if (this._vertical === 1 && this._horizontal === i) {
             draw.dynamic.setColor("3a3a3a");
-            draw.dynamic.roundedRect(new Point(-25-4, -25-4).add(crossCenter), new Point(25+4, 37+4).add(crossCenter), 0.25);
+            draw.dynamic.roundedRect(new Point(-25-4, -25-4).add(crossCenter), new Point(25+4, 37+4+2).add(crossCenter), 0.25);
           }
 
           let user = null;
@@ -740,9 +724,9 @@ export class Settings {
           else draw.dynamic.setColor(tSel ? selectedColors[user.icon.background] : unselectedColors[user.icon.background]);
           draw.dynamic.arc(crossCenter, 20);
 
-          draw.dynamic.setColor(tSel ? "ffffff" : "dadada");
+          draw.dynamic.setColor(tSel && this._horizontal === i ? "ffffff" : "dadada");
           let name = i === this._internals.users.length ? "Add" : user.name;
-          draw.dynamic.text(name, new Point(-4, 12+20+4).add(crossCenter), 12, null, null, true);
+          draw.dynamic.text(name, new Point(-4, 12+20+4).add(crossCenter), tSel && this._horizontal === i ? 12 : 10, null, null, true);
 
           if (i === this._internals.users.length) {
             draw.dynamic.line(new Point(-10, 0).add(crossCenter), new Point(10, 0).add(crossCenter));
@@ -832,7 +816,7 @@ export class Settings {
 }
 
 export class ControllerManager {
-  static get NAME() {return "ControllerManager";}
+  static get NAME() {return "Controller";}
 
   constructor(swemu) {
     this._swemu = swemu;
@@ -840,7 +824,7 @@ export class ControllerManager {
     this._internals = {};
   }
 
-  buttons_east = () => {
+  buttons_b = () => {
     this.terminate();
   }
 
@@ -860,6 +844,13 @@ export class ControllerManager {
 
   render = (draw, gamepads, render) => {
     if (this._terminated) return;
+
+    let center = new Point(this._swemu.screen.width / 2, this._swemu.screen.height / 2);
+    let text = "Under construction";
+    draw.dynamic.setColor("2a2a2a");
+    draw.dynamic.roundedRect(new Point(-text.length*8+16+4, -28).add(center), new Point(text.length*8-16, 16).add(center), 0.25);
+    draw.dynamic.setColor("ffffff");
+    draw.dynamic.text(text, center, 16, null, null, true);
   }
 }
 
@@ -872,7 +863,7 @@ export class Gallery {
     this._internals = {};
   }
 
-  buttons_east = () => {
+  buttons_b = () => {
     this.terminate();
   }
 
@@ -892,11 +883,18 @@ export class Gallery {
 
   render = (draw, gamepads, render) => {
     if (this._terminated) return;
+
+    let center = new Point(this._swemu.screen.width / 2, this._swemu.screen.height / 2);
+    let text = "Under construction";
+    draw.dynamic.setColor("2a2a2a");
+    draw.dynamic.roundedRect(new Point(-text.length*8+16+4, -28).add(center), new Point(text.length*8-16, 16).add(center), 0.25);
+    draw.dynamic.setColor("ffffff");
+    draw.dynamic.text(text, center, 16, null, null, true);
   }
 }
 
 export class AddOnStore {
-  static get NAME() {return "AddOnStore";}
+  static get NAME() {return "Store";}
 
   constructor(swemu) {
     this._swemu = swemu;
@@ -904,7 +902,7 @@ export class AddOnStore {
     this._internals = {};
   }
 
-  buttons_east = () => {
+  buttons_b = () => {
     this.terminate();
   }
 
@@ -924,11 +922,18 @@ export class AddOnStore {
 
   render = (draw, gamepads, render) => {
     if (this._terminated) return;
+
+    let center = new Point(this._swemu.screen.width / 2, this._swemu.screen.height / 2);
+    let text = "Under construction";
+    draw.dynamic.setColor("2a2a2a");
+    draw.dynamic.roundedRect(new Point(-text.length*8+16+4, -28).add(center), new Point(text.length*8-16, 16).add(center), 0.25);
+    draw.dynamic.setColor("ffffff");
+    draw.dynamic.text(text, center, 16, null, null, true);
   }
 }
 
 export class NewsApp {
-  static get NAME() {return "NewsApp";}
+  static get NAME() {return "News";}
 
   constructor(swemu) {
     this._swemu = swemu;
@@ -936,7 +941,7 @@ export class NewsApp {
     this._internals = {};
   }
 
-  buttons_east = () => {
+  buttons_b = () => {
     this.terminate();
   }
 
@@ -956,5 +961,12 @@ export class NewsApp {
 
   render = (draw, gamepads, render) => {
     if (this._terminated) return;
+
+    let center = new Point(this._swemu.screen.width / 2, this._swemu.screen.height / 2);
+    let text = "Under construction";
+    draw.dynamic.setColor("2a2a2a");
+    draw.dynamic.roundedRect(new Point(-text.length*8+16+4, -28).add(center), new Point(text.length*8-16, 16).add(center), 0.25);
+    draw.dynamic.setColor("ffffff");
+    draw.dynamic.text(text, center, 16, null, null, true);
   }
 }
