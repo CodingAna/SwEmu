@@ -228,7 +228,7 @@ export class HomeScreen {
 
       if (this._currentRow === 1 && i === this._highlightedApp) {
         draw.dynamic.setColor(selectedColors[gameClass.NAME]);
-        draw.dynamic.rect(new Point(-5, -5).add(app1start), new Point(5, 5).add(app1end));
+        draw.dynamic.roundedRect(new Point(-5, -5).add(app1start), new Point(5, 5).add(app1end), 0.25);
         draw.dynamic.setColor("ffffff");
         draw.dynamic.text(gameClass.NAME, new Point(-6, 18+12).add(app1text), 18);
         if (app1end.x >= this._swemu.screen.width) {
@@ -238,7 +238,7 @@ export class HomeScreen {
         }
       } else {
         draw.dynamic.setColor(unselectedColors[gameClass.NAME]);
-        draw.dynamic.rect(new Point(5, 5).add(app1start), new Point(-5, -5).add(app1end));
+        draw.dynamic.roundedRect(new Point(5, 5).add(app1start), new Point(-5, -5).add(app1end), 0.25);
         draw.dynamic.setColor("a9a9a9");
         draw.dynamic.text(gameClass.NAME, new Point(6, 16).add(app1text), 16);
       }
@@ -423,25 +423,39 @@ export class Settings {
 
   buttons_south = () => {
     if (this._showUserCreation) {
-      if (this._reachedUserLimit) {
-        if (!this._pressedToReset) {
-          this._internals.users = [];
-          setCookie("users", JSON.stringify(this._internals.users));
-          this._pressedToReset = true;
-        }
-      } else {
-        if (this._choseName && this._validName && this._position === 9) {
-          let name = "";
-          for (let i=0; i<this._nameSelection.length; i++)
-            if (this._nameSelection[i] !== 0) name += String.fromCharCode((i === 0 ? 65 : 97) + this._nameSelection[i]-1);
-          this._internals.users.push({uid: this._generateUID(), name: name, icon: {background: this._backgroundColorSelection}});
-          setCookie("users", JSON.stringify(this._internals.users));
-          this.terminate();
+      if (this._choseName && this._validName && this._position === 9) {
+        let name = "";
+        for (let i=0; i<this._nameSelection.length; i++)
+          if (this._nameSelection[i] !== 0) name += String.fromCharCode((i === 0 ? 65 : 97) + this._nameSelection[i]-1);
+        this._internals.users.push({uid: this._generateUID(), name: name, icon: {background: this._backgroundColorSelection}});
+        setCookie("users", JSON.stringify(this._internals.users), 30);
+
+        let ss = this._sidebarSelection;
+        let sh = this._horizontal;
+        let sv = this._vertical;
+
+        this.terminate();
+        if (!this._firstUser) {
+          this.init(this._internals); // "Re-init the app"
+
+          this._inSidebar = false;
+          this._horizontal = sh;
+          this._vertical = sv;
+          this._sidebarSelection = ss;
         }
       }
     } else {
       if (this._inSidebar) this._inSidebar = false;
-      else if (this._sidebarSelection === 0 && this._vertical === 1 && this._horizontal === 0) this._showUserCreation = true;
+      else {
+        if (this._sidebarSelection === 0 && this._vertical === 1 && this._horizontal === this._internals.users.length) this._showUserCreation = true;
+
+        // && this._horizontal === 0 (standard tho, but add this if there are two horizontal buttons in v=1)
+        if (this._sidebarSelection === 2 && this._vertical === 1 && !this._pressedToReset) {
+          this._internals.users = [];
+          setCookie("users", JSON.stringify(this._internals.users), 30);
+          this._pressedToReset = true;
+        }
+      }
     }
   }
 
@@ -464,7 +478,7 @@ export class Settings {
     else {
       if (this._sidebarSelection === 0) {if (this._vertical > 1) this._vertical = 1;}
       else if (this._sidebarSelection === 1) {if (this._vertical > 1) this._vertical = 1;}
-      else if (this._sidebarSelection === 2) {if (this._vertical > 0) this._vertical = 0;}
+      else if (this._sidebarSelection === 2) {if (this._vertical > 1) this._vertical = 1;}
     }
 
     if (this._horizontal < 0) {
@@ -472,7 +486,8 @@ export class Settings {
       this._horizontal = 0;
     } else {
       if (this._sidebarSelection === 0) {
-        if (this._vertical === 1 && this._horizontal > this._userCount) this._horizontal = this._userCount;  // Not -1 because of the Dummy "Add"
+        if (this._vertical === 0 && this._horizontal > this._appCount - 1) this._horizontal = this._appCount - 1;
+        if (this._vertical === 1 && this._horizontal > this._userCount - (this._reachedUserLimit ? 1 : 0)) this._horizontal = this._userCount - (this._reachedUserLimit ? 1 : 0); // Only -1 if reached userlimit (=>disable hover over hidden dummy)
       }
       else if (this._sidebarSelection === 1) {if (this._horizontal > 0) this._horizontal = 0;}
       else if (this._sidebarSelection === 2) {if (this._horizontal > 0) this._horizontal = 0;}
@@ -492,9 +507,6 @@ export class Settings {
     this._terminated = false;
     this._paused = false;
     this._internals = internals;
-    this._sidebarSelection = 0;
-    this._verticalPosition = 0;
-    this._horizontalPosition = 0;
     // All for user creation, split this up, maybe
     this._position = 0;
     this._nameSelection = [0, 0, 0, 0, 0, 0, 0, 0];
@@ -506,8 +518,9 @@ export class Settings {
     this._choseName = false;
     this._validName = false;
 
-    this._appCount = Object.entries(this._internals.applications.external).length;
     this._userCount = this._internals.users.length;
+    this._appCount = Object.entries(this._internals.applications.external).length;
+    this._appScrollOffset = 0;
     // Now this
     this._sidebarSelection = 0;
     this._sidebarElements = ["General", "Online", "Debug"];
@@ -617,7 +630,7 @@ export class Settings {
       let sidebarWidth = this._inSidebar ? 160 : 120;
 
       draw.dynamic.setColor(this._inSidebar ? "2a2a2a" : "242424");
-      draw.dynamic.rect(new Point(), new Point(sidebarWidth, this._swemu.screen.height));
+      draw.dynamic.rect(new Point(), new Point(sidebarWidth, this._swemu.screen.height), 0.25);
 
       for (let i=0; i<this._sidebarElements.length; i++) {
         let h = 50;
@@ -650,7 +663,46 @@ export class Settings {
         let width = (60 + 10) * this._appCount;
         if (offset + width > this._swemu.screen.width - offset) width = this._swemu.screen.width - offset - 10;
         draw.dynamic.setColor(tSel ? "2a2a2a" : "242424");
-        draw.dynamic.rect(new Point(offset, pHeight), new Point(offset + width, height));
+        draw.dynamic.roundedRect(new Point(offset, pHeight), new Point(offset + width, height), 0.25);
+
+        let appList = Object.entries(this._internals.applications.external);
+        for (let i=this._appScrollOffset; i<appList.length; i++) {
+          let [appName, appClass] = appList[i];
+
+          let unselectedColors = {
+            "CoinCollect": "87875a",
+            "PhysicTest": "5a8787",
+            "HighwayRun": "764976",
+          };
+          let selectedColors = {
+            "CoinCollect": "d7d7aa",
+            "PhysicTest": "aad7d7",
+            "HighwayRun": "c699c6",
+          };
+
+          let left = new Point(offset + 15 + (60 + 15) * (i - this._appScrollOffset), pHeight + 15);
+          let right = new Point(offset + (15 + 60) * (i - this._appScrollOffset + 1), pHeight + 15 + 60);
+
+          //if (tSel && this._horizontal === i && left.x < offset + 15) this._appScrollOffset--;
+
+          if (tSel && this._appScrollOffset === i && this._horizontal < i) this._appScrollOffset--;
+
+          if (left.x >= width + offset - 15) {
+            break;
+          }
+          if (right.x > width + offset - 15) {
+            if (tSel && this._horizontal === i) this._appScrollOffset++;
+            else right.x = width + offset;
+          }
+
+          draw.dynamic.setColor(tSel ? selectedColors[appClass.NAME] : unselectedColors[appClass.NAME]);
+          draw.dynamic.roundedRect(left, right, 0.25);
+
+          if (this._vertical === 0 && this._horizontal === i) {
+            draw.dynamic.setColor(tSel ? "ffffff": "dadada");
+            draw.dynamic.text(appClass.NAME, new Point(-4, 60 + 24 - 5).add(left));
+          }
+        }
         pHeight = height;
 
 
@@ -666,10 +718,12 @@ export class Settings {
         width = (60 + 10) * this._appCount;
         if (offset + width > this._swemu.screen.width - offset) width = this._swemu.screen.width - offset - 10;
         draw.dynamic.setColor(tSel ? "2a2a2a" : "242424");
-        draw.dynamic.rect(new Point(offset, pHeight), new Point(offset + width, height));
+        draw.dynamic.roundedRect(new Point(offset, pHeight), new Point(offset + width, height), 0.25);
 
         // "First" user => "Add user"; But apply this to the user list + use this._horizontal to maybe add a light background (rounded)rect
         for (let i=0; i<this._internals.users.length + 1; i++) {
+          if (i === this._internals.users.length && this._reachedUserLimit) continue;
+
           let crossCenter = new Point(offset + 20 + 15 + (15 + 40) * i, pHeight + 35);
 
           if (this._vertical === 1 && this._horizontal === i) {
@@ -678,19 +732,19 @@ export class Settings {
           }
 
           let user = null;
-          if (i > 0) user = this._internals.users[i - 1];
+          if (i < this._internals.users.length) user = this._internals.users[i];
           let unselectedColors = ["5a8787", "00827a", "c05050"];
           let selectedColors = ["aad7d7", "20b2aa", "f08080"];
 
-          if (i === 0) draw.dynamic.setColor(tSel ? "4a4a4a" : "3a3a3a");
+          if (i === this._internals.users.length) draw.dynamic.setColor(tSel ? "4a4a4a" : "3a3a3a");
           else draw.dynamic.setColor(tSel ? selectedColors[user.icon.background] : unselectedColors[user.icon.background]);
           draw.dynamic.arc(crossCenter, 20);
 
           draw.dynamic.setColor(tSel ? "ffffff" : "dadada");
-          let name = i === 0 ? "Add" : user.name;
+          let name = i === this._internals.users.length ? "Add" : user.name;
           draw.dynamic.text(name, new Point(-4, 12+20+4).add(crossCenter), 12, null, null, true);
 
-          if (i === 0) {
+          if (i === this._internals.users.length) {
             draw.dynamic.line(new Point(-10, 0).add(crossCenter), new Point(10, 0).add(crossCenter));
             draw.dynamic.line(new Point(0, -10).add(crossCenter), new Point(0, 10).add(crossCenter));
           }
@@ -710,9 +764,9 @@ export class Settings {
         // (30 for dropdown (to be implemented)) + (10 to bottom)
         height += 14 + 30 + 10;
         draw.dynamic.setColor(tSel ? "2a2a2a" : "242424");
-        draw.dynamic.rect(new Point(offset, pHeight), new Point(offset + 140, height));
+        draw.dynamic.roundedRect(new Point(offset, pHeight), new Point(offset + 140, height), 0.25);
         // 140 ~ 13 chars ?
-        draw.dynamic.setColor("ffffff");
+        draw.dynamic.setColor(tSel ? "ffffff" : "dadada");
         draw.dynamic.text("DE-Essen-1", new Point(offset + 10, pHeight + 14 + 12), 14);
         pHeight = height;
 
@@ -727,9 +781,9 @@ export class Settings {
         // (30 for dropdown) + (10 to bottom)
         height += 14 + 30 + 10;
         draw.dynamic.setColor(tSel ? "2a2a2a" : "242424");
-        draw.dynamic.rect(new Point(offset, pHeight), new Point(offset + 280, height));
+        draw.dynamic.roundedRect(new Point(offset, pHeight), new Point(offset + 280, height), 0.25);
         // 280 ~ 27 chars ?
-        draw.dynamic.setColor("ffffff");
+        draw.dynamic.setColor(tSel ? "ffffff" : "dadada");
         draw.dynamic.text("john.doe@email.com", new Point(offset + 10, pHeight + 14 + 12), 14);
         pHeight = height;
 
@@ -745,10 +799,32 @@ export class Settings {
         // (30 for dropdown (to be implemented)) + (10 to bottom)
         height += 14 + 30 + 10;
         draw.dynamic.setColor(tSel ? "2a2a2a" : "242424");
-        draw.dynamic.rect(new Point(offset, pHeight), new Point(offset + 370, height));
+        draw.dynamic.roundedRect(new Point(offset, pHeight), new Point(offset + 370, height), 0.25);
         // 370 ~ 36 chars
-        draw.dynamic.setColor("ffffff");
+        draw.dynamic.setColor(tSel ? "ffffff" : "dadada");
         draw.dynamic.text(this._internals.uid, new Point(offset + 10, pHeight + 14 + 12), 14);
+        pHeight = height;
+
+
+        tSel = !this._inSidebar && this._vertical === 1;
+
+        height += 15 + 14;
+        draw.dynamic.setColor(tSel ? "ffffff" : "dadada");
+        draw.dynamic.text("Factory reset", new Point(offset, height), 14);
+        pHeight = height + 14;
+
+        // (30 for button) + (10 to bottom)
+        height += 14 + 30 + 10;
+        draw.dynamic.setColor(tSel ? "ab2222" : "660202");
+        draw.dynamic.roundedRect(new Point(offset, pHeight), new Point(offset + 170, height), 0.25);
+        // 170 ~ 17 chars
+        let rstTxtPos = new Point(offset + 10, pHeight + 14 + 12);
+        draw.dynamic.setColor(tSel ? "ffffff" : "dadada");
+        if (this._pressedToReset) {
+          draw.dynamic.text("Resetting...", rstTxtPos, 14);
+          if (!this._resetTimeout) setTimeout(() => {location.reload();}, 750);
+          this._resetTimeout = true;
+        } else draw.dynamic.text("Reset this Switch", rstTxtPos, 14);
         pHeight = height;
       }
     }
