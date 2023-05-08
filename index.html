@@ -194,10 +194,10 @@
         output: {
           axes: [0, 0, 0, 0],
           buttons: {
-            south: {pressed: false},
-            east: {pressed: false},
-            west: {pressed: false},
-            north: {pressed: false},
+            a: {pressed: false},
+            b: {pressed: false},
+            x: {pressed: false},
+            y: {pressed: false},
             pause: {pressed: false},
             dpad: {
               up: {pressed: false},
@@ -208,10 +208,10 @@
           },
         },
         actions: {
-          south: false,
-          east: false,
-          west: false,
-          north: false,
+          a: false,
+          b: false,
+          x: false,
+          y: false,
           pause: false,
           dpad: {
             up: false,
@@ -382,10 +382,10 @@
             gamepads.used.buttons = true;
           }
 
-        gamepads.output.buttons.south = gamepad.buttons[0];
-        gamepads.output.buttons.east = gamepad.buttons[1];
-        gamepads.output.buttons.west = gamepad.buttons[2];
-        gamepads.output.buttons.north = gamepad.buttons[3];
+        gamepads.output.buttons.a = gamepad.buttons[0];
+        gamepads.output.buttons.b = gamepad.buttons[1];
+        gamepads.output.buttons.x = gamepad.buttons[2];
+        gamepads.output.buttons.y = gamepad.buttons[3];
 
         gamepads.output.buttons.pause = gamepad.buttons[9];
 
@@ -444,20 +444,17 @@
         draw.static.rect(new Point(-buttonRadius*3, -buttonRadius*3).add(buttonCenterRight), new Point(buttonRadius*3, buttonRadius*3).add(buttonCenterRight));
 
         draw.static.setColor("212528");
-        draw.static.arc(new Point(0, -buttonRadius*2).add(buttonCenterRight), buttonRadius-(gamepads.output.buttons.north.pressed ? pressedShrinkRadius : 0));
-        draw.static.arc(new Point(buttonRadius*2, 0).add(buttonCenterRight), buttonRadius-(gamepads.output.buttons.east.pressed ? pressedShrinkRadius : 0));
-        draw.static.arc(new Point(0, buttonRadius*2).add(buttonCenterRight), buttonRadius-(gamepads.output.buttons.south.pressed ? pressedShrinkRadius : 0));
-        draw.static.arc(new Point(-buttonRadius*2, 0).add(buttonCenterRight), buttonRadius-(gamepads.output.buttons.west.pressed ? pressedShrinkRadius : 0));
+        draw.static.arc(new Point(0, -buttonRadius*2).add(buttonCenterRight), buttonRadius-(gamepads.output.buttons.x.pressed ? pressedShrinkRadius : 0));
+        draw.static.arc(new Point(buttonRadius*2, 0).add(buttonCenterRight), buttonRadius-(gamepads.output.buttons.a.pressed ? pressedShrinkRadius : 0));
+        draw.static.arc(new Point(0, buttonRadius*2).add(buttonCenterRight), buttonRadius-(gamepads.output.buttons.b.pressed ? pressedShrinkRadius : 0));
+        draw.static.arc(new Point(-buttonRadius*2, 0).add(buttonCenterRight), buttonRadius-(gamepads.output.buttons.y.pressed ? pressedShrinkRadius : 0));
 
-        draw.static.setColor("212528");
-        //draw.static.setColor("dada34");
-        draw.static.arc(new Point(0, -buttonRadius*2).add(buttonCenterRight), buttonRadius-2-(gamepads.output.buttons.north.pressed ? pressedShrinkRadius : 0));
-        //draw.static.setColor("da3434");
-        draw.static.arc(new Point(buttonRadius*2, 0).add(buttonCenterRight), buttonRadius-2-(gamepads.output.buttons.east.pressed ? pressedShrinkRadius : 0));
-        //draw.static.setColor("34da34");
-        draw.static.arc(new Point(0, buttonRadius*2).add(buttonCenterRight), buttonRadius-2-(gamepads.output.buttons.south.pressed ? pressedShrinkRadius : 0));
-        //draw.static.setColor("3434da");
-        draw.static.arc(new Point(-buttonRadius*2, 0).add(buttonCenterRight), buttonRadius-2-(gamepads.output.buttons.west.pressed ? pressedShrinkRadius : 0));
+        let smaller = new Point(1, -1);
+        draw.static.setColor("dadada");
+        draw.static.text("X", new Point(-6, -buttonRadius*2+5).add(buttonCenterRight).add(gamepads.output.buttons.x.pressed ? smaller : new Point()), gamepads.output.buttons.x.pressed ? 10 : 12);
+        draw.static.text("A", new Point(buttonRadius*2-5, 5).add(buttonCenterRight).add(gamepads.output.buttons.a.pressed ? smaller : new Point()), gamepads.output.buttons.a.pressed ? 10 : 12);
+        draw.static.text("B", new Point(-5, buttonRadius*2+6).add(buttonCenterRight).add(gamepads.output.buttons.b.pressed ? smaller : new Point()), gamepads.output.buttons.b.pressed ? 10 : 12);
+        draw.static.text("Y", new Point(-buttonRadius*2-6, 6).add(buttonCenterRight).add(gamepads.output.buttons.y.pressed ? smaller : new Point()), gamepads.output.buttons.y.pressed ? 10 : 12);
 
         if (!gamepads.used.any) return;
         if (mouse.released) return; // return for now === only draw vgamepad (mouse pressed)
@@ -566,31 +563,29 @@
           dpadTimeouts.left.f = true;
         }
 
-        if (gamepads.output.buttons.north.pressed) {
-          if (!gamepads.actions.north)
-            homeScreen.buttons_north();
-          gamepads.actions.north = true;
-        } else gamepads.actions.north = false;
+        if (gamepads.output.buttons.y.pressed) {
+          if (!gamepads.actions.y)
+            homeScreen.buttons_y();
+          gamepads.actions.y = true;
+        } else gamepads.actions.y = false;
 
-        if (gamepads.output.buttons.south.pressed) {
-          if (!gamepads.actions.south)
-            homeScreen.buttons_south();
-          gamepads.actions.south = true;
-        } else gamepads.actions.south = false;
+        if (gamepads.output.buttons.a.pressed) {
+          if (!gamepads.actions.a)
+            homeScreen.buttons_a();
+          gamepads.actions.a = true;
+        } else gamepads.actions.a = false;
 
-        if (gamepads.output.buttons.east.pressed) {
-          if (!gamepads.actions.east)
-            homeScreen.buttons_east();
-            //if (homeScreen._currentGame === null) homeScreen._actionClick = (homeScreen._actionClick === 0 ? 0 : homeScreen._actionClick - 1);
-            //else homeScreen._currentGame.terminate();
-          gamepads.actions.east = true;
-        } else gamepads.actions.east = false;
+        if (gamepads.output.buttons.b.pressed) {
+          if (!gamepads.actions.b)
+            homeScreen.buttons_b();
+          gamepads.actions.b = true;
+        } else gamepads.actions.b = false;
 
-        if (gamepads.output.buttons.west.pressed) {
-          if (!gamepads.actions.west)
-            homeScreen.buttons_west();
-          gamepads.actions.west = true;
-        } else gamepads.actions.west = false;
+        if (gamepads.output.buttons.x.pressed) {
+          if (!gamepads.actions.x)
+            homeScreen.buttons_x();
+          gamepads.actions.x = true;
+        } else gamepads.actions.x = false;
 
         if (gamepads.output.buttons.pause.pressed) {
           if (!gamepads.actions.pause)
