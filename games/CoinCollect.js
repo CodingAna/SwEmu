@@ -14,11 +14,11 @@ export class CoinCollect {
     this._spawnCoinLoopTimeout = setTimeout(() => {}, 1);
   }
 
-  buttons_south = () => {
+  buttons_a = () => {
     if (this._player.life.dead) this.init(this._user);
   }
 
-  buttons_east = () => {
+  buttons_b = () => {
     if (this._player.started) this.init(this._user);
     else this.terminate();
   }

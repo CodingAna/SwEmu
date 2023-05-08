@@ -12,19 +12,19 @@ export class HighwayRun {
     this._spawnCarLoopTimeout = setTimeout(() => {}, 1);
   }
 
-  buttons_north = () => {
+  buttons_y = () => {
     if (this._player.life.dead)
       ;
     else if (this._player.started) this._player.position.lane--;
   }
 
-  buttons_south = () => {
+  buttons_a = () => {
     if (this._player.life.dead)
       this.init();
     else if (this._player.started) this._player.position.lane++;
   }
 
-  buttons_east = () => {
+  buttons_b = () => {
     if (this._player.started) this.init(this._user);
     else this.terminate();
   }

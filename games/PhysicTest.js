@@ -11,7 +11,7 @@ export class PhysicTest {
     this._player = {};
   }
 
-  buttons_east = () => {
+  buttons_b = () => {
     this.terminate();
   }
 
