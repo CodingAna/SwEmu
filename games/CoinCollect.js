@@ -131,6 +131,8 @@ export class CoinCollect {
   _moveToFuturePlayerPosition = (draw, gamepads, render) => {
     if (!gamepads.used.axes.left) return;
 
+    // check mode == 1 then normalize gamepad vector
+
     this._player.move = new Vector2D(gamepads.output.axes[0], gamepads.output.axes[1]).multiply(this._player.speed.current).multiply(render.deltaTime).multiply(100);
     this._player.position.future = this._player.position.current.add_NW(this._player.move.point());
 
@@ -174,6 +176,7 @@ export class CoinCollect {
   init = (user) => {
     this._terminated = false;
     this._user = user;
+    this._mode = 0;
     this._player = {
       life: {
         alive: true,
@@ -190,13 +193,13 @@ export class CoinCollect {
       speed: {
         current: 2.25,
         init: 2.25,
-        max: 3,
+        max: 3.2,
       },
       newHighscore: false,
       newHighscoreShowUntil: 0,
       coins: 0,
-      finalCoins: 40,
-      finalMultiplier: 1.8,
+      finalCoins: 55,
+      finalMultiplier: 2.15,
       started: false,
       paused: false,
     };
