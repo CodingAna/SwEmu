@@ -71,7 +71,7 @@ export class CoinCollect {
 
       let p2 = new Point(width, height).add(p1);
 
-      draw.dynamic.setColor("ffffff");
+      draw.dynamic.setColor("ef1a48");
       draw.dynamic.rect(p1, p2);
     }
   }
@@ -251,7 +251,7 @@ export class CoinCollect {
           draw.dynamic.setColor("b0b0b0");
           draw.dynamic.text("Press A to restart", new Point(this._swemu.screen.width / 2, this._swemu.screen.height / 2), 18, null, null, true);
 
-          draw.dynamic.setColor("ffa8a8");
+          draw.dynamic.setColor("ef1a48");
           let [p1, width, height, scrollSpeed] = this._player.life.killer;
           draw.dynamic.rect(p1, new Point(width, height).add(p1));
         }
