@@ -934,10 +934,36 @@ export class AddOnStore {
     this.terminate();
   }
 
+  _postRequest = (route, obj, callback) => {
+    if (route === undefined || route === null) route = "/";
+    if (obj === undefined || obj === null) obj = {};
+    if (callback === undefined || callback === null) callback = () => {};
+
+    fetch("http://localhost:12321" + route, {
+      method: "post",
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(obj)
+    }).then((response) => {
+      callback(response);
+    });
+  }
+
   init = (internals) => {
     this._terminated = false;
     this._paused = false;
     this._internals = internals;
+
+    /*
+    // TODO: Add request to download game content.
+    //       "Import" loaded game. How? ==> https://stackoverflow.com/questions/21294/dynamically-load-a-javascript-file
+    //       Move js content from index to custom OS class and give apps access to class for easier access (i.e. _postRequest in OS, _loadFile to sideload)
+    this._postRequest("/store", {}, (resp) => {
+      console.log(resp);
+    });
+    */
 
     return this;
   }
