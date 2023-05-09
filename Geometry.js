@@ -22,7 +22,7 @@ export class Point {
   }
 
   add = (point) => {
-    if (!(point instanceof Point)) return;
+    if (!(point instanceof Point) && !(point instanceof Vector2D)) return;
     this.x += point.x;
     this.y += point.y;
     return this;
