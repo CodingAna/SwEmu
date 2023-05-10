@@ -52,12 +52,12 @@ export class Pong {
   }
 
   _updatePlayers = (draw, gamepads, render) => {
-    this._player.y.left += gamepads.output[0].axes[1] * render.deltaTime * 100 * this._player.speed;
+    this._player.y.left += gamepads.output.axes[1] * render.deltaTime * 100 * this._player.speed;
     if (this._player.y.left < 0) this._player.y.left = 0;
     else if (this._player.y.left > this._swemu.screen.height - this._player.model.y) this._player.y.left = this._swemu.screen.height - this._player.model.y;
 
     // One Controller: output[0].axes[3] OR Two Controller: output[1].axes[1]
-    let cdata = this._controller_mode === 0 ? gamepads.output[0].axes[3] : gamepads.output[1].axes[1]
+    let cdata = this._controller_mode === 0 ? gamepads.output.axes[3] : gamepads.output[1].axes[1]
     this._player.y.right += cdata * render.deltaTime * 100 * this._player.speed;
     if (this._player.y.right < 0) this._player.y.right = 0;
     else if (this._player.y.right > this._swemu.screen.height - this._player.model.y) this._player.y.right = this._swemu.screen.height - this._player.model.y;
@@ -97,8 +97,8 @@ export class Pong {
       if (this._ball.point.y + this._ball.radius >= this._player.y.right && this._ball.point.y - this._ball.radius <= this._player.y.right + this._player.model.y) {
         this._ball.point.x = this._swemu.screen.width - this._player.xOffset - this._player.model.x;
         this._ball.move.x *= -1;
-        this._ball.move.y += gamepads.output[0].axes[3] * 0.5;
-        //this._ball.move.y *= 1 + gamepads.output[0].axes[3];
+        this._ball.move.y += gamepads.output.axes[3] * 0.5;
+        //this._ball.move.y *= 1 + gamepads.output.axes[3];
         this._updateBall(draw, gamepads, render, true, false);
       }
     }
@@ -108,8 +108,8 @@ export class Pong {
       if (this._ball.point.y + this._ball.radius >= this._player.y.left && this._ball.point.y - this._ball.radius <= this._player.y.left + this._player.model.y) {
         this._ball.point.x = this._player.xOffset + this._player.model.x;
         this._ball.move.x *= -1;
-        this._ball.move.y += gamepads.output[0].axes[1] * 0.5;
-        //this._ball.move.y *= 1 + gamepads.output[0].axes[1];
+        this._ball.move.y += gamepads.output.axes[1] * 0.5;
+        //this._ball.move.y *= 1 + gamepads.output.axes[1];
         this._updateBall(draw, gamepads, render, true, false);
       }
     }
