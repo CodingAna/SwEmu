@@ -56,7 +56,9 @@ export class Pong {
     if (this._player.y.left < 0) this._player.y.left = 0;
     else if (this._player.y.left > this._swemu.screen.height - this._player.model.y) this._player.y.left = this._swemu.screen.height - this._player.model.y;
 
-    this._player.y.right += gamepads.output.axes[3] * render.deltaTime * 100 * this._player.speed;
+    // One Controller: output[0].axes[3] OR Two Controller: output[1].axes[1]
+    let cdata = this._controller_mode === 0 ? gamepads.output.axes[3] : gamepads.output[1].axes[1]
+    this._player.y.right += cdata * render.deltaTime * 100 * this._player.speed;
     if (this._player.y.right < 0) this._player.y.right = 0;
     else if (this._player.y.right > this._swemu.screen.height - this._player.model.y) this._player.y.right = this._swemu.screen.height - this._player.model.y;
   }
@@ -122,6 +124,7 @@ export class Pong {
   init = (user) => {
     this._terminated = false;
     this._user = user;
+    this._controller_mode = 0;
     this._player = {
       xOffset: 10,
       model: new Point(15, 50),
