@@ -133,7 +133,7 @@ export class CoinCollect {
 
     // check mode == 1 then normalize gamepad vector
 
-    this._player.move = new Vector2D(gamepads.output.axes[0], gamepads.output.axes[1]).multiply(this._player.speed.current).multiply(render.deltaTime).multiply(100);
+    this._player.move = new Vector2D(gamepads.output[0].axes[0], gamepads.output[0].axes[1]).multiply(this._player.speed.current).multiply(render.deltaTime).multiply(100);
     this._player.position.future = this._player.position.current.add_NW(this._player.move.point());
 
     if (this._player.position.future.x - this._player.radius >= 0 && this._player.position.future.x + this._player.radius <= this._swemu.screen.width) this._player.position.current.x = this._player.position.future.x;
@@ -152,7 +152,7 @@ export class CoinCollect {
 
     if (gamepads.used.axes.left) {
       draw.dynamic.setColor("ff5522");
-      draw.dynamic.line(this._player.position.current, new Vector2D(gamepads.output.axes[0], gamepads.output.axes[1]).multiply(100).point().add(this._player.position.current));
+      draw.dynamic.line(this._player.position.current, new Vector2D(gamepads.output[0].axes[0], gamepads.output[0].axes[1]).multiply(100).point().add(this._player.position.current));
     }
   }
 

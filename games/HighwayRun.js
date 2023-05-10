@@ -135,13 +135,13 @@ export class HighwayRun {
   _updatePlayerPosition = (draw, gamepads, render) => {
     if (!gamepads.used.axes.left && !gamepads.used.buttons) return;
 
-    this._player.move = new Vector2D(gamepads.output.axes[2], 0).multiply(this._player.speed.current).multiply(render.deltaTime).multiply(100);
+    this._player.move = new Vector2D(gamepads.output[0].axes[2], 0).multiply(this._player.speed.current).multiply(render.deltaTime).multiply(100);
     //this._player.position.future.x = this._player.position.current.add_NW(this._player.move.point()).x;
     this._player.position.future.x += this._player.move.x;
 
     // Commented code is for joystick up/down control, kinda funky tho => use of buttons (Y north, A south) instead (in render)
     /*
-    let gpOx = gamepads.output.axes[1];
+    let gpOx = gamepads.output[0].axes[1];
     let gpOxTresh = 0.35;
     let swipeHoldTime = 0.18;
     if (MyMath.abs(gpOx) < gpOxTresh / 2 || Date.now() - this._gamepad_swipe_t >= swipeHoldTime * 1000) {
@@ -199,7 +199,7 @@ export class HighwayRun {
 
     if (gamepads.used.axes.right) {
       draw.dynamic.setColor("ff5522");
-      draw.dynamic.line(this._player.position.current, new Vector2D(gamepads.output.axes[2], 0).multiply(100).point().add(this._player.position.current));
+      draw.dynamic.line(this._player.position.current, new Vector2D(gamepads.output[0].axes[2], 0).multiply(100).point().add(this._player.position.current));
     }
   }
 

@@ -169,7 +169,7 @@ export class HomeScreen {
       return;
     }
 
-    let gpOx = gamepads.output.axes[0];
+    let gpOx = gamepads.output[0].axes[0];
     let gpOxTresh = 0.6;
     if (MyMath.abs(gpOx) < gpOxTresh / 2) this._gamepad_swiped_x = false; // Make swipe available again after being below a certain threshold
     if (!this._gamepad_swiped_x) {
@@ -183,7 +183,7 @@ export class HomeScreen {
     }
 
     if (!this._gamepad_swiped_x) {
-      let gpOy = gamepads.output.axes[1];
+      let gpOy = gamepads.output[0].axes[1];
       let gpOyTresh = 0.6;
       if (MyMath.abs(gpOy) < gpOyTresh / 2) this._gamepad_swiped_y = false; // Make swipe available again after being below a certain threshold
       if (!this._gamepad_swiped_y) {

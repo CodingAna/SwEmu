@@ -30,7 +30,7 @@ export class PhysicTest {
   _moveToFuturePlayerPosition = (draw, gamepads, render) => {
     let lastAirActionDiff = (Date.now() - this._player.lastAirAction) + 300;
 
-    this._player.move.x = gamepads.output.axes[0] * this._player.speed.current * render.deltaTime * 100;
+    this._player.move.x = gamepads.output[0].axes[0] * this._player.speed.current * render.deltaTime * 100;
     this._player.move.y += 9.81 * (MyMath.exp(lastAirActionDiff / 1000, 2)) * render.deltaTime;
 
     // Clamp vertical upwards (jump) velocity
@@ -69,7 +69,7 @@ export class PhysicTest {
 
     if (gamepads.used.axes.left) {
       draw.dynamic.setColor("ff5522");
-      draw.dynamic.line(this._player.position.current, new Vector2D(gamepads.output.axes[0], gamepads.output.axes[1]).multiply(100).point().add(this._player.position.current));
+      draw.dynamic.line(this._player.position.current, new Vector2D(gamepads.output[0].axes[0], gamepads.output[0].axes[1]).multiply(100).point().add(this._player.position.current));
     }
   }
 

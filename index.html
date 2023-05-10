@@ -196,7 +196,7 @@
           renderRadius: 120
         },
         real: {},
-        output: {
+        output: [{
           axes: [0, 0, 0, 0],
           buttons: {
             a: {pressed: false},
@@ -211,7 +211,7 @@
               down: {pressed: false},
             }
           },
-        },
+        }],
         actions: {
           a: false,
           b: false,
@@ -276,8 +276,25 @@
       }
 
       let gamepadHandler = (event, connecting) => {
-        if (connecting) gamepads.real[event.gamepad.index] = navigator.getGamepads()[event.gamepad.index];
-        else delete gamepads.real[event.gamepad.index];
+        if (connecting) {
+          gamepads.real[event.gamepad.index] = navigator.getGamepads()[event.gamepad.index];
+          gamepads.output[event.gamepad.index] = {
+            axes: [0, 0, 0, 0],
+            buttons: {
+              a: {pressed: false},
+              b: {pressed: false},
+              x: {pressed: false},
+              y: {pressed: false},
+              pause: {pressed: false},
+              dpad: {
+                up: {pressed: false},
+                right: {pressed: false},
+                left: {pressed: false},
+                down: {pressed: false},
+              }
+            },
+          };
+        } else delete gamepads.real[event.gamepad.index];
       }
       let mouseMoveHandler = (event) => {
         if (render.input.verbose && !render.input.updated) {
@@ -369,51 +386,56 @@
         gamepads.virtual.axes[0] = gamepads.virtual.dragVector.x;
         gamepads.virtual.axes[1] = gamepads.virtual.dragVector.y;
 
-        gamepads.output.axes = gamepads.virtual.axes;
+        gamepads.output[0].axes = gamepads.virtual.axes;
       }
       let getGamepadData = () => {
-        let gamepad = navigator.getGamepads()[0];
-        if (gamepad === undefined || gamepad === null) return;
+        // TODO: Iterate through all available gamepads.
+        let gps = navigator.getGamepads();
+        for (let g=0; g<gps.length; g++) {
+          //let gamepad = navigator.getGamepads()[0];
+          let gamepad = gps[g];
+          if (gamepad === undefined || gamepad === null) continue; // return;
 
-        if (render.input.verbose && !render.input.updated) {
-          render.input.updated = true;
-          render.input.now = Date.now();
+          if (render.input.verbose && !render.input.updated) {
+            render.input.updated = true;
+            render.input.now = Date.now();
+          }
+
+          let deadzone = 0.065;
+          for (let i=0; i<gamepad.axes.length; i+=2)
+            if (MyMath.abs(gamepad.axes[i]) >= deadzone || MyMath.abs(gamepad.axes[i+1]) >= deadzone) {
+              let v = new Vector2D(gamepad.axes[i], gamepad.axes[i+1]).normalize();
+              let s = new Vector2D(gamepad.axes[i], gamepad.axes[i+1]).length();
+              s = MyMath.clamp(s, 0, 1);
+
+              gamepads.used.any = true;
+              gamepads.used.axes.any = true;
+              if (i === 0) gamepads.used.axes.left = true;
+              if (i === 2) gamepads.used.axes.right = true;
+
+              gamepads.output[g].axes[i] = v.x * s;
+              gamepads.output[g].axes[i+1] = v.y * s;
+            }
+
+          let gobl = Object.entries(gamepads.output[g].buttons).length;
+          for (let i=0; i<gamepad.buttons.length; i++)
+            if (gamepad.buttons[i].pressed || (i < gobl && gamepad.buttons[i].pressed !== Object.entries(gamepads.output[g].buttons)[i][1].pressed)) {
+              gamepads.used.any = true;
+              gamepads.used.buttons = true;
+            }
+
+          gamepads.output[g].buttons.a = gamepad.buttons[0];
+          gamepads.output[g].buttons.b = gamepad.buttons[1];
+          gamepads.output[g].buttons.x = gamepad.buttons[2];
+          gamepads.output[g].buttons.y = gamepad.buttons[3];
+
+          gamepads.output[g].buttons.pause = gamepad.buttons[9];
+
+          gamepads.output[g].buttons.dpad.up = gamepad.buttons[12];
+          gamepads.output[g].buttons.dpad.right = gamepad.buttons[15];
+          gamepads.output[g].buttons.dpad.left = gamepad.buttons[14];
+          gamepads.output[g].buttons.dpad.down = gamepad.buttons[13];
         }
-
-        let deadzone = 0.065;
-        for (let i=0; i<gamepad.axes.length; i+=2)
-          if (MyMath.abs(gamepad.axes[i]) >= deadzone || MyMath.abs(gamepad.axes[i+1]) >= deadzone) {
-            let v = new Vector2D(gamepad.axes[i], gamepad.axes[i+1]).normalize();
-            let s = new Vector2D(gamepad.axes[i], gamepad.axes[i+1]).length();
-            s = MyMath.clamp(s, 0, 1);
-
-            gamepads.used.any = true;
-            gamepads.used.axes.any = true;
-            if (i === 0) gamepads.used.axes.left = true;
-            if (i === 2) gamepads.used.axes.right = true;
-
-            gamepads.output.axes[i] = v.x * s;
-            gamepads.output.axes[i+1] = v.y * s;
-          }
-
-        let gobl = Object.entries(gamepads.output.buttons).length;
-        for (let i=0; i<gamepad.buttons.length; i++)
-          if (gamepad.buttons[i].pressed || (i < gobl && gamepad.buttons[i].pressed !== Object.entries(gamepads.output.buttons)[i][1].pressed)) {
-            gamepads.used.any = true;
-            gamepads.used.buttons = true;
-          }
-
-        gamepads.output.buttons.a = gamepad.buttons[0];
-        gamepads.output.buttons.b = gamepad.buttons[1];
-        gamepads.output.buttons.x = gamepad.buttons[2];
-        gamepads.output.buttons.y = gamepad.buttons[3];
-
-        gamepads.output.buttons.pause = gamepad.buttons[9];
-
-        gamepads.output.buttons.dpad.up = gamepad.buttons[12];
-        gamepads.output.buttons.dpad.right = gamepad.buttons[15];
-        gamepads.output.buttons.dpad.left = gamepad.buttons[14];
-        gamepads.output.buttons.dpad.down = gamepad.buttons[13];
       }
       let renderGamepad = () => {
         let joyStickRadius = swemu.joycon.width/5;
@@ -422,7 +444,7 @@
 
         // Left JoyCon
         let joyStickCenterLeft = new Point((swemu.joycon.width/2), (swemu.joycon.height/4));
-        let joyStickPositionLeft = new Point(joyStickRadius*0.8*gamepads.output.axes[0], joyStickRadius*0.8*gamepads.output.axes[1]).add(joyStickCenterLeft);
+        let joyStickPositionLeft = new Point(joyStickRadius*0.8*gamepads.output[0].axes[0], joyStickRadius*0.8*gamepads.output[0].axes[1]).add(joyStickCenterLeft);
 
         draw.static.setColor("00c3e3");
         draw.static.rect(new Point(-joyStickRadius*2, -joyStickRadius*2).add(joyStickCenterLeft), new Point(joyStickRadius*2, joyStickRadius*2).add(joyStickCenterLeft));
@@ -440,14 +462,14 @@
         draw.static.rect(new Point(-buttonRadius*3, -buttonRadius*3).add(buttonCenterLeft), new Point(buttonRadius*3, buttonRadius*3).add(buttonCenterLeft));
 
         draw.static.setColor("212528");
-        draw.static.arc(new Point(0, -buttonRadius*2).add(buttonCenterLeft), buttonRadius-(gamepads.output.buttons.dpad.up.pressed ? pressedShrinkRadius : 0));
-        draw.static.arc(new Point(buttonRadius*2, 0).add(buttonCenterLeft), buttonRadius-(gamepads.output.buttons.dpad.right.pressed ? pressedShrinkRadius : 0));
-        draw.static.arc(new Point(0, buttonRadius*2).add(buttonCenterLeft), buttonRadius-(gamepads.output.buttons.dpad.down.pressed ? pressedShrinkRadius : 0));
-        draw.static.arc(new Point(-buttonRadius*2, 0).add(buttonCenterLeft), buttonRadius-(gamepads.output.buttons.dpad.left.pressed ? pressedShrinkRadius : 0));
+        draw.static.arc(new Point(0, -buttonRadius*2).add(buttonCenterLeft), buttonRadius-(gamepads.output[0].buttons.dpad.up.pressed ? pressedShrinkRadius : 0));
+        draw.static.arc(new Point(buttonRadius*2, 0).add(buttonCenterLeft), buttonRadius-(gamepads.output[0].buttons.dpad.right.pressed ? pressedShrinkRadius : 0));
+        draw.static.arc(new Point(0, buttonRadius*2).add(buttonCenterLeft), buttonRadius-(gamepads.output[0].buttons.dpad.down.pressed ? pressedShrinkRadius : 0));
+        draw.static.arc(new Point(-buttonRadius*2, 0).add(buttonCenterLeft), buttonRadius-(gamepads.output[0].buttons.dpad.left.pressed ? pressedShrinkRadius : 0));
 
         // Right JoyCon
         let joyStickCenterRight = new Point((swemu.joycon.width/2), (swemu.joycon.height/2)).add(points.redJoyConStart);
-        let joyStickPositionRight = new Point(joyStickRadius*0.8*gamepads.output.axes[2], joyStickRadius*0.8*gamepads.output.axes[3]).add(joyStickCenterRight);
+        let joyStickPositionRight = new Point(joyStickRadius*0.8*gamepads.output[0].axes[2], joyStickRadius*0.8*gamepads.output[0].axes[3]).add(joyStickCenterRight);
 
         draw.static.setColor("e60012");
         draw.static.rect(new Point(-joyStickRadius*2, -joyStickRadius*2).add(joyStickCenterRight), new Point(joyStickRadius*2, joyStickRadius*2).add(joyStickCenterRight));
@@ -465,17 +487,17 @@
         draw.static.rect(new Point(-buttonRadius*3, -buttonRadius*3).add(buttonCenterRight), new Point(buttonRadius*3, buttonRadius*3).add(buttonCenterRight));
 
         draw.static.setColor("212528");
-        draw.static.arc(new Point(0, -buttonRadius*2).add(buttonCenterRight), buttonRadius-(gamepads.output.buttons.x.pressed ? pressedShrinkRadius : 0));
-        draw.static.arc(new Point(buttonRadius*2, 0).add(buttonCenterRight), buttonRadius-(gamepads.output.buttons.a.pressed ? pressedShrinkRadius : 0));
-        draw.static.arc(new Point(0, buttonRadius*2).add(buttonCenterRight), buttonRadius-(gamepads.output.buttons.b.pressed ? pressedShrinkRadius : 0));
-        draw.static.arc(new Point(-buttonRadius*2, 0).add(buttonCenterRight), buttonRadius-(gamepads.output.buttons.y.pressed ? pressedShrinkRadius : 0));
+        draw.static.arc(new Point(0, -buttonRadius*2).add(buttonCenterRight), buttonRadius-(gamepads.output[0].buttons.x.pressed ? pressedShrinkRadius : 0));
+        draw.static.arc(new Point(buttonRadius*2, 0).add(buttonCenterRight), buttonRadius-(gamepads.output[0].buttons.a.pressed ? pressedShrinkRadius : 0));
+        draw.static.arc(new Point(0, buttonRadius*2).add(buttonCenterRight), buttonRadius-(gamepads.output[0].buttons.b.pressed ? pressedShrinkRadius : 0));
+        draw.static.arc(new Point(-buttonRadius*2, 0).add(buttonCenterRight), buttonRadius-(gamepads.output[0].buttons.y.pressed ? pressedShrinkRadius : 0));
 
         let smaller = new Point(1, -1);
         draw.static.setColor("dadada");
-        draw.static.text("X", new Point(-6, -buttonRadius*2+5).add(buttonCenterRight).add(gamepads.output.buttons.x.pressed ? smaller : new Point()), gamepads.output.buttons.x.pressed ? 10 : 12);
-        draw.static.text("A", new Point(buttonRadius*2-5, 5).add(buttonCenterRight).add(gamepads.output.buttons.a.pressed ? smaller : new Point()), gamepads.output.buttons.a.pressed ? 10 : 12);
-        draw.static.text("B", new Point(-5, buttonRadius*2+6).add(buttonCenterRight).add(gamepads.output.buttons.b.pressed ? smaller : new Point()), gamepads.output.buttons.b.pressed ? 10 : 12);
-        draw.static.text("Y", new Point(-buttonRadius*2-6, 6).add(buttonCenterRight).add(gamepads.output.buttons.y.pressed ? smaller : new Point()), gamepads.output.buttons.y.pressed ? 10 : 12);
+        draw.static.text("X", new Point(-6, -buttonRadius*2+5).add(buttonCenterRight).add(gamepads.output[0].buttons.x.pressed ? smaller : new Point()), gamepads.output[0].buttons.x.pressed ? 10 : 12);
+        draw.static.text("A", new Point(buttonRadius*2-5, 5).add(buttonCenterRight).add(gamepads.output[0].buttons.a.pressed ? smaller : new Point()), gamepads.output[0].buttons.a.pressed ? 10 : 12);
+        draw.static.text("B", new Point(-5, buttonRadius*2+6).add(buttonCenterRight).add(gamepads.output[0].buttons.b.pressed ? smaller : new Point()), gamepads.output[0].buttons.b.pressed ? 10 : 12);
+        draw.static.text("Y", new Point(-buttonRadius*2-6, 6).add(buttonCenterRight).add(gamepads.output[0].buttons.y.pressed ? smaller : new Point()), gamepads.output[0].buttons.y.pressed ? 10 : 12);
 
         if (!gamepads.used.any) return;
         if (mouse.released) return; // return for now === only draw vgamepad (mouse pressed)
@@ -484,7 +506,7 @@
         draw.vgamepad.arc(mouse.pressedPosition, gamepads.virtual.renderRadius, false);
         draw.vgamepad.arc(mouse.pressedPosition, gamepads.virtual.renderRadius / 20, false);
 
-        draw.vgamepad.arc(new Point(gamepads.output.axes[0] * gamepads.virtual.renderRadius, gamepads.output.axes[1] * gamepads.virtual.renderRadius).add(mouse.pressedPosition), gamepads.virtual.renderRadius / 3, false);
+        draw.vgamepad.arc(new Point(gamepads.output[0].axes[0] * gamepads.virtual.renderRadius, gamepads.output[0].axes[1] * gamepads.virtual.renderRadius).add(mouse.pressedPosition), gamepads.virtual.renderRadius / 3, false);
       }
 
       // Init listeners
@@ -509,14 +531,14 @@
 
         // Reset .used state every update and let getVirtualGamepadData and getGamepadData update the value manually
         gamepads.used = {any: false, axes: {any: false, left: false, right: false}, buttons: false};
-        gamepads.output.axes = [0, 0, 0, 0];
+        gamepads.output[0].axes = [0, 0, 0, 0];
         getVirtualGamepadData();
         getGamepadData(); // Overwrite virtual data if this exists
         renderGamepad();
 
         getZoomInteraction();
 
-        if (gamepads.output.buttons.dpad.up.pressed) {
+        if (gamepads.output[0].buttons.dpad.up.pressed) {
           if (!gamepads.actions.dpad.up) {
             let td = dpadTimeoutDuration.s;
             if (dpadTimeouts.up.f) {
@@ -533,7 +555,7 @@
           dpadTimeouts.up.f = true;
         }
 
-        if (gamepads.output.buttons.dpad.down.pressed) {
+        if (gamepads.output[0].buttons.dpad.down.pressed) {
           if (!gamepads.actions.dpad.down) {
             let td = dpadTimeoutDuration.s;
             if (dpadTimeouts.down.f) {
@@ -550,7 +572,7 @@
           dpadTimeouts.down.f = true;
         }
 
-        if (gamepads.output.buttons.dpad.right.pressed) {
+        if (gamepads.output[0].buttons.dpad.right.pressed) {
           if (!gamepads.actions.dpad.right) {
             let td = dpadTimeoutDuration.s;
             if (dpadTimeouts.right.f) {
@@ -567,7 +589,7 @@
           dpadTimeouts.right.f = true;
         }
 
-        if (gamepads.output.buttons.dpad.left.pressed) {
+        if (gamepads.output[0].buttons.dpad.left.pressed) {
           if (!gamepads.actions.dpad.left) {
             let td = dpadTimeoutDuration.s;
             if (dpadTimeouts.left.f) {
@@ -584,31 +606,31 @@
           dpadTimeouts.left.f = true;
         }
 
-        if (gamepads.output.buttons.y.pressed) {
+        if (gamepads.output[0].buttons.y.pressed) {
           if (!gamepads.actions.y)
             homeScreen.buttons_y();
           gamepads.actions.y = true;
         } else gamepads.actions.y = false;
 
-        if (gamepads.output.buttons.a.pressed) {
+        if (gamepads.output[0].buttons.a.pressed) {
           if (!gamepads.actions.a)
             homeScreen.buttons_a();
           gamepads.actions.a = true;
         } else gamepads.actions.a = false;
 
-        if (gamepads.output.buttons.b.pressed) {
+        if (gamepads.output[0].buttons.b.pressed) {
           if (!gamepads.actions.b)
             homeScreen.buttons_b();
           gamepads.actions.b = true;
         } else gamepads.actions.b = false;
 
-        if (gamepads.output.buttons.x.pressed) {
+        if (gamepads.output[0].buttons.x.pressed) {
           if (!gamepads.actions.x)
             homeScreen.buttons_x();
           gamepads.actions.x = true;
         } else gamepads.actions.x = false;
 
-        if (gamepads.output.buttons.pause.pressed) {
+        if (gamepads.output[0].buttons.pause.pressed) {
           if (!gamepads.actions.pause)
             homeScreen.buttons_pause();
           gamepads.actions.pause = true;
