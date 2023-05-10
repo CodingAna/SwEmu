@@ -8,15 +8,14 @@
   </head>
   <body class="disable-select">
     <div>
-      <canvas class="disable-select" id="canvas_zoom" width="100vh" height="100vh"></canvas>
       <canvas class="disable-select" id="canvas_static" width="100vh" height="100vh"></canvas>
       <canvas class="disable-select" id="canvas_dynamic" width="100vh" height="100vh" style="background-color: black; border-radius: 10px;"></canvas>
-      <canvas class="disable-select" id="canvas_vgamepad" width="100vh" height="100vh"></canvas>
     </div>
     <script type="module">
       import { CustomDraw } from "./CustomDraw.js";
       import { Point, Vector2D } from "./Geometry.js";
       import { MyMath } from "./MyMath.js";
+      import { GamepadDummy } from "./GamepadDummy.js";
       import { setCookie, getCookie } from "./Cookies.js";
       // Import Games
       import { CoinCollect } from "./games/CoinCollect.js";
@@ -26,50 +25,36 @@
       // Import SystemApplications
       import { HomeScreen, NewsApp, AddOnStore, Gallery, ControllerManager, Settings } from "./SystemApplications.js";
 
-      // TODO: Change "type" from Button to a Slider (similar to a SeekBar)
-      let zoomPressed = false;
-      let zoomf = parseFloat(getCookie("zoom"));
-      let totalZoom = [1.0, 1.5, 2.0].includes(zoomf) ? zoomf : 1;
+      // https://stackoverflow.com/questions/122102/what-is-the-most-efficient-way-to-deep-clone-an-object-in-javascript
+      let clone = (obj) => {
+        return JSON.parse(JSON.stringify(obj));
+      }
 
       let swemu = {
         screen: {
-          width: 630*totalZoom,
-          height: 360*totalZoom,
-          borderWidth: 50*totalZoom,
-          borderHeight: 20*totalZoom,
+          width: 630,
+          height: 360,
+          borderWidth: 50,
+          borderHeight: 20,
         },
         joycon: {
-          width: 130*totalZoom,
-          height: 400*totalZoom,
+          width: 130,
+          height: 400,
         }
       };
 
       let canvas = {
-        zoom: document.getElementById("canvas_zoom"),
         static: document.getElementById("canvas_static"),
         dynamic: document.getElementById("canvas_dynamic"),
-        vgamepad: document.getElementById("canvas_vgamepad"),
       };
       let context = {
-        zoom: canvas.zoom.getContext("2d"),
         static: canvas.static.getContext("2d"),
         dynamic: canvas.dynamic.getContext("2d"),
-        vgamepad: canvas.vgamepad.getContext("2d"),
       };
       let draw = {
-        zoom: new CustomDraw(canvas.zoom, context.zoom),
         static: new CustomDraw(canvas.static, context.static),
         dynamic: new CustomDraw(canvas.dynamic, context.dynamic),
-        vgamepad: new CustomDraw(canvas.vgamepad, context.vgamepad),
       };
-
-      // Zoom
-      canvas.zoom.width = 400;
-      canvas.zoom.height = 65;
-
-      canvas.zoom.style.position = "absolute";
-      canvas.zoom.style.left = "0px";
-      canvas.zoom.style.top = "0px";
 
       // Static
       canvas.static.width = 2*(swemu.joycon.width + swemu.screen.borderWidth) + swemu.screen.width;
@@ -86,14 +71,6 @@
       canvas.dynamic.style.position = "absolute";
       canvas.dynamic.style.left = (window.innerWidth / 2) - (swemu.screen.width / 2) + "px";
       canvas.dynamic.style.top = (window.innerHeight / 2) - (swemu.screen.height / 2)+ "px";
-
-      // vGamepad
-      canvas.vgamepad.width = window.innerWidth;
-      canvas.vgamepad.height = window.innerHeight;
-
-      canvas.vgamepad.style.position = "absolute";
-      canvas.vgamepad.style.left = "0px";
-      canvas.vgamepad.style.top = "0px";
 
       let points = {
         zero: new Point(),
@@ -130,9 +107,6 @@
             )
           )
         ),
-
-        zoomInteractiveFieldStart: new Point(),
-        zoomInteractiveFieldEnd: new Point(400, 65),
       };
 
       let internals = {
@@ -158,15 +132,9 @@
           },
           external: {
             coinCollect: CoinCollect,
-            //coinCollect9: CoinCollect,
-            //coinCollect8: CoinCollect,
-            physicTest: PhysicTest,
-            highwayRun: HighwayRun,
+            // physicTest: PhysicTest,
+            // highwayRun: HighwayRun,
             pong: Pong,
-            //coinCollect2: CoinCollect,
-            //highwayRun2: HighwayRun,
-            //coinCollect3: CoinCollect,
-            //physicTest2: PhysicTest,
           }
         },
         settings: {
@@ -174,65 +142,13 @@
         }
       }
 
-      let mouse = {
-        position: new Point(),
-        pressed: false,
-        pressedPosition: new Point(),
-        released: true,
-        releasedPosition: new Point(),
-      };
       let gamepads = {
-        used: {
-          any: false,
-          axes: {
-            any: false,
-            left: false,
-            right: false,
-          },
-          buttons: false,
-        },
-        virtual: {
-          axes: [0, 0],
-          renderRadius: 120
-        },
-        real: {},
-        output: {
-          axes: [0, 0, 0, 0],
-          buttons: {
-            a: {pressed: false},
-            b: {pressed: false},
-            x: {pressed: false},
-            y: {pressed: false},
-            pause: {pressed: false},
-            dpad: {
-              up: {pressed: false},
-              right: {pressed: false},
-              left: {pressed: false},
-              down: {pressed: false},
-            }
-          },
-        },
-        actions: {
-          a: false,
-          b: false,
-          x: false,
-          y: false,
-          pause: false,
-          dpad: {
-            up: false,
-            right: false,
-            left: false,
-            down: false,
-          }
-        }
+        player1: new GamepadDummy(),
+        player2: new GamepadDummy(),
+        player3: new GamepadDummy(),
+        player4: new GamepadDummy()
       };
-      let dpadTimeoutDuration = {f: 425, s: 145}; // f=first, s=second(and all following)
-      let dpadTimeouts = {
-        up: {f: true, t: setTimeout(() => {}, 1)}, // f=first(-bool), t=timeout(-object)
-        down: {f: true, t: setTimeout(() => {}, 1)},
-        right: {f: true, t: setTimeout(() => {}, 1)},
-        left: {f: true, t: setTimeout(() => {}, 1)},
-      }
+
       let render = {
         deltaTime: Date.now(),
         now: Date.now(),
@@ -277,161 +193,70 @@
 
       let gamepadHandler = (event, connecting) => {
         if (connecting) {
-          gamepads.real[event.gamepad.index] = navigator.getGamepads()[event.gamepad.index];
-          gamepads.output[event.gamepad.index] = {
-            axes: [0, 0, 0, 0],
-            buttons: {
-              a: {pressed: false},
-              b: {pressed: false},
-              x: {pressed: false},
-              y: {pressed: false},
-              pause: {pressed: false},
-              dpad: {
-                up: {pressed: false},
-                right: {pressed: false},
-                left: {pressed: false},
-                down: {pressed: false},
-              }
-            },
-          };
-        } else delete gamepads.real[event.gamepad.index];
-      }
-      let mouseMoveHandler = (event) => {
-        if (render.input.verbose && !render.input.updated) {
-          render.input.updated = true;
-          render.input.now = Date.now();
-        }
-
-        var eventDoc, doc, body;
-
-        event = event || window.event;
-
-        if (event.pageX == null && event.clientX != null) {
-            eventDoc = (event.target && event.target.ownerDocument) || document;
-            doc = eventDoc.documentElement;
-            body = eventDoc.body;
-
-            event.pageX = event.clientX + (doc && doc.scrollLeft || body && body.scrollLeft || 0) - (doc && doc.clientLeft || body && body.clientLeft || 0);
-            event.pageY = event.clientY + (doc && doc.scrollTop  || body && body.scrollTop  || 0) - (doc && doc.clientTop  || body && body.clientTop  || 0);
-        }
-
-        mouse.position = new Point(event.pageX, event.pageY);
-      }
-      let mouseClickHandler = (event) => {
-        mouseMoveHandler(event); // Refresh mouse position before updating
-
-        mouse.pressed = event.type === "mousedown";
-        mouse.released = event.type === "mouseup";
-        if (event.type === "mousedown") mouse.pressedPosition = mouse.position.valueOf();
-        else if (event.type === "mouseup") mouse.releasedPosition = mouse.position.valueOf();
-      }
-
-      let getZoomInteraction = () => {
-        if (mouse.released) {
-          zoomPressed = false;
-          return;
-        }
-        if (mouse.pressedPosition.x < points.zoomInteractiveFieldStart.x || mouse.pressedPosition.y < points.zoomInteractiveFieldStart.y) return;
-        if (mouse.pressedPosition.x > points.zoomInteractiveFieldEnd.x || mouse.pressedPosition.y > points.zoomInteractiveFieldEnd.y) return;
-        if (zoomPressed) return;
-        zoomPressed = true;
-
-        let localPressedPosition = new Point(mouse.pressedPosition.x - points.zoomInteractiveFieldStart.x, mouse.pressedPosition.y - points.zoomInteractiveFieldStart.y);
-
-        // TODO: remove buttonCount in the future
-        let buttonCount = 3;
-        let buttonWidth = (points.zoomInteractiveFieldEnd.x - points.zoomInteractiveFieldStart.x) / buttonCount;
-        let pressedButtonId = parseInt(localPressedPosition.x / buttonWidth);
-
-        setCookie("zoom", ["1.0", "1.5", "2.0"][pressedButtonId], 7);
-        location.reload();
-      }
-      let renderZoomInteraction = () => {
-        let buttonCount = 3;
-        let buttonWidth = (points.zoomInteractiveFieldEnd.x - points.zoomInteractiveFieldStart.x) / buttonCount;
-
-        for (let i=0; i<buttonCount; i++) {
-          let pi = new Point(buttonWidth*i, 0);
-          let pi1 = new Point(buttonWidth*(i+1), 0);
-
-          draw.zoom.setColor("4d4d4d");
-          draw.zoom.rect(pi, new Point(0, points.zoomInteractiveFieldEnd.y).add(pi1));
-
-          draw.zoom.setColor("ffffff")
-          draw.zoom.text(["1.0x", "1.5x", "2.0x"][i], new Point(buttonWidth/2, 65/2+5).add(pi), 16, null, null, true);
-
-          draw.zoom.setColor("aaaaaa");
-          if (i+1 < buttonCount) draw.zoom.line(pi1, new Point(pi1.x, points.zoomInteractiveFieldEnd.y));
+          let players = Object.entries(gamepads);
+          for (let i=0; i<players.length; i++) {
+            let [pname, _] = players[i];
+            if (gamepads[pname].id !== -1) continue;
+            gamepads[pname] = new GamepadDummy(event.gamepad.index);
+            break;
+          }
+        } else {
+          let players = Object.entries(gamepads);
+          for (let i=0; i<players.length; i++) {
+            let [pname, _] = players[i];
+            if (gamepads[pname].id !== event.gamepad.index) continue;
+            gamepads[pname].id = -1;
+            break;
+          }
         }
       }
 
-      let getVirtualGamepadData = () => {
-        if (mouse.released) return;
-        gamepads.used.any = true;
-        gamepads.used.axes = {any: true, left: true, right: false};
-
-        // Calculate vector from starting to current position and normalize
-        gamepads.virtual.dragVector = new Vector2D(mouse.position, mouse.pressedPosition);
-
-        // Calculate "strength" (0 <= strength <= 1 if in .renderRadius)
-        gamepads.virtual.dragStrength = gamepads.virtual.dragVector.length() / gamepads.virtual.renderRadius;
-
-        // Normalize vector after calculating .drawStrength or else it'd be 1 / .renderRadius
-        gamepads.virtual.dragVector.normalize();
-
-        // Multiply vector with strength only if 0 <= strength <= 1
-        if (gamepads.virtual.dragStrength < 1) gamepads.virtual.dragVector.multiply(gamepads.virtual.dragStrength);
-
-        // Apply dragVector values to .axes for easier and more similar (compared to .real gamepads) access
-        gamepads.virtual.axes[0] = gamepads.virtual.dragVector.x;
-        gamepads.virtual.axes[1] = gamepads.virtual.dragVector.y;
-
-        gamepads.output.axes = gamepads.virtual.axes;
-      }
       let getGamepadData = () => {
-        // TODO: Iterate through all available gamepads.
-        let gamepad = navigator.getGamepads()[0];
-        if (gamepad === undefined || gamepad === null) return;
-
         if (render.input.verbose && !render.input.updated) {
-          render.input.updated = true;
           render.input.now = Date.now();
+          render.input.updated = true;
         }
 
-        let deadzone = 0.065;
-        for (let i=0; i<gamepad.axes.length; i+=2)
-          if (MyMath.abs(gamepad.axes[i]) >= deadzone || MyMath.abs(gamepad.axes[i+1]) >= deadzone) {
-            let v = new Vector2D(gamepad.axes[i], gamepad.axes[i+1]).normalize();
-            let s = new Vector2D(gamepad.axes[i], gamepad.axes[i+1]).length();
-            s = MyMath.clamp(s, 0, 1);
+        let connectedGamepads = navigator.getGamepads();
 
-            gamepads.used.any = true;
-            gamepads.used.axes.any = true;
-            if (i === 0) gamepads.used.axes.left = true;
-            if (i === 2) gamepads.used.axes.right = true;
+        let players = Object.entries(gamepads);
+        for (let i=0; i<players.length; i++) {
+          let [_, player_gamepad] = players[i];
+          if (player_gamepad.id === -1) continue;
+          let gamepad = connectedGamepads[player_gamepad.id];
 
-            gamepads.output.axes[i] = v.x * s;
-            gamepads.output.axes[i+1] = v.y * s;
-          }
+          player_gamepad.pressed.a = gamepad.buttons[0].pressed;
+          player_gamepad.pressed.b = gamepad.buttons[1].pressed;
+          player_gamepad.pressed.x = gamepad.buttons[2].pressed;
+          player_gamepad.pressed.y = gamepad.buttons[3].pressed;
+          player_gamepad.pressed.paused = gamepad.buttons[9].pressed;
+          player_gamepad.pressed.dpad.up = gamepad.buttons[12].pressed;
+          player_gamepad.pressed.dpad.down = gamepad.buttons[13].pressed;
+          player_gamepad.pressed.dpad.left = gamepad.buttons[14].pressed;
+          player_gamepad.pressed.dpad.right = gamepad.buttons[15].pressed;
 
-        let gobl = Object.entries(gamepads.output.buttons).length;
-        for (let i=0; i<gamepad.buttons.length; i++)
-          if (gamepad.buttons[i].pressed || (i < gobl && gamepad.buttons[i].pressed !== Object.entries(gamepads.output.buttons)[i][1].pressed)) {
-            gamepads.used.any = true;
-            gamepads.used.buttons = true;
-          }
+          player_gamepad.trigger.left = 0;
+          player_gamepad.trigger.right = 0;
 
-        gamepads.output.buttons.a = gamepad.buttons[0];
-        gamepads.output.buttons.b = gamepad.buttons[1];
-        gamepads.output.buttons.x = gamepad.buttons[2];
-        gamepads.output.buttons.y = gamepad.buttons[3];
+          player_gamepad.joystick.left = new Vector2D(gamepad.axes[0], gamepad.axes[1]);
+          // console.log([gamepad.axes[0], gamepad.axes[1]]); // [-0, -0]
+          // console.log([player_gamepad.joystick.left.x, player_gamepad.joystick.left.y]); // [-0, -0]
+          let ll = player_gamepad.joystick.left.length();
+          // console.log(ll); // 0
+          ll = MyMath.clamp(ll, 0, 1);
+          // console.log(ll); // 0
+          if (ll >= player_gamepad.joystick.deadzone) player_gamepad.joystick.used.left = true;
+          else player_gamepad.joystick.used.left = false;
+          player_gamepad.joystick.left.normalize().multiply(ll);
+          // console.log([player_gamepad.joystick.left.x, player_gamepad.joystick.left.y]); // [NaN, NaN]
 
-        gamepads.output.buttons.pause = gamepad.buttons[9];
-
-        gamepads.output.buttons.dpad.up = gamepad.buttons[12];
-        gamepads.output.buttons.dpad.right = gamepad.buttons[15];
-        gamepads.output.buttons.dpad.left = gamepad.buttons[14];
-        gamepads.output.buttons.dpad.down = gamepad.buttons[13];
+          player_gamepad.joystick.right = new Vector2D(gamepad.axes[2], gamepad.axes[3]);
+          let rl = player_gamepad.joystick.right.length();
+          rl = MyMath.clamp(rl, 0, 1);
+          if (rl >= player_gamepad.joystick.deadzone) player_gamepad.joystick.used.right = true;
+          else player_gamepad.joystick.used.right = false;
+          player_gamepad.joystick.right.normalize().multiply(rl);
+        }
       }
       let renderGamepad = () => {
         let joyStickRadius = swemu.joycon.width/5;
@@ -440,7 +265,7 @@
 
         // Left JoyCon
         let joyStickCenterLeft = new Point((swemu.joycon.width/2), (swemu.joycon.height/4));
-        let joyStickPositionLeft = new Point(joyStickRadius*0.8*gamepads.output.axes[0], joyStickRadius*0.8*gamepads.output.axes[1]).add(joyStickCenterLeft);
+        let joyStickPositionLeft = new Point(joyStickRadius*0.8*gamepads.player1.joystick.left.x, joyStickRadius*0.8*gamepads.player1.joystick.left.y).add(joyStickCenterLeft);
 
         draw.static.setColor("00c3e3");
         draw.static.rect(new Point(-joyStickRadius*2, -joyStickRadius*2).add(joyStickCenterLeft), new Point(joyStickRadius*2, joyStickRadius*2).add(joyStickCenterLeft));
@@ -458,14 +283,14 @@
         draw.static.rect(new Point(-buttonRadius*3, -buttonRadius*3).add(buttonCenterLeft), new Point(buttonRadius*3, buttonRadius*3).add(buttonCenterLeft));
 
         draw.static.setColor("212528");
-        draw.static.arc(new Point(0, -buttonRadius*2).add(buttonCenterLeft), buttonRadius-(gamepads.output.buttons.dpad.up.pressed ? pressedShrinkRadius : 0));
-        draw.static.arc(new Point(buttonRadius*2, 0).add(buttonCenterLeft), buttonRadius-(gamepads.output.buttons.dpad.right.pressed ? pressedShrinkRadius : 0));
-        draw.static.arc(new Point(0, buttonRadius*2).add(buttonCenterLeft), buttonRadius-(gamepads.output.buttons.dpad.down.pressed ? pressedShrinkRadius : 0));
-        draw.static.arc(new Point(-buttonRadius*2, 0).add(buttonCenterLeft), buttonRadius-(gamepads.output.buttons.dpad.left.pressed ? pressedShrinkRadius : 0));
+        draw.static.arc(new Point(0, -buttonRadius*2).add(buttonCenterLeft), buttonRadius-(gamepads.player1.pressed.dpad.up ? pressedShrinkRadius : 0));
+        draw.static.arc(new Point(buttonRadius*2, 0).add(buttonCenterLeft), buttonRadius-(gamepads.player1.pressed.dpad.right ? pressedShrinkRadius : 0));
+        draw.static.arc(new Point(0, buttonRadius*2).add(buttonCenterLeft), buttonRadius-(gamepads.player1.pressed.dpad.down ? pressedShrinkRadius : 0));
+        draw.static.arc(new Point(-buttonRadius*2, 0).add(buttonCenterLeft), buttonRadius-(gamepads.player1.pressed.dpad.left ? pressedShrinkRadius : 0));
 
         // Right JoyCon
         let joyStickCenterRight = new Point((swemu.joycon.width/2), (swemu.joycon.height/2)).add(points.redJoyConStart);
-        let joyStickPositionRight = new Point(joyStickRadius*0.8*gamepads.output.axes[2], joyStickRadius*0.8*gamepads.output.axes[3]).add(joyStickCenterRight);
+        let joyStickPositionRight = new Point(joyStickRadius*0.8*gamepads.player1.joystick.right.x, joyStickRadius*0.8*gamepads.player1.joystick.right.y).add(joyStickCenterRight);
 
         draw.static.setColor("e60012");
         draw.static.rect(new Point(-joyStickRadius*2, -joyStickRadius*2).add(joyStickCenterRight), new Point(joyStickRadius*2, joyStickRadius*2).add(joyStickCenterRight));
@@ -483,154 +308,129 @@
         draw.static.rect(new Point(-buttonRadius*3, -buttonRadius*3).add(buttonCenterRight), new Point(buttonRadius*3, buttonRadius*3).add(buttonCenterRight));
 
         draw.static.setColor("212528");
-        draw.static.arc(new Point(0, -buttonRadius*2).add(buttonCenterRight), buttonRadius-(gamepads.output.buttons.x.pressed ? pressedShrinkRadius : 0));
-        draw.static.arc(new Point(buttonRadius*2, 0).add(buttonCenterRight), buttonRadius-(gamepads.output.buttons.a.pressed ? pressedShrinkRadius : 0));
-        draw.static.arc(new Point(0, buttonRadius*2).add(buttonCenterRight), buttonRadius-(gamepads.output.buttons.b.pressed ? pressedShrinkRadius : 0));
-        draw.static.arc(new Point(-buttonRadius*2, 0).add(buttonCenterRight), buttonRadius-(gamepads.output.buttons.y.pressed ? pressedShrinkRadius : 0));
+        draw.static.arc(new Point(0, -buttonRadius*2).add(buttonCenterRight), buttonRadius-(gamepads.player1.pressed.x ? pressedShrinkRadius : 0));
+        draw.static.arc(new Point(buttonRadius*2, 0).add(buttonCenterRight), buttonRadius-(gamepads.player1.pressed.a ? pressedShrinkRadius : 0));
+        draw.static.arc(new Point(0, buttonRadius*2).add(buttonCenterRight), buttonRadius-(gamepads.player1.pressed.b ? pressedShrinkRadius : 0));
+        draw.static.arc(new Point(-buttonRadius*2, 0).add(buttonCenterRight), buttonRadius-(gamepads.player1.pressed.y ? pressedShrinkRadius : 0));
 
         let smaller = new Point(1, -1);
         draw.static.setColor("dadada");
-        draw.static.text("X", new Point(-6, -buttonRadius*2+5).add(buttonCenterRight).add(gamepads.output.buttons.x.pressed ? smaller : new Point()), gamepads.output.buttons.x.pressed ? 10 : 12);
-        draw.static.text("A", new Point(buttonRadius*2-5, 5).add(buttonCenterRight).add(gamepads.output.buttons.a.pressed ? smaller : new Point()), gamepads.output.buttons.a.pressed ? 10 : 12);
-        draw.static.text("B", new Point(-5, buttonRadius*2+6).add(buttonCenterRight).add(gamepads.output.buttons.b.pressed ? smaller : new Point()), gamepads.output.buttons.b.pressed ? 10 : 12);
-        draw.static.text("Y", new Point(-buttonRadius*2-6, 6).add(buttonCenterRight).add(gamepads.output.buttons.y.pressed ? smaller : new Point()), gamepads.output.buttons.y.pressed ? 10 : 12);
-
-        if (!gamepads.used.any) return;
-        if (mouse.released) return; // return for now === only draw vgamepad (mouse pressed)
-
-        draw.vgamepad.setColor("ffffff");
-        draw.vgamepad.arc(mouse.pressedPosition, gamepads.virtual.renderRadius, false);
-        draw.vgamepad.arc(mouse.pressedPosition, gamepads.virtual.renderRadius / 20, false);
-
-        draw.vgamepad.arc(new Point(gamepads.output.axes[0] * gamepads.virtual.renderRadius, gamepads.output.axes[1] * gamepads.virtual.renderRadius).add(mouse.pressedPosition), gamepads.virtual.renderRadius / 3, false);
+        draw.static.text("X", new Point(-6, -buttonRadius*2+5).add(buttonCenterRight).add(gamepads.player1.pressed.x ? smaller : new Point()), gamepads.player1.pressed.x ? 10 : 12);
+        draw.static.text("A", new Point(buttonRadius*2-5, 5).add(buttonCenterRight).add(gamepads.player1.pressed.a ? smaller : new Point()), gamepads.player1.pressed.a ? 10 : 12);
+        draw.static.text("B", new Point(-5, buttonRadius*2+6).add(buttonCenterRight).add(gamepads.player1.pressed.b ? smaller : new Point()), gamepads.player1.pressed.b ? 10 : 12);
+        draw.static.text("Y", new Point(-buttonRadius*2-6, 6).add(buttonCenterRight).add(gamepads.player1.pressed.y ? smaller : new Point()), gamepads.player1.pressed.y ? 10 : 12);
       }
 
       // Init listeners
       window.addEventListener("gamepadconnected",    event => {gamepadHandler(event, true );}, false);
       window.addEventListener("gamepaddisconnected", event => {gamepadHandler(event, false);}, false);
-      document.onmousemove = mouseMoveHandler;
-      document.ontouchmove = mouseMoveHandler;
-      document.onmousedown = mouseClickHandler;
-      document.ontouchdown = mouseClickHandler;
-      document.onmouseup   = mouseClickHandler;
-      document.ontouchup   = mouseClickHandler;
 
       // Static / One-Time render
-      renderZoomInteraction();
       renderSwitch();
 
       let mainRenderer = () => {
-        //if (currentGame !== null) requestAnimationFrame(mainRenderer);
-
-        context.vgamepad.clearRect(0, 0, canvas.vgamepad.width, canvas.vgamepad.height);
         context.dynamic.clearRect(0, 0, canvas.dynamic.width, canvas.dynamic.height);
 
-        // Reset .used state every update and let getVirtualGamepadData and getGamepadData update the value manually
-        gamepads.used = {any: false, axes: {any: false, left: false, right: false}, buttons: false};
-        gamepads.output.axes = [0, 0, 0, 0];
-        getVirtualGamepadData();
-        getGamepadData(); // Overwrite virtual data if this exists
+        getGamepadData();
         renderGamepad();
 
-        getZoomInteraction();
-
-        if (gamepads.output.buttons.dpad.up.pressed) {
-          if (!gamepads.actions.dpad.up) {
-            let td = dpadTimeoutDuration.s;
-            if (dpadTimeouts.up.f) {
-              td = dpadTimeoutDuration.f;
-              dpadTimeouts.up.f = false;
+        if (gamepads.player1.pressed.dpad.up) {
+          if (!gamepads.player1.actions.dpad.up) {
+            let timeoutDuration = gamepads.player1.actions.timeouts.dpad.duration.any;
+            if (gamepads.player1.actions.timeouts.dpad.up.first) {
+              timeoutDuration = gamepads.player1.actions.timeouts.dpad.duration.first;
+              gamepads.player1.actions.timeouts.dpad.up.first = false;
             }
-            clearTimeout(dpadTimeouts.up.t);
-            dpadTimeouts.up.t = setTimeout(() => {gamepads.actions.dpad.up = false;}, td);
+            clearTimeout(gamepads.player1.actions.timeouts.dpad.up.timeout);
+            gamepads.player1.actions.timeouts.dpad.up.timeout = setTimeout(() => {gamepads.player1.actions.dpad.up = false;}, timeoutDuration);
             homeScreen.dpad_up(); // Maybe this need's some parameters. Not yet tho.
           }
-          gamepads.actions.dpad.up = true;
+          gamepads.player1.actions.dpad.up = true;
         } else {
-          gamepads.actions.dpad.up = false;
-          dpadTimeouts.up.f = true;
+          gamepads.player1.actions.dpad.up = false;
+          gamepads.player1.actions.timeouts.dpad.up.first = true;
         }
 
-        if (gamepads.output.buttons.dpad.down.pressed) {
-          if (!gamepads.actions.dpad.down) {
-            let td = dpadTimeoutDuration.s;
-            if (dpadTimeouts.down.f) {
-              td = dpadTimeoutDuration.f;
-              dpadTimeouts.down.f = false;
+        if (gamepads.player1.pressed.dpad.down) {
+          if (!gamepads.player1.actions.dpad.down) {
+            let timeoutDuration = gamepads.player1.actions.timeouts.dpad.duration.any;
+            if (gamepads.player1.actions.timeouts.dpad.down.first) {
+              timeoutDuration = gamepads.player1.actions.timeouts.dpad.duration.first;
+              gamepads.player1.actions.timeouts.dpad.down.first = false;
             }
-            clearTimeout(dpadTimeouts.down.t);
-            dpadTimeouts.down.t = setTimeout(() => {gamepads.actions.dpad.down = false;}, td);
+            clearTimeout(gamepads.player1.actions.timeouts.dpad.down.timeout);
+            gamepads.player1.actions.timeouts.dpad.down.timeout = setTimeout(() => {gamepads.player1.actions.dpad.down = false;}, timeoutDuration);
             homeScreen.dpad_down(); // Maybe this need's some parameters. Not yet tho.
           }
-          gamepads.actions.dpad.down = true;
+          gamepads.player1.actions.dpad.down = true;
         } else {
-          gamepads.actions.dpad.down = false;
-          dpadTimeouts.down.f = true;
+          gamepads.player1.actions.dpad.down = false;
+          gamepads.player1.actions.timeouts.dpad.down.first = true;
         }
 
-        if (gamepads.output.buttons.dpad.right.pressed) {
-          if (!gamepads.actions.dpad.right) {
-            let td = dpadTimeoutDuration.s;
-            if (dpadTimeouts.right.f) {
-              td = dpadTimeoutDuration.f;
-              dpadTimeouts.right.f = false;
+        if (gamepads.player1.pressed.dpad.left) {
+          if (!gamepads.player1.actions.dpad.left) {
+            let timeoutDuration = gamepads.player1.actions.timeouts.dpad.duration.any;
+            if (gamepads.player1.actions.timeouts.dpad.left.first) {
+              timeoutDuration = gamepads.player1.actions.timeouts.dpad.duration.first;
+              gamepads.player1.actions.timeouts.dpad.left.first = false;
             }
-            clearTimeout(dpadTimeouts.right.t);
-            dpadTimeouts.right.t = setTimeout(() => {gamepads.actions.dpad.right = false;}, td);
-            homeScreen.dpad_right(); // Maybe this need's some parameters. Not yet tho.
-          }
-          gamepads.actions.dpad.right = true;
-        } else {
-          gamepads.actions.dpad.right = false;
-          dpadTimeouts.right.f = true;
-        }
-
-        if (gamepads.output.buttons.dpad.left.pressed) {
-          if (!gamepads.actions.dpad.left) {
-            let td = dpadTimeoutDuration.s;
-            if (dpadTimeouts.left.f) {
-              td = dpadTimeoutDuration.f;
-              dpadTimeouts.left.f = false;
-            }
-            clearTimeout(dpadTimeouts.left.t);
-            dpadTimeouts.left.t = setTimeout(() => {gamepads.actions.dpad.left = false;}, td);
+            clearTimeout(gamepads.player1.actions.timeouts.dpad.left.timeout);
+            gamepads.player1.actions.timeouts.dpad.left.timeout = setTimeout(() => {gamepads.player1.actions.dpad.left = false;}, timeoutDuration);
             homeScreen.dpad_left(); // Maybe this need's some parameters. Not yet tho.
           }
-          gamepads.actions.dpad.left = true;
+          gamepads.player1.actions.dpad.left = true;
         } else {
-          gamepads.actions.dpad.left = false;
-          dpadTimeouts.left.f = true;
+          gamepads.player1.actions.dpad.left = false;
+          gamepads.player1.actions.timeouts.dpad.left.first = true;
         }
 
-        if (gamepads.output.buttons.y.pressed) {
-          if (!gamepads.actions.y)
-            homeScreen.buttons_y();
-          gamepads.actions.y = true;
-        } else gamepads.actions.y = false;
+        if (gamepads.player1.pressed.dpad.right) {
+          if (!gamepads.player1.actions.dpad.right) {
+            let timeoutDuration = gamepads.player1.actions.timeouts.dpad.duration.any;
+            if (gamepads.player1.actions.timeouts.dpad.right.first) {
+              timeoutDuration = gamepads.player1.actions.timeouts.dpad.duration.first;
+              gamepads.player1.actions.timeouts.dpad.right.first = false;
+            }
+            clearTimeout(gamepads.player1.actions.timeouts.dpad.right.timeout);
+            gamepads.player1.actions.timeouts.dpad.right.timeout = setTimeout(() => {gamepads.player1.actions.dpad.right = false;}, timeoutDuration);
+            homeScreen.dpad_right(); // Maybe this need's some parameters. Not yet tho.
+          }
+          gamepads.player1.actions.dpad.right = true;
+        } else {
+          gamepads.player1.actions.dpad.right = false;
+          gamepads.player1.actions.timeouts.dpad.right.first = true;
+        }
 
-        if (gamepads.output.buttons.a.pressed) {
-          if (!gamepads.actions.a)
+        if (gamepads.player1.pressed.a) {
+          if (!gamepads.player1.actions.a)
             homeScreen.buttons_a();
-          gamepads.actions.a = true;
-        } else gamepads.actions.a = false;
+          gamepads.player1.actions.a = true;
+        } else gamepads.player1.actions.a = false;
 
-        if (gamepads.output.buttons.b.pressed) {
-          if (!gamepads.actions.b)
+        if (gamepads.player1.pressed.b) {
+          if (!gamepads.player1.actions.b)
             homeScreen.buttons_b();
-          gamepads.actions.b = true;
-        } else gamepads.actions.b = false;
+          gamepads.player1.actions.b = true;
+        } else gamepads.player1.actions.b = false;
 
-        if (gamepads.output.buttons.x.pressed) {
-          if (!gamepads.actions.x)
+        if (gamepads.player1.pressed.x) {
+          if (!gamepads.player1.actions.x)
             homeScreen.buttons_x();
-          gamepads.actions.x = true;
-        } else gamepads.actions.x = false;
+          gamepads.player1.actions.x = true;
+        } else gamepads.player1.actions.x = false;
 
-        if (gamepads.output.buttons.pause.pressed) {
-          if (!gamepads.actions.pause)
+        if (gamepads.player1.pressed.y) {
+          if (!gamepads.player1.actions.y)
+            homeScreen.buttons_y();
+          gamepads.player1.actions.y = true;
+        } else gamepads.player1.actions.y = false;
+
+        if (gamepads.player1.pressed.pause) {
+          if (!gamepads.player1.actions.pause)
             homeScreen.buttons_pause();
-          gamepads.actions.pause = true;
-        } else gamepads.actions.pause = false;
+          gamepads.player1.actions.pause = true;
+        } else gamepads.player1.actions.pause = false;
 
         homeScreen.render(draw, gamepads, render);
 
