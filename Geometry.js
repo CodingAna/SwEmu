@@ -76,6 +76,8 @@ export class Vector2D {
 
   normalize = () => {
     let len = this.length();
+    if (len === 0) return this;
+
     this.x /= len;
     this.y /= len;
 
