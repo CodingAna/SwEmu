@@ -169,7 +169,7 @@ export class HomeScreen {
       return;
     }
 
-    let gpOx = gamepads.output[0].axes[0];
+    let gpOx = gamepads.player1.joystick.left.x;
     let gpOxTresh = 0.6;
     if (MyMath.abs(gpOx) < gpOxTresh / 2) this._gamepad_swiped_x = false; // Make swipe available again after being below a certain threshold
     if (!this._gamepad_swiped_x) {
@@ -183,7 +183,7 @@ export class HomeScreen {
     }
 
     if (!this._gamepad_swiped_x) {
-      let gpOy = gamepads.output[0].axes[1];
+      let gpOy = gamepads.player1.joystick.left.y;
       let gpOyTresh = 0.6;
       if (MyMath.abs(gpOy) < gpOyTresh / 2) this._gamepad_swiped_y = false; // Make swipe available again after being below a certain threshold
       if (!this._gamepad_swiped_y) {
@@ -652,7 +652,7 @@ export class Settings {
 
         // (60 for icon) + (2*12 for text) + (10 to bottom)
         height += 14 + 60 + 24 + 20;
-        let width = (5 + 60 + 15) * this._appCount;
+        let width = 15 + (60 + 15) * this._appCount;
         if (offset + width > this._swemu.screen.width - offset) width = this._swemu.screen.width - offset - 10;
         draw.dynamic.setColor(tSel ? "2a2a2a" : "242424");
         draw.dynamic.roundedRect(new Point(offset, pHeight), new Point(offset + width, height), 0.25);

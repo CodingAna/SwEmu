@@ -30,7 +30,7 @@ export class PhysicTest {
   _moveToFuturePlayerPosition = (draw, gamepads, render) => {
     let lastAirActionDiff = (Date.now() - this._player.lastAirAction) + 300;
 
-    this._player.move.x = gamepads.output[0].axes[0] * this._player.speed.current * render.deltaTime * 100;
+    this._player.move.x = gamepads.player1.joystick.left.x * this._player.speed.current * render.deltaTime * 100;
     this._player.move.y += 9.81 * (MyMath.exp(lastAirActionDiff / 1000, 2)) * render.deltaTime;
 
     // Clamp vertical upwards (jump) velocity
@@ -67,9 +67,9 @@ export class PhysicTest {
     draw.dynamic.setColor("ffffff");
     draw.dynamic.arc(this._player.position.current, this._player.radius);
 
-    if (gamepads.used.axes.left) {
+    if (gamepads.player1.joystick.used.left) {
       draw.dynamic.setColor("ff5522");
-      draw.dynamic.line(this._player.position.current, new Vector2D(gamepads.output[0].axes[0], gamepads.output[0].axes[1]).multiply(100).point().add(this._player.position.current));
+      draw.dynamic.line(this._player.position.current, new Vector2D(gamepads.player1.joystick.left.x, gamepads.player1.joystick.left.y).multiply(100).point().add(this._player.position.current));
     }
   }
 
@@ -114,7 +114,7 @@ export class PhysicTest {
   render = (draw, gamepads, render) => {
     if (this._terminated) return;
 
-    if (gamepads.used.axes.left) this._player.started = true;
+    if (gamepads.player1.joystick.used.left) this._player.started = true;
 
     if (this._jump) {
       // If not above limit OR distance to ground <= player diameter (=> user doesn't have to wait to actually touch the ground)

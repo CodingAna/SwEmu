@@ -9,6 +9,18 @@ export class Pong {
     this._swemu = swemu;
   }
 
+  dpad_up = () => {
+    if (this._player.started) return;
+    this._controller_mode++;
+    this._checkControllerMode();
+  }
+
+  dpad_down = () => {
+    if (this._player.started) return;
+    this._controller_mode--;
+    this._checkControllerMode();
+  }
+
   buttons_a = () => {
   }
 
@@ -20,6 +32,11 @@ export class Pong {
   buttons_pause = () => {
   }
 
+  _checkControllerMode = () => {
+    if (this._controller_mode < 0) this._controller_mode = 0;
+    else if (this._controller_mode > 1) this._controller_mode = 1;
+  }
+
   _updateBall = (draw, gamepads, render, ux, uy) => {
     if (ux === undefined || ux === null) ux = true;
     if (uy === undefined || uy === null) uy = true;
@@ -28,6 +45,8 @@ export class Pong {
     let mm = this._ball.move.multiply_NW(render.deltaTime * 100 * this._ball.speed);
     if (ux) this._ball.point.x += mm.x;
     if (uy) this._ball.point.y += mm.y;
+
+    let cm = this._controller_mode;
 
     let sl = this._player.score.left;
     let yl = this._player.y.left;
@@ -40,6 +59,7 @@ export class Pong {
       sl++;
       this.init();
     }
+    this._controller_mode = cm;
     this._player.score.left = sl;
     this._player.score.right = sr;
     this._player.y.left = yl;
@@ -52,13 +72,13 @@ export class Pong {
   }
 
   _updatePlayers = (draw, gamepads, render) => {
-    this._player.y.left += gamepads.output.axes[1] * render.deltaTime * 100 * this._player.speed;
+    this._player.y.left += gamepads.player1.joystick.left.y * render.deltaTime * 100 * this._player.speed;
     if (this._player.y.left < 0) this._player.y.left = 0;
     else if (this._player.y.left > this._swemu.screen.height - this._player.model.y) this._player.y.left = this._swemu.screen.height - this._player.model.y;
 
-    // One Controller: output[0].axes[3] OR Two Controller: output[1].axes[1]
-    let cdata = this._controller_mode === 0 ? gamepads.output.axes[3] : gamepads.output[1].axes[1]
-    this._player.y.right += cdata * render.deltaTime * 100 * this._player.speed;
+    // One Controller: player1.right.y OR Two Controller: player2.left.y
+    let rdata = this._controller_mode === 0 ? gamepads.player1.joystick.right.y : gamepads.player2.joystick.left.y;
+    this._player.y.right += rdata * render.deltaTime * 100 * this._player.speed;
     if (this._player.y.right < 0) this._player.y.right = 0;
     else if (this._player.y.right > this._swemu.screen.height - this._player.model.y) this._player.y.right = this._swemu.screen.height - this._player.model.y;
   }
@@ -97,8 +117,9 @@ export class Pong {
       if (this._ball.point.y + this._ball.radius >= this._player.y.right && this._ball.point.y - this._ball.radius <= this._player.y.right + this._player.model.y) {
         this._ball.point.x = this._swemu.screen.width - this._player.xOffset - this._player.model.x;
         this._ball.move.x *= -1;
-        this._ball.move.y += gamepads.output.axes[3] * 0.5;
-        //this._ball.move.y *= 1 + gamepads.output.axes[3];
+        // One Controller: player1.joystick.right.y OR Two Controller: player2.joystick.left.y
+        let rdata = this._controller_mode === 0 ? gamepads.player1.joystick.right.y : gamepads.player2.joystick.left.y;
+        this._ball.move.y += rdata * 0.5;
         this._updateBall(draw, gamepads, render, true, false);
       }
     }
@@ -108,8 +129,7 @@ export class Pong {
       if (this._ball.point.y + this._ball.radius >= this._player.y.left && this._ball.point.y - this._ball.radius <= this._player.y.left + this._player.model.y) {
         this._ball.point.x = this._player.xOffset + this._player.model.x;
         this._ball.move.x *= -1;
-        this._ball.move.y += gamepads.output.axes[1] * 0.5;
-        //this._ball.move.y *= 1 + gamepads.output.axes[1];
+        this._ball.move.y += gamepads.player1.joystick.left.y * 0.5;
         this._updateBall(draw, gamepads, render, true, false);
       }
     }
@@ -159,7 +179,17 @@ export class Pong {
   render = (draw, gamepads, render) => {
     if (this._terminated) return;
 
-    if (gamepads.used.axes.any) this._player.started = true;
+    if (!this._player.started) {
+      draw.dynamic.setColor("ffffff");
+      draw.dynamic.text((this._controller_mode === 0 ? "1" : "2") + " Controller", new Point(this._swemu.screen.width / 2, this._swemu.screen.height - 14), 14, null, null, true);
+
+      if (this._controller_mode === 1 && gamepads.player2.id === -1) {
+        draw.dynamic.setColor("ffffff");
+        draw.dynamic.text("Controller 2 not connected", new Point(this._swemu.screen.width / 2, this._swemu.screen.height - 14 - 14 - 14), 14, null, null, true);
+      }
+    }
+
+    if (gamepads.player1.joystick.used.left && (this._controller_mode === 0 || gamepads.player2.id !== -1)) this._player.started = true;
 
     if (this._player.started) {
       this._updateBall(draw, gamepads, render);

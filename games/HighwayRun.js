@@ -133,33 +133,11 @@ export class HighwayRun {
   }
 
   _updatePlayerPosition = (draw, gamepads, render) => {
-    if (!gamepads.used.axes.left && !gamepads.used.buttons) return;
+    if (!gamepads.player1.joystick.used.right) return;
 
-    this._player.move = new Vector2D(gamepads.output[0].axes[2], 0).multiply(this._player.speed.current).multiply(render.deltaTime).multiply(100);
+    this._player.move = new Vector2D(gamepads.player1.joystick.right.y, 0).multiply(this._player.speed.current).multiply(render.deltaTime).multiply(100);
     //this._player.position.future.x = this._player.position.current.add_NW(this._player.move.point()).x;
     this._player.position.future.x += this._player.move.x;
-
-    // Commented code is for joystick up/down control, kinda funky tho => use of buttons (Y north, A south) instead (in render)
-    /*
-    let gpOx = gamepads.output[0].axes[1];
-    let gpOxTresh = 0.35;
-    let swipeHoldTime = 0.18;
-    if (MyMath.abs(gpOx) < gpOxTresh / 2 || Date.now() - this._gamepad_swipe_t >= swipeHoldTime * 1000) {
-      this._gamepad_swiped = false; // Make swipe available again after being below a certain threshold
-      this._gamepad_swipe_t = Date.now();
-    }
-    if (!this._gamepad_swiped) {
-      if (gpOx >= gpOxTresh) {
-        this._player.position.lane++;
-        this._gamepad_swiped = true;
-      } else if (gpOx <= -gpOxTresh) {
-        this._player.position.lane--;
-        this._gamepad_swiped = true;
-      }
-      if (this._player.position.lane > this._highwayLanes - 1) this._player.position.lane = this._highwayLanes - 1;
-      else if (this._player.position.lane < 0) this._player.position.lane = 0;
-    }
-    */
 
     this._player.position.future.y = (this._swemu.screen.height / this._highwayLanes) * this._player.position.lane + ((this._swemu.screen.height / this._highwayLanes) / 2);
     this._player.position.current.y = this._player.position.future.y;
@@ -197,9 +175,9 @@ export class HighwayRun {
     draw.dynamic.setColor("ffffff");
     draw.dynamic.arc(this._player.position.current, this._player.radius);
 
-    if (gamepads.used.axes.right) {
+    if (gamepads.player1.joystick.used.right) {
       draw.dynamic.setColor("ff5522");
-      draw.dynamic.line(this._player.position.current, new Vector2D(gamepads.output[0].axes[2], 0).multiply(100).point().add(this._player.position.current));
+      draw.dynamic.line(this._player.position.current, new Vector2D(gamepads.player1.joystick.right.y, 0).multiply(100).point().add(this._player.position.current));
     }
   }
 
@@ -260,7 +238,7 @@ export class HighwayRun {
   render = (draw, gamepads, render) => {
     if (this._terminated) return;
 
-    if (gamepads.used.axes.right) this._player.started = true;
+    if (gamepads.player1.joystick.used.right) this._player.started = true;
 
     if (this._player.position.lane > this._highwayLanes - 1) this._player.position.lane = this._highwayLanes - 1;
     else if (this._player.position.lane < 0) this._player.position.lane = 0;
