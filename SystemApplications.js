@@ -198,8 +198,8 @@ export class HomeScreen {
     }
 
     let date = new Date();
-    draw.dynamic.setColor("ffffff")
-    draw.dynamic.text(Utils.fillStart(""+date.getHours(), "0", 2) + ":" + Utils.fillStart(""+date.getMinutes(), "0", 2), new Point(this._swemu.screen.width - (30 + 14), 30), 14, null, null, true);
+    draw.setColor("ffffff")
+    draw.text(Utils.fillStart(""+date.getHours(), "0", 2) + ":" + Utils.fillStart(""+date.getMinutes(), "0", 2), new Point(this._swemu.screen.width - (30 + 14), 30), 14, null, null, true);
 
     let i = 0;
     Object.entries(this._internals.applications.external).forEach((g) => {
@@ -229,20 +229,20 @@ export class HomeScreen {
       let app1text = new Point(app1start.x, app1end.y);
 
       if (this._currentRow === 1 && i === this._highlightedApp) {
-        draw.dynamic.setColor(selectedColors[gameClass.NAME]);
-        draw.dynamic.roundedRect(new Point(-5, -5).add(app1start), new Point(5, 5).add(app1end), 0.25);
-        draw.dynamic.setColor("ffffff");
-        draw.dynamic.text(gameClass.NAME, new Point(-6, 18+12).add(app1text), 18);
+        draw.setColor(selectedColors[gameClass.NAME]);
+        draw.roundedRect(new Point(-5, -5).add(app1start), new Point(5, 5).add(app1end), 0.25);
+        draw.setColor("ffffff");
+        draw.text(gameClass.NAME, new Point(-6, 18+12).add(app1text), 18);
         if (app1end.x >= this._swemu.screen.width) {
           this._appScrollOffset++;
         } else if (app1start.x <= 0) {
           this._appScrollOffset--;
         }
       } else {
-        draw.dynamic.setColor(unselectedColors[gameClass.NAME]);
-        draw.dynamic.roundedRect(new Point(5, 5).add(app1start), new Point(-5, -5).add(app1end), 0.25);
-        draw.dynamic.setColor("a9a9a9");
-        draw.dynamic.text(gameClass.NAME, new Point(6, 16).add(app1text), 16);
+        draw.setColor(unselectedColors[gameClass.NAME]);
+        draw.roundedRect(new Point(5, 5).add(app1start), new Point(-5, -5).add(app1end), 0.25);
+        draw.setColor("a9a9a9");
+        draw.text(gameClass.NAME, new Point(6, 16).add(app1text), 16);
       }
       i++;
     });
@@ -276,15 +276,15 @@ export class HomeScreen {
         let appCenter = new Point(appCountOffset + (this._appIconSize / 5), this._swemu.screen.height - (this._appIconSize / 5 + 30));
 
         if (this._currentRow === 2 && i === this._highlightedSystemApp) {
-          draw.dynamic.setColor(selectedColors[gameClass.NAME]);
-          draw.dynamic.arc(appCenter, this._appIconSize/5);
-          draw.dynamic.setColor("ffffff");
-          draw.dynamic.text(gameClass.NAME, new Point(-4, 16 + (this._appIconSize / 5) + 4).add(appCenter), 16, null, null, true);
+          draw.setColor(selectedColors[gameClass.NAME]);
+          draw.arc(appCenter, this._appIconSize/5);
+          draw.setColor("ffffff");
+          draw.text(gameClass.NAME, new Point(-4, 16 + (this._appIconSize / 5) + 4).add(appCenter), 16, null, null, true);
         } else {
-          draw.dynamic.setColor(unselectedColors[gameClass.NAME]);
-          draw.dynamic.arc(appCenter, this._appIconSize/5);
-          draw.dynamic.setColor("a9a9a9");
-          //draw.dynamic.text(gameClass.NAME, new Point(6, 16).add(app1text), 16);
+          draw.setColor(unselectedColors[gameClass.NAME]);
+          draw.arc(appCenter, this._appIconSize/5);
+          draw.setColor("a9a9a9");
+          //draw.text(gameClass.NAME, new Point(6, 16).add(app1text), 16);
         }
         i++;
       }
@@ -300,15 +300,15 @@ export class HomeScreen {
       let userCenter = new Point(36+userOffset, 36);
 
       if (this._currentRow === 0 && i === this._highlightedUser) {
-        //draw.dynamic.setColor("ffffff");
-        //draw.dynamic.arc(userCenter, userRadius+1);
-        draw.dynamic.setColor(selectedColors[user.icon.background]);
-        draw.dynamic.arc(userCenter, userRadius);
-        draw.dynamic.setColor("ffffff");
-        draw.dynamic.text(user.name, new Point(-4, 12+userRadius+4).add(userCenter), 12, null, null, true);
+        //draw.setColor("ffffff");
+        //draw.arc(userCenter, userRadius+1);
+        draw.setColor(selectedColors[user.icon.background]);
+        draw.arc(userCenter, userRadius);
+        draw.setColor("ffffff");
+        draw.text(user.name, new Point(-4, 12+userRadius+4).add(userCenter), 12, null, null, true);
       } else {
-        draw.dynamic.setColor(unselectedColors[user.icon.background]);
-        draw.dynamic.arc(userCenter, userRadius);
+        draw.setColor(unselectedColors[user.icon.background]);
+        draw.arc(userCenter, userRadius);
       }
       i++;
     });
@@ -321,8 +321,8 @@ export class HomeScreen {
     } else if (this._actionOpen === 1) {
       // On app (external)
       if (this._actionClick === 1) {
-        draw.dynamic.setColor("2a2a2a");
-        draw.dynamic.rect(new Point(0, this._swemu.screen.height / 2), new Point(this._swemu.screen.width, this._swemu.screen.height));
+        draw.setColor("2a2a2a");
+        draw.rect(new Point(0, this._swemu.screen.height / 2), new Point(this._swemu.screen.width, this._swemu.screen.height));
 
         i = 0;
         this._internals.users.forEach((user) => {
@@ -334,13 +334,13 @@ export class HomeScreen {
           let userCenter = new Point(userOffset, this._swemu.screen.height - userWidth);
 
           if (i === this._appSelectedUser) {
-            draw.dynamic.setColor(selectedColors[user.icon.background]);
-            draw.dynamic.rect(new Point(-userWidth/2-2, -userWidth/2-2).add(userCenter), new Point(userWidth/2+2, userWidth/2+2).add(userCenter));
-            draw.dynamic.setColor("ffffff");
-            draw.dynamic.text(user.name, new Point(-4, 12+userWidth/2+10).add(userCenter), 14, null, null, true);
+            draw.setColor(selectedColors[user.icon.background]);
+            draw.rect(new Point(-userWidth/2-2, -userWidth/2-2).add(userCenter), new Point(userWidth/2+2, userWidth/2+2).add(userCenter));
+            draw.setColor("ffffff");
+            draw.text(user.name, new Point(-4, 12+userWidth/2+10).add(userCenter), 14, null, null, true);
           } else {
-            draw.dynamic.setColor(unselectedColors[user.icon.background]);
-            draw.dynamic.rect(new Point(-userWidth/2+2, -userWidth/2+2).add(userCenter), new Point(userWidth/2-2, userWidth/2-2).add(userCenter));
+            draw.setColor(unselectedColors[user.icon.background]);
+            draw.rect(new Point(-userWidth/2+2, -userWidth/2+2).add(userCenter), new Point(userWidth/2-2, userWidth/2-2).add(userCenter));
           }
           i++;
         });
@@ -568,9 +568,9 @@ export class Settings {
       if (this._backgroundColorSelection < 0) this._backgroundColorSelection = 2;
       else if (this._backgroundColorSelection > 2) this._backgroundColorSelection = 0;
 
-      draw.dynamic.setColor("ffffff");
-      draw.dynamic.text("Create " + (this._firstUser ? "the first" : "another") + " user for your Switch. Use the D-pad control to navigate.", new Point(16, 28));
-      if (!this._firstUser) draw.dynamic.text("Note: You can only add up to 5 users.", new Point(16, 52));
+      draw.setColor("ffffff");
+      draw.text("Create " + (this._firstUser ? "the first" : "another") + " user for your Switch. Use the D-pad control to navigate.", new Point(16, 28));
+      if (!this._firstUser) draw.text("Note: You can only add up to 5 users.", new Point(16, 52));
 
       // User preview (name + icon) & Check name
       let selectedColors = ["aad7d7", "20b2aa", "f08080"];
@@ -595,46 +595,46 @@ export class Settings {
       if (!this._reachedUserLimit) {
         for (let i=0; i<this._nameSelection.length + 1; i++) {
           let relSelP = new Point(150 + i*(25 + 10), 150);
-          draw.dynamic.setColor("ffffff");
-          if (i === 0 || i === 8) draw.dynamic.text(i === 0 ? "Name" : "Color", new Point(-4, -30).add(relSelP));
-          if (i === this._position) draw.dynamic.rect(new Point(-4, -18).add(relSelP), new Point(16, 6).add(relSelP), false);
+          draw.setColor("ffffff");
+          if (i === 0 || i === 8) draw.text(i === 0 ? "Name" : "Color", new Point(-4, -30).add(relSelP));
+          if (i === this._position) draw.rect(new Point(-4, -18).add(relSelP), new Point(16, 6).add(relSelP), false);
           if (i < this._nameSelection.length) {
-            draw.dynamic.text(this._nameSelection[i] === 0 ? " " : String.fromCharCode((i === 0 ? 65 : 97) + this._nameSelection[i]-1), new Point(0, 0).add(relSelP));
-            draw.dynamic.line(new Point(-4, 16).add(relSelP), new Point(16, 16).add(relSelP));
+            draw.text(this._nameSelection[i] === 0 ? " " : String.fromCharCode((i === 0 ? 65 : 97) + this._nameSelection[i]-1), new Point(0, 0).add(relSelP));
+            draw.line(new Point(-4, 16).add(relSelP), new Point(16, 16).add(relSelP));
           }
-          else draw.dynamic.text(this._backgroundColorSelection, relSelP);
+          else draw.text(this._backgroundColorSelection, relSelP);
         }
         let i = 9;
         let relSelP = new Point(150 + i*(25 + 10), 150);
-        if (i === this._position) draw.dynamic.setColor(this._reachedUserLimit || !this._choseName || !this._validName ? "ac143c" : "40ae40"); // DC143C
-        else draw.dynamic.setColor(this._reachedUserLimit || !this._choseName || !this._validName ? "7c040c" : "107e10");
-        draw.dynamic.roundedRect(new Point(-4, -16).add(relSelP), new Point(16, 4).add(relSelP));
+        if (i === this._position) draw.setColor(this._reachedUserLimit || !this._choseName || !this._validName ? "ac143c" : "40ae40"); // DC143C
+        else draw.setColor(this._reachedUserLimit || !this._choseName || !this._validName ? "7c040c" : "107e10");
+        draw.roundedRect(new Point(-4, -16).add(relSelP), new Point(16, 4).add(relSelP));
 
         // Render preview
-        draw.dynamic.setColor(selectedColors[this._backgroundColorSelection]);
-        draw.dynamic.arc(preMid, preRadius);
-        draw.dynamic.setColor("ffffff");
-        draw.dynamic.text("User preview", new Point(-preRadius*2-(("User preview".length+1)*7)-14, 7).add(preMid), 14);
-        draw.dynamic.text(name, new Point(-4, 14+preRadius+4).add(preMid), 14, null, null, true);
+        draw.setColor(selectedColors[this._backgroundColorSelection]);
+        draw.arc(preMid, preRadius);
+        draw.setColor("ffffff");
+        draw.text("User preview", new Point(-preRadius*2-(("User preview".length+1)*7)-14, 7).add(preMid), 14);
+        draw.text(name, new Point(-4, 14+preRadius+4).add(preMid), 14, null, null, true);
       }
 
     } else {
       let sidebarWidth = this._inSidebar ? 160 : 120;
 
-      draw.dynamic.setColor(this._inSidebar ? "2a2a2a" : "242424");
-      draw.dynamic.rect(new Point(), new Point(sidebarWidth, this._swemu.screen.height), 0.25);
+      draw.setColor(this._inSidebar ? "2a2a2a" : "242424");
+      draw.rect(new Point(), new Point(sidebarWidth, this._swemu.screen.height), 0.25);
 
       for (let i=0; i<this._sidebarElements.length; i++) {
         let h = 50;
         let o = 25;
 
-        if (this._inSidebar) draw.dynamic.setColor(this._sidebarSelection === i ? "4a4a4a" : "3a3a3a");
-        else draw.dynamic.setColor(this._sidebarSelection === i ? "424242" : "323232");
-        draw.dynamic.rect(new Point(0, o + (o + h) * i), new Point(sidebarWidth, (o + h) * (i + 1)));
+        if (this._inSidebar) draw.setColor(this._sidebarSelection === i ? "4a4a4a" : "3a3a3a");
+        else draw.setColor(this._sidebarSelection === i ? "424242" : "323232");
+        draw.rect(new Point(0, o + (o + h) * i), new Point(sidebarWidth, (o + h) * (i + 1)));
 
-        if (this._inSidebar) draw.dynamic.setColor(this._sidebarSelection === i ? "ffffff" : "bbbbbb");
-        else draw.dynamic.setColor(this._sidebarSelection === i ? "f8f8f8" : "b1b1b1");
-        draw.dynamic.text(this._sidebarElements[i], new Point(15, 32 + o + (o + h) * i), 14)
+        if (this._inSidebar) draw.setColor(this._sidebarSelection === i ? "ffffff" : "bbbbbb");
+        else draw.setColor(this._sidebarSelection === i ? "f8f8f8" : "b1b1b1");
+        draw.text(this._sidebarElements[i], new Point(15, 32 + o + (o + h) * i), 14)
       }
 
       let offset = sidebarWidth + 15;
@@ -646,16 +646,16 @@ export class Settings {
         tSel = !this._inSidebar && this._vertical === 0;
 
         height += 15 + 14;
-        draw.dynamic.setColor(tSel ? "ffffff" : "dadada");
-        draw.dynamic.text("Installed apps", new Point(offset, height), 14);
+        draw.setColor(tSel ? "ffffff" : "dadada");
+        draw.text("Installed apps", new Point(offset, height), 14);
         pHeight = height + 14;
 
         // (60 for icon) + (2*12 for text) + (10 to bottom)
         height += 14 + 60 + 24 + 20;
         let width = 15 + (60 + 15) * this._appCount;
         if (offset + width > this._swemu.screen.width - offset) width = this._swemu.screen.width - offset - 10;
-        draw.dynamic.setColor(tSel ? "2a2a2a" : "242424");
-        draw.dynamic.roundedRect(new Point(offset, pHeight), new Point(offset + width, height), 0.25);
+        draw.setColor(tSel ? "2a2a2a" : "242424");
+        draw.roundedRect(new Point(offset, pHeight), new Point(offset + width, height), 0.25);
 
         let appList = Object.entries(this._internals.applications.external);
         for (let i=this._appScrollOffset; i<appList.length; i++) {
@@ -689,12 +689,12 @@ export class Settings {
             else right.x = width + offset;
           }
 
-          draw.dynamic.setColor(tSel && this._horizontal === i ? selectedColors[appClass.NAME] : unselectedColors[appClass.NAME]);
-          draw.dynamic.roundedRect(left, right, 0.25);
+          draw.setColor(tSel && this._horizontal === i ? selectedColors[appClass.NAME] : unselectedColors[appClass.NAME]);
+          draw.roundedRect(left, right, 0.25);
 
           if (this._vertical === 0 && this._horizontal === i) {
-            draw.dynamic.setColor(tSel ? "ffffff": "dadada");
-            draw.dynamic.text(appClass.NAME, new Point(-4, 60 + 24 - 5).add(left));
+            draw.setColor(tSel ? "ffffff": "dadada");
+            draw.text(appClass.NAME, new Point(-4, 60 + 24 - 5).add(left));
           }
         }
         pHeight = height;
@@ -703,16 +703,16 @@ export class Settings {
         tSel = !this._inSidebar && this._vertical === 1;
 
         height += 15 + 14;
-        draw.dynamic.setColor(tSel ? "ffffff" : "dadada");
-        draw.dynamic.text("Local users", new Point(offset, height), 14);
+        draw.setColor(tSel ? "ffffff" : "dadada");
+        draw.text("Local users", new Point(offset, height), 14);
         pHeight = height + 14;
 
         // (40 for icon) + (2*12 for text) + (10 to bottom)
         height += 14 + 40 + 24 + 20;
         width = (8 + 40 + 15) * (this._userCount + 1);
         if (offset + width > this._swemu.screen.width - offset) width = this._swemu.screen.width - offset - 10;
-        draw.dynamic.setColor(tSel ? "2a2a2a" : "242424");
-        draw.dynamic.roundedRect(new Point(offset, pHeight), new Point(offset + width, height), 0.25);
+        draw.setColor(tSel ? "2a2a2a" : "242424");
+        draw.roundedRect(new Point(offset, pHeight), new Point(offset + width, height), 0.25);
 
         // "First" user => "Add user"; But apply this to the user list + use this._horizontal to maybe add a light background (rounded)rect
         for (let i=0; i<this._internals.users.length + 1; i++) {
@@ -721,8 +721,8 @@ export class Settings {
           let crossCenter = new Point(offset + 20 + 15 + (15 + 40) * i, pHeight + 35);
 
           if (this._vertical === 1 && this._horizontal === i) {
-            draw.dynamic.setColor("3a3a3a");
-            draw.dynamic.roundedRect(new Point(-25-4, -25-4).add(crossCenter), new Point(25+4, 37+4+2).add(crossCenter), 0.25);
+            draw.setColor("3a3a3a");
+            draw.roundedRect(new Point(-25-4, -25-4).add(crossCenter), new Point(25+4, 37+4+2).add(crossCenter), 0.25);
           }
 
           let user = null;
@@ -730,17 +730,17 @@ export class Settings {
           let unselectedColors = ["5a8787", "00827a", "c05050"];
           let selectedColors = ["aad7d7", "20b2aa", "f08080"];
 
-          if (i === this._internals.users.length) draw.dynamic.setColor(tSel ? "4a4a4a" : "3a3a3a");
-          else draw.dynamic.setColor(tSel ? selectedColors[user.icon.background] : unselectedColors[user.icon.background]);
-          draw.dynamic.arc(crossCenter, 20);
+          if (i === this._internals.users.length) draw.setColor(tSel ? "4a4a4a" : "3a3a3a");
+          else draw.setColor(tSel ? selectedColors[user.icon.background] : unselectedColors[user.icon.background]);
+          draw.arc(crossCenter, 20);
 
-          draw.dynamic.setColor(tSel && this._horizontal === i ? "ffffff" : "dadada");
+          draw.setColor(tSel && this._horizontal === i ? "ffffff" : "dadada");
           let name = i === this._internals.users.length ? "Add" : user.name;
-          draw.dynamic.text(name, new Point(-4, 12+20+4).add(crossCenter), tSel && this._horizontal === i ? 12 : 10, null, null, true);
+          draw.text(name, new Point(-4, 12+20+4).add(crossCenter), tSel && this._horizontal === i ? 12 : 10, null, null, true);
 
           if (i === this._internals.users.length) {
-            draw.dynamic.line(new Point(-10, 0).add(crossCenter), new Point(10, 0).add(crossCenter));
-            draw.dynamic.line(new Point(0, -10).add(crossCenter), new Point(0, 10).add(crossCenter));
+            draw.line(new Point(-10, 0).add(crossCenter), new Point(10, 0).add(crossCenter));
+            draw.line(new Point(0, -10).add(crossCenter), new Point(0, 10).add(crossCenter));
           }
         }
 
@@ -751,34 +751,34 @@ export class Settings {
         tSel = !this._inSidebar && this._vertical === 0;
 
         height += 15 + 14;
-        draw.dynamic.setColor(tSel ? "ffffff" : "dadada");
-        draw.dynamic.text("Selected server", new Point(offset, height), 14);
+        draw.setColor(tSel ? "ffffff" : "dadada");
+        draw.text("Selected server", new Point(offset, height), 14);
         pHeight = height + 14;
 
         // (30 for dropdown (to be implemented)) + (10 to bottom)
         height += 14 + 30 + 10;
-        draw.dynamic.setColor(tSel ? "2a2a2a" : "242424");
-        draw.dynamic.roundedRect(new Point(offset, pHeight), new Point(offset + 140, height), 0.25);
+        draw.setColor(tSel ? "2a2a2a" : "242424");
+        draw.roundedRect(new Point(offset, pHeight), new Point(offset + 140, height), 0.25);
         // 140 ~ 13 chars ?
-        draw.dynamic.setColor(tSel ? "ffffff" : "dadada");
-        draw.dynamic.text("DE-Essen-1", new Point(offset + 10, pHeight + 14 + 12), 14);
+        draw.setColor(tSel ? "ffffff" : "dadada");
+        draw.text("DE-Essen-1", new Point(offset + 10, pHeight + 14 + 12), 14);
         pHeight = height;
 
 
         tSel = !this._inSidebar && this._vertical === 1;
 
         height += 15 + 14;
-        draw.dynamic.setColor(tSel ? "ffffff" : "dadada");
-        draw.dynamic.text("Online account", new Point(offset, height), 14);
+        draw.setColor(tSel ? "ffffff" : "dadada");
+        draw.text("Online account", new Point(offset, height), 14);
         pHeight = height + 14;
 
         // (30 for dropdown) + (10 to bottom)
         height += 14 + 30 + 10;
-        draw.dynamic.setColor(tSel ? "2a2a2a" : "242424");
-        draw.dynamic.roundedRect(new Point(offset, pHeight), new Point(offset + 280, height), 0.25);
+        draw.setColor(tSel ? "2a2a2a" : "242424");
+        draw.roundedRect(new Point(offset, pHeight), new Point(offset + 280, height), 0.25);
         // 280 ~ 27 chars ?
-        draw.dynamic.setColor(tSel ? "ffffff" : "dadada");
-        draw.dynamic.text("john.doe@email.com", new Point(offset + 10, pHeight + 14 + 12), 14);
+        draw.setColor(tSel ? "ffffff" : "dadada");
+        draw.text("john.doe@email.com", new Point(offset + 10, pHeight + 14 + 12), 14);
         pHeight = height;
 
 
@@ -786,57 +786,57 @@ export class Settings {
         tSel = !this._inSidebar && this._vertical === 0;
 
         height += 15 + 14;
-        draw.dynamic.setColor(tSel ? "ffffff" : "dadada");
-        draw.dynamic.text("Switch UID", new Point(offset, height), 14);
+        draw.setColor(tSel ? "ffffff" : "dadada");
+        draw.text("Switch UID", new Point(offset, height), 14);
         pHeight = height + 14;
 
         // (30 for dropdown (to be implemented)) + (10 to bottom)
         height += 14 + 30 + 10;
-        draw.dynamic.setColor(tSel ? "2a2a2a" : "242424");
-        draw.dynamic.roundedRect(new Point(offset, pHeight), new Point(offset + 370, height), 0.25);
+        draw.setColor(tSel ? "2a2a2a" : "242424");
+        draw.roundedRect(new Point(offset, pHeight), new Point(offset + 370, height), 0.25);
         // 370 ~ 36 chars
-        draw.dynamic.setColor(tSel ? "ffffff" : "dadada");
-        draw.dynamic.text(this._internals.uid, new Point(offset + 10, pHeight + 14 + 12), 14);
+        draw.setColor(tSel ? "ffffff" : "dadada");
+        draw.text(this._internals.uid, new Point(offset + 10, pHeight + 14 + 12), 14);
         pHeight = height;
 
 
         tSel = !this._inSidebar && this._vertical === 1;
 
         height += 15 + 14;
-        draw.dynamic.setColor(tSel ? "ffffff" : "dadada");
-        draw.dynamic.text("Show input delay & FPS", new Point(offset, height), 14);
+        draw.setColor(tSel ? "ffffff" : "dadada");
+        draw.text("Show input delay & FPS", new Point(offset, height), 14);
         pHeight = height + 14;
 
         // (30 for button) + (10 to bottom)
         height += 14 + 30 + 10;
-        draw.dynamic.setColor(tSel ? "2a2a2a" : "242424");
-        draw.dynamic.roundedRect(new Point(offset, pHeight), new Point(offset + 170, height), 0.25);
+        draw.setColor(tSel ? "2a2a2a" : "242424");
+        draw.roundedRect(new Point(offset, pHeight), new Point(offset + 170, height), 0.25);
         // 170 ~ 17 chars
         let rstTxtPos = new Point(offset + 10, pHeight + 14 + 12);
-        draw.dynamic.setColor(tSel ? "ffffff" : "dadada");
-        draw.dynamic.text(this._internals.settings.debug ? "Hide" : "Show", rstTxtPos, 14);
+        draw.setColor(tSel ? "ffffff" : "dadada");
+        draw.text(this._internals.settings.debug ? "Hide" : "Show", rstTxtPos, 14);
         pHeight = height;
 
 
         tSel = !this._inSidebar && this._vertical === 2;
 
         height += 15 + 14;
-        draw.dynamic.setColor(tSel ? "ffffff" : "dadada");
-        draw.dynamic.text("Factory reset", new Point(offset, height), 14);
+        draw.setColor(tSel ? "ffffff" : "dadada");
+        draw.text("Factory reset", new Point(offset, height), 14);
         pHeight = height + 14;
 
         // (30 for button) + (10 to bottom)
         height += 14 + 30 + 10;
-        draw.dynamic.setColor(tSel ? "ab2222" : "660202");
-        draw.dynamic.roundedRect(new Point(offset, pHeight), new Point(offset + 170, height), 0.25);
+        draw.setColor(tSel ? "ab2222" : "660202");
+        draw.roundedRect(new Point(offset, pHeight), new Point(offset + 170, height), 0.25);
         // 170 ~ 17 chars
         rstTxtPos = new Point(offset + 10, pHeight + 14 + 12);
-        draw.dynamic.setColor(tSel ? "ffffff" : "dadada");
+        draw.setColor(tSel ? "ffffff" : "dadada");
         if (this._pressedToReset) {
-          draw.dynamic.text("Resetting...", rstTxtPos, 14);
+          draw.text("Resetting...", rstTxtPos, 14);
           if (!this._resetTimeout) setTimeout(() => {location.reload();}, 750);
           this._resetTimeout = true;
-        } else draw.dynamic.text("Reset this Switch", rstTxtPos, 14);
+        } else draw.text("Reset this Switch", rstTxtPos, 14);
         pHeight = height;
       }
     }
@@ -875,10 +875,10 @@ export class ControllerManager {
 
     let center = new Point(this._swemu.screen.width / 2, this._swemu.screen.height / 2);
     let text = "Under construction";
-    draw.dynamic.setColor("2a2a2a");
-    draw.dynamic.roundedRect(new Point(-text.length*8+16+4, -28).add(center), new Point(text.length*8-16, 16).add(center), 0.25);
-    draw.dynamic.setColor("ffffff");
-    draw.dynamic.text(text, center, 16, null, null, true);
+    draw.setColor("2a2a2a");
+    draw.roundedRect(new Point(-text.length*8+16+4, -28).add(center), new Point(text.length*8-16, 16).add(center), 0.25);
+    draw.setColor("ffffff");
+    draw.text(text, center, 16, null, null, true);
   }
 }
 
@@ -914,10 +914,10 @@ export class Gallery {
 
     let center = new Point(this._swemu.screen.width / 2, this._swemu.screen.height / 2);
     let text = "Under construction";
-    draw.dynamic.setColor("2a2a2a");
-    draw.dynamic.roundedRect(new Point(-text.length*8+16+4, -28).add(center), new Point(text.length*8-16, 16).add(center), 0.25);
-    draw.dynamic.setColor("ffffff");
-    draw.dynamic.text(text, center, 16, null, null, true);
+    draw.setColor("2a2a2a");
+    draw.roundedRect(new Point(-text.length*8+16+4, -28).add(center), new Point(text.length*8-16, 16).add(center), 0.25);
+    draw.setColor("ffffff");
+    draw.text(text, center, 16, null, null, true);
   }
 }
 
@@ -979,10 +979,10 @@ export class AddOnStore {
 
     let center = new Point(this._swemu.screen.width / 2, this._swemu.screen.height / 2);
     let text = "Under construction";
-    draw.dynamic.setColor("2a2a2a");
-    draw.dynamic.roundedRect(new Point(-text.length*8+16+4, -28).add(center), new Point(text.length*8-16, 16).add(center), 0.25);
-    draw.dynamic.setColor("ffffff");
-    draw.dynamic.text(text, center, 16, null, null, true);
+    draw.setColor("2a2a2a");
+    draw.roundedRect(new Point(-text.length*8+16+4, -28).add(center), new Point(text.length*8-16, 16).add(center), 0.25);
+    draw.setColor("ffffff");
+    draw.text(text, center, 16, null, null, true);
   }
 }
 
@@ -1018,9 +1018,9 @@ export class NewsApp {
 
     let center = new Point(this._swemu.screen.width / 2, this._swemu.screen.height / 2);
     let text = "Under construction";
-    draw.dynamic.setColor("2a2a2a");
-    draw.dynamic.roundedRect(new Point(-text.length*8+16+4, -28).add(center), new Point(text.length*8-16, 16).add(center), 0.25);
-    draw.dynamic.setColor("ffffff");
-    draw.dynamic.text(text, center, 16, null, null, true);
+    draw.setColor("2a2a2a");
+    draw.roundedRect(new Point(-text.length*8+16+4, -28).add(center), new Point(text.length*8-16, 16).add(center), 0.25);
+    draw.setColor("ffffff");
+    draw.text(text, center, 16, null, null, true);
   }
 }

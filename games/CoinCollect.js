@@ -71,8 +71,8 @@ export class CoinCollect {
 
       let p2 = new Point(width, height).add(p1);
 
-      draw.dynamic.setColor("ef1a48");
-      draw.dynamic.rect(p1, p2);
+      draw.setColor("ef1a48");
+      draw.rect(p1, p2);
     }
   }
 
@@ -114,17 +114,17 @@ export class CoinCollect {
       if (this._buffers.coins[i] === undefined) continue;
       let [center, radius, scrollSpeed] = this._buffers.coins[i];
 
-      draw.dynamic.setColor("dbcb20");
-      draw.dynamic.arc(center, radius, true);
-      draw.dynamic.setColor("000000");
-      draw.dynamic.text("C", new Point(-7, 8).add(center), 16)
+      draw.setColor("dbcb20");
+      draw.arc(center, radius, true);
+      draw.setColor("000000");
+      draw.text("C", new Point(-7, 8).add(center), 16)
     }
   }
   _renderHighscore = (draw, gamepads, render) => {
     let coinHighscore = getCookie("coinHighscore_" + this._user.uid);
     if (coinHighscore > 0) {
-      draw.dynamic.setColor("dbcb20");
-      draw.dynamic.text("Highscore: " + coinHighscore, new Point(10, 30), 20);
+      draw.setColor("dbcb20");
+      draw.text("Highscore: " + coinHighscore, new Point(10, 30), 20);
     }
   }
 
@@ -147,12 +147,12 @@ export class CoinCollect {
   }
   // _checkPlayerHitbox = () => {} // TODO
   _renderPlayer = (draw, gamepads, render) => {
-    draw.dynamic.setColor("ffffff");
-    draw.dynamic.arc(this._player.position.current, this._player.radius);
+    draw.setColor("ffffff");
+    draw.arc(this._player.position.current, this._player.radius);
 
     if (gamepads.player1.joystick.used.left) {
-      draw.dynamic.setColor("ff5522");
-      draw.dynamic.line(this._player.position.current, new Vector2D(gamepads.player1.joystick.left.x, gamepads.player1.joystick.left.y).multiply(100).point().add(this._player.position.current));
+      draw.setColor("ff5522");
+      draw.line(this._player.position.current, new Vector2D(gamepads.player1.joystick.left.x, gamepads.player1.joystick.left.y).multiply(100).point().add(this._player.position.current));
     }
   }
 
@@ -228,15 +228,15 @@ export class CoinCollect {
 
     if (this._player.started) {
       if (this._player.newHighscoreShowUntil >= Date.now()) {
-        draw.dynamic.setColor("dbcb20");
-        draw.dynamic.text("New Highscore!", new Point(this._swemu.screen.width/2, 30), 20, null, null, true);
+        draw.setColor("dbcb20");
+        draw.text("New Highscore!", new Point(this._swemu.screen.width/2, 30), 20, null, null, true);
       }
 
       if (this._player.paused) {
-        draw.dynamic.setColor("ffffff");
-        draw.dynamic.text("Paused", new Point(this._swemu.screen.width / 2 - 25, this._swemu.screen.height / 2 - 70), 35, null, "bold", true);
-        draw.dynamic.setColor("b0b0b0");
-        draw.dynamic.text("Press again to continue", new Point(this._swemu.screen.width / 2, this._swemu.screen.height / 2), 18, null, null, true);
+        draw.setColor("ffffff");
+        draw.text("Paused", new Point(this._swemu.screen.width / 2 - 25, this._swemu.screen.height / 2 - 70), 35, null, "bold", true);
+        draw.setColor("b0b0b0");
+        draw.text("Press again to continue", new Point(this._swemu.screen.width / 2, this._swemu.screen.height / 2), 18, null, null, true);
 
         this._renderHighscore(draw, gamepads, render);
       } else {
@@ -249,25 +249,25 @@ export class CoinCollect {
           this._moveToFuturePlayerPosition(draw, gamepads, render); // Update .future and push them eventually into .current
           // checkPlayerHitbox(); // Check current and .future values and reset the latter if invalid (hitbox check === true)
         } else {
-          draw.dynamic.setColor("ffffff");
-          draw.dynamic.text("Game over", new Point(this._swemu.screen.width / 2 - 25, this._swemu.screen.height / 2 - 70), 35, null, "bold", true);
-          draw.dynamic.setColor("b0b0b0");
-          draw.dynamic.text("Press A to restart", new Point(this._swemu.screen.width / 2, this._swemu.screen.height / 2), 18, null, null, true);
+          draw.setColor("ffffff");
+          draw.text("Game over", new Point(this._swemu.screen.width / 2 - 25, this._swemu.screen.height / 2 - 70), 35, null, "bold", true);
+          draw.setColor("b0b0b0");
+          draw.text("Press A to restart", new Point(this._swemu.screen.width / 2, this._swemu.screen.height / 2), 18, null, null, true);
 
-          draw.dynamic.setColor("ef1a48");
+          draw.setColor("ef1a48");
           let [p1, width, height, scrollSpeed] = this._player.life.killer;
-          draw.dynamic.rect(p1, new Point(width, height).add(p1));
+          draw.rect(p1, new Point(width, height).add(p1));
         }
         this._renderPlayer(draw, gamepads, render);
         // Render coin count
-        draw.dynamic.setColor("dbcb20");
-        draw.dynamic.text(this._player.coins + " Coin" + (this._player.coins === 1 ? "" : "s"), new Point(10, 30), 20);
+        draw.setColor("dbcb20");
+        draw.text(this._player.coins + " Coin" + (this._player.coins === 1 ? "" : "s"), new Point(10, 30), 20);
       }
     } else {
       this._renderPlayer(draw, gamepads, render);
 
-      draw.dynamic.setColor("ffffff");
-      draw.dynamic.text("Move to start", new Point(this._swemu.screen.width / 2, this._swemu.screen.height / 2), 18, null, null, true);
+      draw.setColor("ffffff");
+      draw.text("Move to start", new Point(this._swemu.screen.width / 2, this._swemu.screen.height / 2), 18, null, null, true);
 
       this._renderHighscore(draw, gamepads, render);
     }

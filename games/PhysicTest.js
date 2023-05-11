@@ -64,12 +64,12 @@ export class PhysicTest {
     }
   }
   _renderPlayer = (draw, gamepads, render) => {
-    draw.dynamic.setColor("ffffff");
-    draw.dynamic.arc(this._player.position.current, this._player.radius);
+    draw.setColor("ffffff");
+    draw.arc(this._player.position.current, this._player.radius);
 
     if (gamepads.player1.joystick.used.left) {
-      draw.dynamic.setColor("ff5522");
-      draw.dynamic.line(this._player.position.current, new Vector2D(gamepads.player1.joystick.left.x, gamepads.player1.joystick.left.y).multiply(100).point().add(this._player.position.current));
+      draw.setColor("ff5522");
+      draw.line(this._player.position.current, new Vector2D(gamepads.player1.joystick.left.x, gamepads.player1.joystick.left.y).multiply(100).point().add(this._player.position.current));
     }
   }
 
@@ -129,10 +129,10 @@ export class PhysicTest {
 
     if (this._player.started) {
       if (this._player.paused) {
-        draw.dynamic.setColor("ffffff");
-        draw.dynamic.text("Paused", new Point(this._swemu.screen.width / 2 - 25, this._swemu.screen.height / 2 - 70), 35, null, "bold", true);
-        draw.dynamic.setColor("b0b0b0");
-        draw.dynamic.text("Press again to continue", new Point(this._swemu.screen.width / 2, this._swemu.screen.height / 2), 18, null, null, true);
+        draw.setColor("ffffff");
+        draw.text("Paused", new Point(this._swemu.screen.width / 2 - 25, this._swemu.screen.height / 2 - 70), 35, null, "bold", true);
+        draw.setColor("b0b0b0");
+        draw.text("Press again to continue", new Point(this._swemu.screen.width / 2, this._swemu.screen.height / 2), 18, null, null, true);
       } else {
         this._moveToFuturePlayerPosition(draw, gamepads, render);
       }

@@ -67,8 +67,8 @@ export class Pong {
   }
 
   _renderBall = (draw, gamepads, render) => {
-    draw.dynamic.setColor("ffffff");
-    draw.dynamic.arc(this._ball.point, 6);
+    draw.setColor("ffffff");
+    draw.arc(this._ball.point, 6);
   }
 
   _updatePlayers = (draw, gamepads, render) => {
@@ -84,22 +84,22 @@ export class Pong {
   }
 
   _renderPlayers = (draw, gamepads, render) => {
-    draw.dynamic.setColor("ffffff");
+    draw.setColor("ffffff");
 
     let leftPlayer = new Point(this._player.xOffset, this._player.y.left);
-    draw.dynamic.rect(leftPlayer, this._player.model.add_NW(leftPlayer));
+    draw.rect(leftPlayer, this._player.model.add_NW(leftPlayer));
 
     let rightPlayer = new Point(this._swemu.screen.width - (this._player.xOffset + this._player.model.x), this._player.y.right);
-    draw.dynamic.rect(rightPlayer, this._player.model.add_NW(rightPlayer));
+    draw.rect(rightPlayer, this._player.model.add_NW(rightPlayer));
   }
 
   _renderScore = (draw, gamepads, render) => {
-    draw.dynamic.setColor("ffffff");
+    draw.setColor("ffffff");
     let mid = new Point(this._swemu.screen.width / 2, 10);
     let sl = ""+this._player.score.left;
     let sr = ""+this._player.score.right;
-    draw.dynamic.text(sl, new Point(sl.length * 14, 14).add(mid), 14);
-    draw.dynamic.text(sr, new Point(-14, 14).add(mid), 14);
+    draw.text(sl, new Point(sl.length * 14, 14).add(mid), 14);
+    draw.text(sr, new Point(-14, 14).add(mid), 14);
   }
 
   _checkHitbox = (draw, gamepads, render) => {
@@ -180,12 +180,12 @@ export class Pong {
     if (this._terminated) return;
 
     if (!this._player.started) {
-      draw.dynamic.setColor("ffffff");
-      draw.dynamic.text((this._controller_mode === 0 ? "1" : "2") + " Controller", new Point(this._swemu.screen.width / 2, this._swemu.screen.height - 14), 14, null, null, true);
+      draw.setColor("ffffff");
+      draw.text((this._controller_mode === 0 ? "1" : "2") + " Controller", new Point(this._swemu.screen.width / 2, this._swemu.screen.height - 14), 14, null, null, true);
 
       if (this._controller_mode === 1 && gamepads.player2.id === -1) {
-        draw.dynamic.setColor("ffffff");
-        draw.dynamic.text("Controller 2 not connected", new Point(this._swemu.screen.width / 2, this._swemu.screen.height - 14 - 14 - 14), 14, null, null, true);
+        draw.setColor("ffffff");
+        draw.text("Controller 2 not connected", new Point(this._swemu.screen.width / 2, this._swemu.screen.height - 14 - 14 - 14), 14, null, null, true);
       }
     }
 

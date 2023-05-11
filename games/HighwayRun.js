@@ -36,12 +36,12 @@ export class HighwayRun {
   }
 
   _renderHighway = (draw, gamepads, render) => {
-    draw.dynamic.setColor("ffffff");
+    draw.setColor("ffffff");
     for (let i=1; i<this._highwayLanes; i++) {
       let y = (this._swemu.screen.height / this._highwayLanes) * i;
       if (i === 0) y += 1;
       if (i === this._highwayLanes) y -= 1;
-      draw.dynamic.line(new Point(0, y), new Point(this._swemu.screen.width, y));
+      draw.line(new Point(0, y), new Point(this._swemu.screen.width, y));
     }
   }
 
@@ -125,9 +125,9 @@ export class HighwayRun {
         let p1 = new Point(x, y-(localWidth / 2));
         let p2 = new Point(localLength, localWidth).add(p1);
 
-        if (fatalCrash) draw.dynamic.setColor("ff4444");
-        else draw.dynamic.setColor("ffffff");
-        draw.dynamic.rect(p1, p2);
+        if (fatalCrash) draw.setColor("ff4444");
+        else draw.setColor("ffffff");
+        draw.rect(p1, p2);
       } // for i
     } // for lane
   }
@@ -172,12 +172,12 @@ export class HighwayRun {
       this._player.position.current.x = this._player.radius;
   }
   _renderPlayer = (draw, gamepads, render) => {
-    draw.dynamic.setColor("ffffff");
-    draw.dynamic.arc(this._player.position.current, this._player.radius);
+    draw.setColor("ffffff");
+    draw.arc(this._player.position.current, this._player.radius);
 
     if (gamepads.player1.joystick.used.right) {
-      draw.dynamic.setColor("ff5522");
-      draw.dynamic.line(this._player.position.current, new Vector2D(gamepads.player1.joystick.right.y, 0).multiply(100).point().add(this._player.position.current));
+      draw.setColor("ff5522");
+      draw.line(this._player.position.current, new Vector2D(gamepads.player1.joystick.right.y, 0).multiply(100).point().add(this._player.position.current));
     }
   }
 
@@ -247,10 +247,10 @@ export class HighwayRun {
 
     if (this._player.started) {
       if (this._player.paused) {
-        draw.dynamic.setColor("ffffff");
-        draw.dynamic.text("Paused", new Point(this._swemu.screen.width / 2 - 25, this._swemu.screen.height / 2 - 70), 35, null, "bold", true);
-        draw.dynamic.setColor("b0b0b0");
-        draw.dynamic.text("Press again to continue", new Point(this._swemu.screen.width / 2, this._swemu.screen.height / 2), 18, null, null, true);
+        draw.setColor("ffffff");
+        draw.text("Paused", new Point(this._swemu.screen.width / 2 - 25, this._swemu.screen.height / 2 - 70), 35, null, "bold", true);
+        draw.setColor("b0b0b0");
+        draw.text("Press again to continue", new Point(this._swemu.screen.width / 2, this._swemu.screen.height / 2), 18, null, null, true);
       } else {
         if (this._player.life.alive) {
           this._updateAnimalPositions();
@@ -261,12 +261,12 @@ export class HighwayRun {
 
           this._updatePlayerPosition(draw, gamepads, render);
         } else {
-          draw.dynamic.setColor("ffffff");
-          draw.dynamic.text("Game over", new Point(this._swemu.screen.width / 2 - 25, this._swemu.screen.height / 2 - 70), 35, null, "bold", true);
-          draw.dynamic.setColor("b0b0b0");
-          draw.dynamic.text("Press A to restart", new Point(this._swemu.screen.width / 2, this._swemu.screen.height / 2), 18, null, null, true);
+          draw.setColor("ffffff");
+          draw.text("Game over", new Point(this._swemu.screen.width / 2 - 25, this._swemu.screen.height / 2 - 70), 35, null, "bold", true);
+          draw.setColor("b0b0b0");
+          draw.text("Press A to restart", new Point(this._swemu.screen.width / 2, this._swemu.screen.height / 2), 18, null, null, true);
 
-          draw.dynamic.setColor("ffa8a8");
+          draw.setColor("ffa8a8");
           let [x, lane, carType, scrollSpeed] = this._player.life.killer;
           let y = (this._swemu.screen.height / this._highwayLanes) * lane + ((this._swemu.screen.height / this._highwayLanes) / 2);
           let width = carType === "SUV" ? this._highwayLaneWidth*1.65 : (carType === "Normal" ? this._highwayLaneWidth : 200);
@@ -275,16 +275,16 @@ export class HighwayRun {
           let p1 = new Point(x, y-(height / 2));
           let p2 = new Point(width, height).add(p1);
 
-          draw.dynamic.setColor("ffffff");
-          draw.dynamic.rect(p1, p2);
+          draw.setColor("ffffff");
+          draw.rect(p1, p2);
         }
       }
       this._renderPlayer(draw, gamepads, render);
     } else {
       this._renderPlayer(draw, gamepads, render);
 
-      draw.dynamic.setColor("ffffff");
-      draw.dynamic.text("Move to start", new Point(this._swemu.screen.width / 2, this._swemu.screen.height / 2), 18, null, null, true);
+      draw.setColor("ffffff");
+      draw.text("Move to start", new Point(this._swemu.screen.width / 2, this._swemu.screen.height / 2), 18, null, null, true);
     }
   }
 }
