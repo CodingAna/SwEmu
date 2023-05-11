@@ -74,12 +74,17 @@ export class Pong {
     console.log(this._mp_mode);
 
     nc.onrecv((recvObj) => {
+      this._player.started = true;
 
       if (!recvObj.success) console.warn(recvObj);
       if (recvObj.type === "game.play") {
         if (recvObj.data.player === "left") this._player.y.left = recvObj.data.y;
         else this._player.y.right = recvObj.data.y;
-        if (!this._mp_mode) {
+        console.log([recvObj.data.joyR, recvObj.data.joyL]);
+        if (this._mp_mode) {
+          this._joyR = recvObj.data.joyR;
+        } else {
+          this._joyL = recvObj.data.joyL;
           this._ball = recvObj.data.ball;
           this._ball.point = new Point(this._ball.point.x, this._ball.point.y);
           this._ball.move = new Vector2D(this._ball.move.x, this._ball.move.y);
@@ -91,7 +96,8 @@ export class Pong {
             code: this.roomCode,
             player: this._mp_mode ? "left" : "right",
             y: this._mp_mode ? this._player.y.left : this._player.y.right,
-            ball: this._ball
+            ball: this._ball,
+            joy: this._mp_mode ? this._joyL : this._joyR,
           },
         });
       }
@@ -104,7 +110,8 @@ export class Pong {
           code: this.roomCode,
           player: this._mp_mode ? "left" : "right",
           y: this._mp_mode ? this._player.y.left : this._player.y.right,
-          ball: this._ball
+          ball: this._ball,
+          joy: this._mp_mode ? this._joyL : this._joyR,
         },
       });
     });
@@ -212,8 +219,9 @@ export class Pong {
         this._ball.point.x = this._swemu.screen.width - this._player.xOffset - this._player.model.x;
         this._ball.move.x *= -1;
         // One Controller: player1.joystick.right.y OR Two Controller: player2.joystick.left.y
-        let rdata = this._controller_mode === 0 ? gamepads.player1.joystick.right.y : gamepads.player2.joystick.left.y;
-        this._ball.move.y += rdata * 0.5;
+        // let rdata = this._controller_mode === 0 ? gamepads.player1.joystick.right.y : gamepads.player2.joystick.left.y;
+        // if (!this._mp_mode) this._ball.move.y += gamepads.player1.joystick.y * 0.5;
+        this._ball.move.y += this._joyR * 0.5;
         this._updateBall(draw, gamepads, render, true, false);
       }
     }
@@ -223,7 +231,7 @@ export class Pong {
       if (this._ball.point.y + this._ball.radius >= this._player.y.left && this._ball.point.y - this._ball.radius <= this._player.y.left + this._player.model.y) {
         this._ball.point.x = this._player.xOffset + this._player.model.x;
         this._ball.move.x *= -1;
-        this._ball.move.y += gamepads.player1.joystick.left.y * 0.5;
+        if (this._mp_mode) this._ball.move.y += gamepads.player1.joystick.left.y * 0.5;
         this._updateBall(draw, gamepads, render, true, false);
       }
     }
@@ -236,6 +244,9 @@ export class Pong {
   }
 
   init = (user) => {
+    this._joyL = 0;
+    this._joyR = 0;
+
     this._terminated = false;
     this._user = user;
     this._controller_mode = 0;
@@ -274,6 +285,9 @@ export class Pong {
   render = (draw, gamepads, render) => {
     if (this._terminated) return;
 
+    if (this._mp_mode) this._joyL = gamepads.player1.joystick.y;
+    else this._joyR = gamepads.player1.joystick.y;
+
     if (!this._player.started) {
       draw.setColor("ffffff");
       draw.text((this._controller_mode === 0 ? "1" : "2") + " Controller", new Point(this._swemu.screen.width / 2, this._swemu.screen.height - 14), 14, null, null, true);
@@ -284,9 +298,9 @@ export class Pong {
       }
     }
 
-    if (gamepads.player1.joystick.used.left && (this._controller_mode === 0 || gamepads.player2.id !== -1)) this._player.started = true;
+    // if (gamepads.player1.joystick.used.left && (this._controller_mode === 0 || gamepads.player2.id !== -1)) this._player.started = true;
 
-    if (this._player.started || true) {
+    if (this._player.started) {
       this._updateBall(draw, gamepads, render);
       this._updatePlayers(draw, gamepads, render);
       this._checkHitbox(draw, gamepads, render); // call _updateBall in _checkHitbox to move ball further away
