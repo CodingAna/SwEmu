@@ -312,6 +312,20 @@ export class OS {
     if (getCookie("s-uid") === null) setCookie("s-uid", this.generateUID(), 30);
     this.internals.uid = getCookie("s-uid");
 
+    let nc = new NetworkConnection();
+    nc.onrecv((recvObj) => {
+      if (!recvObj.success) console.warn(recvObj);
+      if (recvObj.type === "register.switch") console.log(recvObj.data.msg);
+    });
+    nc.onopen(() => {
+      nc.send({
+        type: "register.switch",
+        data:{
+          uid: this.internals.uid,
+        },
+      });
+    });
+
     this.delayedInterval = setInterval(() => {}, 100);
   }
 
@@ -469,3 +483,23 @@ export class OS {
     requestAnimationFrame(this.mainRenderer);
   }
 }
+
+export class NetworkConnection {
+  constructor(recvCallback) {
+    this.ws = new WebSocket('ws://localhost:3000');
+  }
+
+  onrecv = (callback) => {
+    this.ws.onmessage = (msg) => {
+      callback(JSON.parse(msg.data));
+    };
+  }
+
+  onopen = (callback) => {
+    this.ws.onopen = callback;
+  }
+
+  send = (dataObj) => {
+    if (this.ws.readyState === 1) this.ws.send(JSON.stringify(dataObj));
+  }
+};
