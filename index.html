@@ -432,7 +432,7 @@
           gamepads.player1.actions.pause = true;
         } else gamepads.player1.actions.pause = false;
 
-        homeScreen.render(draw, gamepads, render);
+        homeScreen.render(draw.dynamic, gamepads, render);
 
         let now = Date.now();
         render.deltaTime = (now - render.now) / 1000;
