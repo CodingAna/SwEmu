@@ -3,6 +3,7 @@ import { Point, Vector2D } from "./Geometry.js";
 import { MyMath } from "./MyMath.js";
 import { GamepadDummy } from "./GamepadDummy.js";
 import { setCookie, getCookie } from "./Cookies.js";
+import { Utils } from "./Utils.js";
 // Import SystemApplications
 import { HomeScreen, NewsApp, AddOnStore, Gallery, ControllerManager, Settings } from "./SystemApplications.js";
 
@@ -33,15 +34,6 @@ export class OS {
 
   addApp = (name, app) => {
     this.internals.applications.external[name] = app;
-  }
-
-  generateUID = () => {
-    let uid = "";
-    for (let i=1; i<=8+4+4+4+12; i++) {
-      uid += parseInt(Math.random() * 16).toString(16);
-      if (i === 8 || i === 8+4 || i === 8+4+4 || i === 8+4+4+4) uid += "-";
-    }
-    return uid;
   }
 
   renderSwitch = () => {
@@ -309,7 +301,7 @@ export class OS {
     if (getCookie("users") === null) setCookie("users", JSON.stringify(this.internals.users), 30);
     this.internals.users = JSON.parse(getCookie("users"));
 
-    if (getCookie("s-uid") === null) setCookie("s-uid", this.generateUID(), 30);
+    if (getCookie("s-uid") === null) setCookie("s-uid", Utils.generateUID(), 30);
     this.internals.uid = getCookie("s-uid");
 
     let nc = new NetworkConnection();
@@ -486,7 +478,7 @@ export class OS {
 
 export class NetworkConnection {
   constructor(recvCallback) {
-    this.ws = new WebSocket('ws://localhost:3000');
+    this.ws = new WebSocket('ws://172.20.10.5:3000');
   }
 
   onrecv = (callback) => {

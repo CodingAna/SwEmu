@@ -1,4 +1,6 @@
 import { MyMath } from "../MyMath.js";
+import { NetworkConnection } from "../OS.js";
+import { Utils } from "../Utils.js";
 import { Point, Vector2D } from "../Geometry.js";
 import { setCookie, getCookie } from "../Cookies.js";
 
@@ -22,11 +24,90 @@ export class Pong {
   }
 
   buttons_a = () => {
+    this._mp_mode = false;
   }
 
   buttons_b = () => {
     if (this._player.started) this.init(this._user);
     else this.terminate();
+  }
+
+  buttons_y = () => {
+    let nc = new NetworkConnection();
+    if (this._mp_mode) {
+      // Create room
+      nc.onrecv((recvObj) => {
+        console.log(recvObj);
+        if (!recvObj.success) console.warn(recvObj);
+        if (recvObj.type === "game.create") this.roomCode = recvObj.data.code;
+      });
+
+      nc.onopen(() => {
+        nc.send({
+          type: "game.create",
+          data:{
+          },
+        });
+      });
+
+    } else {
+      // Join room
+      nc.onrecv((recvObj) => {
+        if (!recvObj.success) console.warn(recvObj);
+        if (recvObj.type === "game.join" && recvObj.data.msg === "Connected to room.") this.roomCode = recvObj.data.code;
+      });
+
+      nc.onopen(() => {
+        nc.send({
+          type: "game.join",
+          data: {
+            code: "ABCD",
+          }
+        });
+      });
+    }
+  }
+
+  buttons_x = () => {
+    let nc = new NetworkConnection();
+
+    console.log(this._mp_mode);
+
+    nc.onrecv((recvObj) => {
+
+      if (!recvObj.success) console.warn(recvObj);
+      if (recvObj.type === "game.play") {
+        if (recvObj.data.player === "left") this._player.y.left = recvObj.data.y;
+        else this._player.y.right = recvObj.data.y;
+        if (!this._mp_mode) {
+          this._ball = recvObj.data.ball;
+          this._ball.point = new Point(this._ball.point.x, this._ball.point.y);
+          this._ball.move = new Vector2D(this._ball.move.x, this._ball.move.y);
+        }
+
+        nc.send({
+          type: "game.play",
+          data:{
+            code: this.roomCode,
+            player: this._mp_mode ? "left" : "right",
+            y: this._mp_mode ? this._player.y.left : this._player.y.right,
+            ball: this._ball
+          },
+        });
+      }
+    });
+
+    nc.onopen(() => {
+      nc.send({
+        type: "game.play",
+        data:{
+          code: this.roomCode,
+          player: this._mp_mode ? "left" : "right",
+          y: this._mp_mode ? this._player.y.left : this._player.y.right,
+          ball: this._ball
+        },
+      });
+    });
   }
 
   buttons_pause = () => {
@@ -47,6 +128,7 @@ export class Pong {
     if (uy) this._ball.point.y += mm.y;
 
     let cm = this._controller_mode;
+    let mp = this._mp_mode;
 
     let sl = this._player.score.left;
     let yl = this._player.y.left;
@@ -60,6 +142,7 @@ export class Pong {
       this.init();
     }
     this._controller_mode = cm;
+    this._mp_mode = mp;
     this._player.score.left = sl;
     this._player.score.right = sr;
     this._player.y.left = yl;
@@ -72,6 +155,7 @@ export class Pong {
   }
 
   _updatePlayers = (draw, gamepads, render) => {
+    /*
     this._player.y.left += gamepads.player1.joystick.left.y * render.deltaTime * 100 * this._player.speed;
     if (this._player.y.left < 0) this._player.y.left = 0;
     else if (this._player.y.left > this._swemu.screen.height - this._player.model.y) this._player.y.left = this._swemu.screen.height - this._player.model.y;
@@ -81,6 +165,16 @@ export class Pong {
     this._player.y.right += rdata * render.deltaTime * 100 * this._player.speed;
     if (this._player.y.right < 0) this._player.y.right = 0;
     else if (this._player.y.right > this._swemu.screen.height - this._player.model.y) this._player.y.right = this._swemu.screen.height - this._player.model.y;
+    */
+    if (this._mp_mode) {
+      this._player.y.left += gamepads.player1.joystick.left.y * render.deltaTime * 100 * this._player.speed;
+      if (this._player.y.left < 0) this._player.y.left = 0;
+      else if (this._player.y.left > this._swemu.screen.height - this._player.model.y) this._player.y.left = this._swemu.screen.height - this._player.model.y;
+    } else {
+      this._player.y.right += gamepads.player1.joystick.left.y * render.deltaTime * 100 * this._player.speed;
+      if (this._player.y.right < 0) this._player.y.right = 0;
+      else if (this._player.y.right > this._swemu.screen.height - this._player.model.y) this._player.y.right = this._swemu.screen.height - this._player.model.y;
+    }
   }
 
   _renderPlayers = (draw, gamepads, render) => {
@@ -145,6 +239,7 @@ export class Pong {
     this._terminated = false;
     this._user = user;
     this._controller_mode = 0;
+    this._mp_mode = true;
     this._player = {
       xOffset: 10,
       model: new Point(15, 50),
@@ -191,7 +286,7 @@ export class Pong {
 
     if (gamepads.player1.joystick.used.left && (this._controller_mode === 0 || gamepads.player2.id !== -1)) this._player.started = true;
 
-    if (this._player.started) {
+    if (this._player.started || true) {
       this._updateBall(draw, gamepads, render);
       this._updatePlayers(draw, gamepads, render);
       this._checkHitbox(draw, gamepads, render); // call _updateBall in _checkHitbox to move ball further away
