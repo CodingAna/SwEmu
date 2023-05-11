@@ -478,7 +478,7 @@ export class OS {
 
 export class NetworkConnection {
   constructor(recvCallback) {
-    this.ws = new WebSocket('ws://172.20.10.5:3000');
+    this.ws = new WebSocket('ws://localhost:3000');
   }
 
   onrecv = (callback) => {
