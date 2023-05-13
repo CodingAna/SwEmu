@@ -37,7 +37,7 @@ export class GamepadDummy {
         dpad: {
           duration: {
             first: 425,
-            any: 145,
+            any: 145
           },
           up: {
             first: true,
