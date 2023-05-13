@@ -20,23 +20,8 @@ export class Pong {
   buttons_a = () => {
     if (this._terminated) return;
     if (this._started) return;
-    this._started = true;
 
-    let nc = new NetworkConnection();
-
-    nc.onrecv((recv) => {
-      if (recv.type === "room.create") {}
-      else if (recv.type === "room.join") {}
-      else if (recv.type === "room.play") {}
-
-      nc.send({type: "room.play", code: "ABCD", game: "Pong", user: {uid: this._user.uid, name: this._user.name}, data: {
-      }});
-    });
-
-    nc.onopen(() => {
-      if (this._me_p1) nc.send({type: "room.create", game: "Pong", user: {uid: this._user.uid, name: this._user.name}});
-      else nc.send({type: "room.join", code: "ABCD", game: "Pong", user: {uid: this._user.uid, name: this._user.name}});
-    });
+    if ()
   }
 
   buttons_b = () => {
@@ -49,6 +34,18 @@ export class Pong {
   }
 
   buttons_x = () => {
+    let nc = new NetworkConnection();
+
+    nc.onrecv((recv) => {
+      if (recv.type === "game.start") {
+        this._gamecode = recv.room.gamecode;
+      }
+    });
+
+    nc.onopen(() => {
+      if (this._me_p1) nc.send({type: "room.create", game: "Pong", user: {uid: this._user.uid, name: this._user.name}});
+      else nc.send({type: "room.join", code: "ABCD", game: "Pong", user: {uid: this._user.uid, name: this._user.name}});
+    });
   }
 
   buttons_pause = () => {
@@ -61,6 +58,7 @@ export class Pong {
     this._user = user;
 
     this._me_p1 = true;
+    this._gamecode = "";
 
     this._model = {
       offset: 15,
@@ -69,11 +67,13 @@ export class Pong {
     };
     this._p1 = {
       y: 100,
-      move: 0
+      move: 0,
+      score: 0
     };
     this._p2 = {
       y: 100,
-      move: 0
+      move: 0,
+      score: 0
     };
     this._ball = {
       point: new Point(this._swemu.screen.width / 2, this._swemu.screen.height / 2),
@@ -82,6 +82,24 @@ export class Pong {
       speed: 2,
       maxSpeed: 3
     };
+
+    this.nc = new NetworkConnection();
+
+    this.nc.onrecv((recv) => {
+      if (recv.type === "room.create") {}
+      else if (recv.type === "room.join") {}
+      else if (recv.type === "room.heartbeat") {
+        if (this._gamecode === "" && recv.room.gamecode !== "") {
+          this._gamecode = recv.room.gamecode;
+          nc.send({type: "game.data"});
+        } else nc.send({type: "room.heartbeat", code: "ABCD", game: "Pong", user: {uid: this._user.uid, name: this._user.name}, data: {}});
+      }
+    });
+
+    this.nc.onopen(() => {
+      if (this._me_p1) nc.send({type: "room.create", game: "Pong", user: {uid: this._user.uid, name: this._user.name}});
+      else nc.send({type: "room.join", code: "ABCD", game: "Pong", user: {uid: this._user.uid, name: this._user.name}});
+    });
 
     return this;
   }
@@ -95,6 +113,8 @@ export class Pong {
   render = (draw, gamepads, render) => {
     if (this._terminated) return;
     if (this._paused) return;
+    if (this._gamecode !== "") this._started = true;
+    if (!this._started) return;
 
     if (gamepads.player1.joystick.used.left) {
       if (this._me_p1) this._p1.move = gamepads.player1.joystick.left.y;
