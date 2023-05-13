@@ -494,4 +494,8 @@ export class NetworkConnection {
   send = (dataObj) => {
     if (this.ws.readyState === 1) this.ws.send(JSON.stringify(dataObj));
   }
+
+  isopen = () => {
+    return this.ws.readyState === 2;
+  }
 };
