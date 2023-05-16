@@ -24,7 +24,7 @@ export class Pong {
   }
 
   buttons_a = () => {
-    this._mp_mode = false;
+    //this._mp_mode = false;
   }
 
   buttons_b = () => {
@@ -33,6 +33,7 @@ export class Pong {
   }
 
   buttons_y = () => {
+    /*
     let nc = new NetworkConnection();
     if (this._mp_mode) {
       // Create room
@@ -66,9 +67,11 @@ export class Pong {
         });
       });
     }
+    */
   }
 
   buttons_x = () => {
+    /*
     let nc = new NetworkConnection();
 
     console.log(this._mp_mode);
@@ -115,6 +118,7 @@ export class Pong {
         },
       });
     });
+    */
   }
 
   buttons_pause = () => {
@@ -162,7 +166,6 @@ export class Pong {
   }
 
   _updatePlayers = (draw, gamepads, render) => {
-    /*
     this._player.y.left += gamepads.player1.joystick.left.y * render.deltaTime * 100 * this._player.speed;
     if (this._player.y.left < 0) this._player.y.left = 0;
     else if (this._player.y.left > this._swemu.screen.height - this._player.model.y) this._player.y.left = this._swemu.screen.height - this._player.model.y;
@@ -172,7 +175,7 @@ export class Pong {
     this._player.y.right += rdata * render.deltaTime * 100 * this._player.speed;
     if (this._player.y.right < 0) this._player.y.right = 0;
     else if (this._player.y.right > this._swemu.screen.height - this._player.model.y) this._player.y.right = this._swemu.screen.height - this._player.model.y;
-    */
+    /*
     if (this._mp_mode) {
       this._player.y.left += gamepads.player1.joystick.left.y * render.deltaTime * 100 * this._player.speed;
       if (this._player.y.left < 0) this._player.y.left = 0;
@@ -182,6 +185,7 @@ export class Pong {
       if (this._player.y.right < 0) this._player.y.right = 0;
       else if (this._player.y.right > this._swemu.screen.height - this._player.model.y) this._player.y.right = this._swemu.screen.height - this._player.model.y;
     }
+    */
   }
 
   _renderPlayers = (draw, gamepads, render) => {
@@ -219,9 +223,10 @@ export class Pong {
         this._ball.point.x = this._swemu.screen.width - this._player.xOffset - this._player.model.x;
         this._ball.move.x *= -1;
         // One Controller: player1.joystick.right.y OR Two Controller: player2.joystick.left.y
-        // let rdata = this._controller_mode === 0 ? gamepads.player1.joystick.right.y : gamepads.player2.joystick.left.y;
+        let rdata = this._controller_mode === 0 ? gamepads.player1.joystick.right.y : gamepads.player2.joystick.left.y;
         // if (!this._mp_mode) this._ball.move.y += gamepads.player1.joystick.y * 0.5;
-        this._ball.move.y += this._joyR * 0.5;
+        this._ball.move.y += rdata * 0.5;
+        // this._ball.move.y += this._joyR * 0.5;
         this._updateBall(draw, gamepads, render, true, false);
       }
     }
@@ -231,7 +236,8 @@ export class Pong {
       if (this._ball.point.y + this._ball.radius >= this._player.y.left && this._ball.point.y - this._ball.radius <= this._player.y.left + this._player.model.y) {
         this._ball.point.x = this._player.xOffset + this._player.model.x;
         this._ball.move.x *= -1;
-        if (this._mp_mode) this._ball.move.y += gamepads.player1.joystick.left.y * 0.5;
+        this._ball.move.y += gamepads.player1.joystick.left.y * 0.5;
+        // if (this._mp_mode) this._ball.move.y += gamepads.player1.joystick.left.y * 0.5;
         this._updateBall(draw, gamepads, render, true, false);
       }
     }
@@ -285,8 +291,10 @@ export class Pong {
   render = (draw, gamepads, render) => {
     if (this._terminated) return;
 
+    /*
     if (this._mp_mode) this._joyL = gamepads.player1.joystick.y;
     else this._joyR = gamepads.player1.joystick.y;
+    */
 
     if (!this._player.started) {
       draw.setColor("ffffff");
