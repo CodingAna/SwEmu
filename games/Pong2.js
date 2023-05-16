@@ -7,8 +7,10 @@ import { setCookie, getCookie } from "../Cookies.js";
 export class Pong {
   static get NAME() {return "Pong";}
 
-  constructor(swemu) {
+  constructor(swemu, showNotification, showKeyboard) {
     this._swemu = swemu;
+    this._showNotification = showNotification;
+    this._showKeyboard = showKeyboard;
   }
 
   dpad_up = () => {
@@ -18,10 +20,9 @@ export class Pong {
   }
 
   buttons_a = () => {
+    this._showKeyboard();
     if (this._terminated) return;
     if (this._started) return;
-
-    if ()
   }
 
   buttons_b = () => {
@@ -110,7 +111,9 @@ export class Pong {
     return this;
   }
 
-  render = (draw, gamepads, render) => {
+  render = (draw, gamepads, render, text) => {
+    draw.setColor("ffffff");
+    draw.text(text, new Point(100, 20), 20);
     if (this._terminated) return;
     if (this._paused) return;
     if (this._gamecode !== "") this._started = true;

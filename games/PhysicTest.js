@@ -5,10 +5,10 @@ import { setCookie, getCookie } from "../Cookies.js";
 export class PhysicTest {
   static get NAME() {return "PhysicTest";}
 
-  constructor(swemu) {
+  constructor(swemu, showNotification, showKeyboard) {
     this._swemu = swemu;
-    this._terminated = false;
-    this._player = {};
+    this._showNotification = showNotification;
+    this._showKeyboard = showKeyboard;
   }
 
   buttons_a = () => {

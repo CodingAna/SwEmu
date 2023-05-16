@@ -373,10 +373,10 @@ export class HomeScreen {
 export class Settings {
   static get NAME() {return "Settings";}
 
-  constructor(swemu) {
+  constructor(swemu, showNotification, showKeyboard) {
     this._swemu = swemu;
-    this._terminated = false;
-    this._internals = {};
+    this._showNotification = showNotification;
+    this._showKeyboard = showKeyboard;
   }
 
   dpad_up = () => {
@@ -854,10 +854,10 @@ export class Settings {
 export class ControllerManager {
   static get NAME() {return "Controller";}
 
-  constructor(swemu) {
+  constructor(swemu, showNotification, showKeyboard) {
     this._swemu = swemu;
-    this._terminated = false;
-    this._internals = {};
+    this._showNotification = showNotification;
+    this._showKeyboard = showKeyboard;
   }
 
   buttons_b = () => {
@@ -893,10 +893,10 @@ export class ControllerManager {
 export class Gallery {
   static get NAME() {return "Gallery";}
 
-  constructor(swemu) {
+  constructor(swemu, showNotification, showKeyboard) {
     this._swemu = swemu;
-    this._terminated = false;
-    this._internals = {};
+    this._showNotification = showNotification;
+    this._showKeyboard = showKeyboard;
   }
 
   buttons_b = () => {
@@ -932,10 +932,10 @@ export class Gallery {
 export class AddOnStore {
   static get NAME() {return "Store";}
 
-  constructor(swemu) {
+  constructor(swemu, showNotification, showKeyboard) {
     this._swemu = swemu;
-    this._terminated = false;
-    this._internals = {};
+    this._showNotification = showNotification;
+    this._showKeyboard = showKeyboard;
   }
 
   buttons_b = () => {
@@ -997,10 +997,10 @@ export class AddOnStore {
 export class NewsApp {
   static get NAME() {return "News";}
 
-  constructor(swemu) {
+  constructor(swemu, showNotification, showKeyboard) {
     this._swemu = swemu;
-    this._terminated = false;
-    this._internals = {};
+    this._showNotification = showNotification;
+    this._showKeyboard = showKeyboard;
   }
 
   buttons_b = () => {

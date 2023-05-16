@@ -7,8 +7,10 @@ import { setCookie, getCookie } from "../Cookies.js";
 export class Pong {
   static get NAME() {return "Pong";}
 
-  constructor(swemu) {
+  constructor(swemu, showNotification, showKeyboard) {
     this._swemu = swemu;
+    this._showNotification = showNotification;
+    this._showKeyboard = showKeyboard;
   }
 
   dpad_up = () => {

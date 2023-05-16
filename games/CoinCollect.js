@@ -4,11 +4,10 @@ import { setCookie, getCookie } from "../Cookies.js";
 export class CoinCollect {
   static get NAME() {return "CoinCollect";}
 
-  constructor(swemu) {
+  constructor(swemu, showNotification, showKeyboard) {
     this._swemu = swemu;
-    this._terminated = false;
-    this._player = {};
-    this._buffers = {};
+    this._showNotification = showNotification;
+    this._showKeyboard = showKeyboard;
 
     this._spawnObstacleLoopTimeout = setTimeout(() => {}, 1);
     this._spawnCoinLoopTimeout = setTimeout(() => {}, 1);

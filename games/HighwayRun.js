@@ -5,9 +5,10 @@ import { setCookie, getCookie } from "../Cookies.js";
 export class HighwayRun {
   static get NAME() {return "HighwayRun";}
 
-  constructor(swemu) {
+  constructor(swemu, showNotification, showKeyboard) {
     this._swemu = swemu;
-    this._terminated = false;
+    this._showNotification = showNotification;
+    this._showKeyboard = showKeyboard;
 
     this._spawnCarLoopTimeout = setTimeout(() => {}, 1);
   }
