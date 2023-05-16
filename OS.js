@@ -55,20 +55,26 @@ export class OS {
   gamepadHandler = (event, connecting) => {
     if (connecting) {
       let players = Object.entries(this.gamepads);
+      let conI = 0;
       for (let i=0; i<players.length; i++) {
+        conI = i;
         let [pname, _] = players[i];
         if (this.gamepads[pname].id !== -1) continue;
         this.gamepads[pname] = new GamepadDummy(event.gamepad.index);
         break;
       }
+      this.showNotification("Connected Controller " + conI);
     } else {
       let players = Object.entries(this.gamepads);
+      let conI = 0;
       for (let i=0; i<players.length; i++) {
+        conI = i;
         let [pname, _] = players[i];
         if (this.gamepads[pname].id !== event.gamepad.index) continue;
         this.gamepads[pname].id = -1;
         break;
       }
+      this.showNotification("Disconnected Controller " + conI);
     }
   }
 
@@ -183,9 +189,22 @@ export class OS {
     this.draw.static.text("Y", new Point(-buttonRadius*2-6, 6).add(buttonCenterRight).add(this.gamepads.player1.pressed.y ? smaller : new Point()), this.gamepads.player1.pressed.y ? 10 : 12);
   }
 
+  showNotification = (text) => {
+    this.notifications.push(text);
+  }
+
   init = () => {
     this.started = false;
     this.terminated = false;
+
+    this.currentNotification = {
+      animProg: 0,
+      started: false,
+      startTime: 0,
+      animDuration: 500,
+      holdDuration: 2000,
+    };
+    this.notifications = [];
 
     this.draw = {
       static: new CustomDraw(this.canvas.static, this.context.static),
@@ -357,6 +376,39 @@ export class OS {
 
     this.getGamepadData();
     this.renderGamepad();
+
+    if (this.notifications.length > 0) {
+      if (this.currentNotification.started) {
+        let diff = Date.now() - this.currentNotification.startTime;
+        if (diff <= this.currentNotification.animDuration)
+          this.currentNotification.animProg = diff / this.currentNotification.animDuration; // Make slide animation (slide-in)
+        else if (diff <= this.currentNotification.animDuration + this.currentNotification.holdDuration)
+          this.currentNotification.animProg = 1; // Hold notification
+        else if (diff <= this.currentNotification.animDuration + this.currentNotification.holdDuration + this.currentNotification.animDuration)
+          this.currentNotification.animProg = ((this.currentNotification.animDuration + this.currentNotification.holdDuration + this.currentNotification.animDuration) - diff) / this.currentNotification.animDuration; // Make reverse slide animation (slide-out)
+        else {
+          // Remove notification
+          this.currentNotification.started = false;
+          this.notifications.reverse();
+          this.notifications.pop(); // I can probably use this.notifications.remove(this.notifications[0])
+          this.notifications.reverse();
+        }
+      } else {
+        this.currentNotification.started = true;
+        this.currentNotification.startTime = Date.now();
+      }
+      if (this.currentNotification.started) {
+        let width = 240;
+        let height = 45;
+
+        this.draw.dynamic.setColor("ff5555");
+        this.draw.dynamic.rect(new Point(this.swemu.screen.width / 2 - width / 2, -height+height*this.currentNotification.animProg), new Point(this.swemu.screen.width / 2 + width / 2, this.currentNotification.animProg*height/2));
+        this.draw.dynamic.roundedRect(new Point(this.swemu.screen.width / 2 - width / 2, -height+height*this.currentNotification.animProg), new Point(this.swemu.screen.width / 2 + width / 2, height*this.currentNotification.animProg));
+
+        this.draw.dynamic.setColor("000000");
+        this.draw.dynamic.text(this.notifications[0], new Point(this.swemu.screen.width / 2 - 10, -height/2+this.currentNotification.animProg*height+7), 14, null, null, true);
+      }
+    }
 
     if (this.gamepads.player1.pressed.dpad.up) {
       if (!this.gamepads.player1.actions.dpad.up) {
