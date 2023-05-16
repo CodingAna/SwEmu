@@ -7,18 +7,17 @@ export class Point {
     this.x = x;
     this.y = y;
 
-    // TODO: This doesn't really work, fix!
-    if (x instanceof Point && y === undefined) {
+    if ((x instanceof Vector2D) && y === undefined) {
       this.x = x.x;
       this.y = x.y;
     }
   }
 
   interpolate = (point, t) => {
-    if (!(point instanceof Point)) return;
+    if (!(point instanceof Point) && !(point instanceof Vector2D)) return;
     let dx = point.x - this.x;
     let dy = point.y - this.y;
-    return new Point(dx*t, dy*t).add(this);
+    return new Point(dx * t, dy * t).add(this);
   }
 
   add = (point) => {
@@ -29,7 +28,7 @@ export class Point {
   }
 
   add_NW = (point) => {
-    if (!(point instanceof Point)) return;
+    if (!(point instanceof Point) && !(point instanceof Vector2D)) return;
     return new Point(this.x + point.x, this.y + point.y);
   }
 
@@ -53,7 +52,7 @@ export class Line {
   }
 
   vector = () => {
-    return new Vector2D(this.p1.x-this.p2.x, this.p1.y-this.p2.y);
+    return new Vector2D(this.p1.x - this.p2.x, this.p1.y - this.p2.y);
   }
 }
 
@@ -91,7 +90,10 @@ export class Vector2D {
     return this;
   }
 
-  // add_NW = () => {} // TODO
+  add_NW = () => {
+    if (!(v instanceof Vector2D) && !(v instanceof Point)) return;
+    return new Vector2D(this.x + v.x, this.y + v.y);
+  }
 
   multiply = (a) => {
     this.x *= a;
