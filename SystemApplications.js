@@ -6,8 +6,10 @@ import { setCookie, getCookie } from "./Cookies.js";
 export class HomeScreen {
   static get NAME() {return "HomeScreen";}
 
-  constructor(swemu) {
+  constructor(swemu, showNotification, showKeyboard) {
     this._swemu = swemu;
+    this._showNotification = showNotification;
+    this._showKeyboard = showKeyboard;
     this._terminated = false;
     this._internals = {};
   }
@@ -161,11 +163,11 @@ export class HomeScreen {
     return this;
   }
 
-  render = (draw, gamepads, render) => {
+  render = (draw, gamepads, render, text) => {
     if (this._currentGame === null) this._paused = false;
     if (this._paused) {
       if (this._currentGame._terminated) this._currentGame = null;
-      else this._currentGame.render(draw, gamepads, render);
+      else this._currentGame.render(draw, gamepads, render, text);
       return;
     }
 
@@ -345,7 +347,7 @@ export class HomeScreen {
           i++;
         });
       } else if (this._actionClick === 2) {
-        let game = new (Object.entries(this._internals.applications.external)[this._highlightedApp][1])(this._swemu);
+        let game = new (Object.entries(this._internals.applications.external)[this._highlightedApp][1])(this._swemu, this._showNotification, this._showKeyboard);
         this._currentGame = game.init(this._internals.users[this._appSelectedUser]);
         this._paused = true;
         this._actionClick = 0;
@@ -353,7 +355,7 @@ export class HomeScreen {
 
     } else if (this._actionOpen === 2) {
       // On app (system)
-      let systemApp = new (Object.entries(this._internals.applications.system)[this._highlightedSystemApp][1])(this._swemu);
+      let systemApp = new (Object.entries(this._internals.applications.system)[this._highlightedSystemApp][1])(this._swemu, this._showNotification, this._showKeyboard);
       this._currentGame = systemApp.init(this._internals);
       this._paused = true;
       this._actionClick = 0;
@@ -1022,5 +1024,196 @@ export class NewsApp {
     draw.roundedRect(new Point(-text.length*8+16+4, -28).add(center), new Point(text.length*8-16, 16).add(center), 0.25);
     draw.setColor("ffffff");
     draw.text(text, center, 16, null, null, true);
+  }
+}
+
+export class Keyboard {
+  static get NAME() {return "Keyboard";}
+
+  constructor(swemu) {
+    this._swemu = swemu;
+  }
+
+  dpad_up = () => {
+    this._row--;
+
+    this._checkSelection();
+  }
+
+  dpad_down = () => {
+    this._row++;
+
+    this._checkSelection();
+  }
+
+  dpad_left = () => {
+    this._horizontal--;
+
+    this._checkSelection();
+  }
+
+  dpad_right = () => {
+    this._horizontal++;
+
+    this._checkSelection();
+  }
+
+  buttons_a = () => {
+    if (this._row === 4 && this._horizontal === 3) this._submitted = true;
+    else {
+      if (this._row === 0)
+    }
+
+    if (this._row === 0) this._text += numRow[this._horizontal];
+    else if (this._row === 1) this._text += qRow[this._horizontal];
+    else if (this._row === 2) this._text += aRow[this._horizontal];
+    else if (this._row === 3) this._text += yRow[this._horizontal];
+    else if (this._row === 3) {
+    }
+  }
+
+  buttons_b = () => {}
+
+  buttons_x = () => {}
+
+  buttons_y = () => {}
+
+  _checkSelection = () => {
+    if (this._row < 0) this._row = 0;
+    else if (this._row > 4) this._row = 4;
+
+    if (this._horizontal < 0) this._horizontal = 0;
+    else {
+      if (this._row === 0 && this._horizontal > this.numRow.length - 1) this._horizontal = this.numRow.length - 1;
+      else if (this._row === 1 && this._horizontal > this.qRow.length - 1) this._horizontal = this.qRow.length - 1;
+      else if (this._row === 2 && this._horizontal > this.aRow.length - 1) this._horizontal = this.aRow.length - 1;
+      else if (this._row === 3 && this._horizontal > this.yRow.length - 1) this._horizontal = this.yRow.length - 1;
+      else if (this._row === 4 && this._horizontal > 3) this._horizontal = 3;
+    }
+  }
+
+  init = (user, textHint) => {
+    this._terminated = false;
+    this._user = user;
+
+    this._hint = textHint;
+    this._submitted = false;
+    this._text = "Text ABC 123";
+
+    this._row = 0;
+    this._horizontal = 0;
+
+    this._shifted = false;
+
+    this.numRow = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
+    this.qRow = ["Q", "W", "E", "R", "T", "Z", "U", "I", "O", "P", "Ü"];
+    this.aRow = ["A", "S", "D", "F", "G", "H", "J", "K", "L", "Ö", "Ä"];
+    this.yRow = ["Y", "X", "C", "V", "B", "N", "M", ",", ".", "@", "ß"];
+
+    return this;
+  }
+
+  terminate = () => {
+    this._terminated = true;
+
+    return this;
+  }
+
+  render = (draw, gamepads, render) => {
+    if (this._terminated) return;
+    if (this._submitted) return;
+
+    let textHeight = 60;
+    let buttonHeight = (this._swemu.screen.height - textHeight - 10) / 6;
+
+    let numWidth = (this._swemu.screen.width - 20 -  10 * this.numRow.length) / this.numRow.length;
+
+    let qWidth = (this._swemu.screen.width - 20 -  10 * this.qRow.length) / this.qRow.length;
+
+    let aWidth = (this._swemu.screen.width - 20 -  10 * this.aRow.length) / this.aRow.length;
+
+    let yWidth = (this._swemu.screen.width - 20 -  10 * this.yRow.length) / this.yRow.length;
+
+    draw.setColor("ffffff");
+    draw.rect(new Point(0, 0), new Point(this._swemu.screen.width, textHeight));
+
+    draw.setColor("888888");
+    draw.rect(new Point(0, textHeight), new Point(this._swemu.screen.width, this._swemu.screen.height));
+
+    draw.setColor("000000")
+    draw.text(this._text, new Point(10, 38), 20);
+
+    let rowNum = new Point(10, textHeight + 10);
+    let rowQ = new Point(10, textHeight + 10 + buttonHeight + 10);
+    let rowA = new Point(10, textHeight + 10 + (buttonHeight + 10) * 2);
+    let rowY = new Point(10, textHeight + 10 + (buttonHeight + 10) * 3);
+    let rowSpecial = new Point(10, textHeight + 10 + (buttonHeight + 10) * 4);
+
+    for (let i=0; i<this.numRow.length; i++) {
+      if (this._row === 0 && i === this._horizontal) draw.setColor("666666");
+      else draw.setColor("444444");
+      draw.roundedRect(new Point((numWidth + 10) * i, 0).add(rowNum), new Point(numWidth * (i + 1) + (i * 10), buttonHeight).add(rowNum));
+
+      draw.setColor("ffffff");
+      draw.text(this.numRow[i], new Point((numWidth + 10) * i + 18, buttonHeight / 2 + 10).add(rowNum), 20);
+    }
+
+    for (let i=0; i<this.qRow.length; i++) {
+      if (this._row === 1 && i === this._horizontal) draw.setColor("666666");
+      else draw.setColor("444444");
+      draw.roundedRect(new Point((qWidth + 10) * i, 0).add(rowQ), new Point(qWidth * (i + 1) + (i * 10), buttonHeight).add(rowQ));
+
+      draw.setColor("ffffff");
+      draw.text(this.qRow[i], new Point((qWidth + 10) * i + 14, buttonHeight / 2 + 10).add(rowQ), 20);
+    }
+
+    for (let i=0; i<this.aRow.length; i++) {
+      if (this._row === 2 && i === this._horizontal) draw.setColor("666666");
+      else draw.setColor("444444");
+      draw.roundedRect(new Point((aWidth + 10) * i, 0).add(rowA), new Point(aWidth * (i + 1) + (i * 10), buttonHeight).add(rowA));
+
+      draw.setColor("ffffff");
+      draw.text(this.aRow[i], new Point((aWidth + 10) * i + 14, buttonHeight / 2 + 10).add(rowA), 20);
+    }
+
+    for (let i=0; i<this.yRow.length; i++) {
+      if (this._row === 3 && i === this._horizontal) draw.setColor("666666");
+      else draw.setColor("444444");
+      draw.roundedRect(new Point((yWidth + 10) * i, 0).add(rowY), new Point(yWidth * (i + 1) + (i * 10), buttonHeight).add(rowY));
+
+      draw.setColor("ffffff");
+      draw.text(this.yRow[i], new Point((yWidth + 10) * i + 14, buttonHeight / 2 + 10).add(rowY), 20);
+    }
+
+    let shiftWidth = this._swemu.screen.width * (5 / 40);
+    let spaceWidth = this._swemu.screen.width * (15 / 40);
+    let delWidth = this._swemu.screen.width * (5 / 40);
+    let enterWidth = this._swemu.screen.width * (10 / 40);
+    let padding = this._swemu.screen.width * (1 / 40);
+
+    if (this._row === 4 && 0 === this._horizontal) draw.setColor("666666");
+    else draw.setColor("444444");
+    draw.roundedRect(new Point().add(rowSpecial), new Point(shiftWidth, buttonHeight).add(rowSpecial));
+
+    if (this._row === 4 && 1 === this._horizontal) draw.setColor("666666");
+    else draw.setColor("444444");
+    draw.roundedRect(new Point(shiftWidth+padding, 0).add(rowSpecial), new Point(shiftWidth+padding+spaceWidth, buttonHeight).add(rowSpecial));
+
+    if (this._row === 4 && 2 === this._horizontal) draw.setColor("666666");
+    else draw.setColor("444444");
+    draw.roundedRect(new Point(shiftWidth+padding+spaceWidth+padding, 0).add(rowSpecial), new Point(shiftWidth+padding+spaceWidth+padding+delWidth, buttonHeight).add(rowSpecial));
+
+    if (this._row === 4 && 3 === this._horizontal) draw.setColor("666666");
+    else draw.setColor("444444");
+    draw.roundedRect(new Point(shiftWidth+padding+spaceWidth+padding+delWidth+padding, 0).add(rowSpecial), new Point(shiftWidth+padding+spaceWidth+padding+delWidth+padding+enterWidth, buttonHeight).add(rowSpecial));
+
+    // draw.roundedRect(new Point().add(rowSpecial), new Point().add(rowSpecial));
+
+    draw.setColor("ffffff");
+    draw.text("SHIFT", new Point(4, buttonHeight / 2 + 9).add(rowSpecial), 18);
+    draw.text("SPACE", new Point(shiftWidth + padding + spaceWidth / 2 - 18, buttonHeight / 2 + 9).add(rowSpecial), 18, null, null, true);
+    draw.text("DEL", new Point(shiftWidth + padding + spaceWidth + padding + 13, buttonHeight / 2 + 9).add(rowSpecial), 18);
+    draw.text("ENTER", new Point(shiftWidth + padding + spaceWidth + padding + delWidth + enterWidth / 2, buttonHeight / 2 + 9).add(rowSpecial), 18, null, null, true);
+    // draw.text("", new Point().add(rowSpecial), 20);
   }
 }
