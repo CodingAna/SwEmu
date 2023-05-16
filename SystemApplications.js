@@ -6,8 +6,9 @@ import { setCookie, getCookie } from "./Cookies.js";
 export class HomeScreen {
   static get NAME() {return "HomeScreen";}
 
-  constructor(swemu, showNotification, showKeyboard) {
+  constructor(swemu, keyboardData, showNotification, showKeyboard) {
     this._swemu = swemu;
+    this._keyboardData = keyboardData;
     this._showNotification = showNotification;
     this._showKeyboard = showKeyboard;
     this._terminated = false;
@@ -347,6 +348,11 @@ export class HomeScreen {
           i++;
         });
       } else if (this._actionClick === 2) {
+        // Reset keyboardData on startup (=> clear text)
+        this._keyboardData.shown = false;
+        this._keyboardData.text = "";
+        this._keyboardData.submitted = false;
+
         let game = new (Object.entries(this._internals.applications.external)[this._highlightedApp][1])(this._swemu, this._showNotification, this._showKeyboard);
         this._currentGame = game.init(this._internals.users[this._appSelectedUser]);
         this._paused = true;
@@ -1059,24 +1065,33 @@ export class Keyboard {
   }
 
   buttons_a = () => {
-    if (this._row === 4 && this._horizontal === 3) this._submitted = true;
-    else {
-      if (this._row === 0)
-    }
+    if (this._submitted) return;
 
-    if (this._row === 0) this._text += numRow[this._horizontal];
-    else if (this._row === 1) this._text += qRow[this._horizontal];
-    else if (this._row === 2) this._text += aRow[this._horizontal];
-    else if (this._row === 3) this._text += yRow[this._horizontal];
-    else if (this._row === 3) {
+    if (this._row === 0) this._text += this.numRow[this._horizontal];
+    else if (this._row === 1) this._text += this.qRow[this._horizontal];
+    else if (this._row === 2) this._text += this.aRow[this._horizontal];
+    else if (this._row === 3) this._text += this.yRow[this._horizontal];
+    else if (this._row === 4) {
+      if (this._horizontal === 0) {
+        this._shifted = !this._shifted;
+        this._updateShift();
+      } else if (this._horizontal === 1) this._text += " ";
+      else if (this._horizontal === 2 && this._text.length > 0) this._text = this._text.substring(0, this._text.length - 1);
+      else if (this._horizontal === 3) this._submitted = true;
     }
   }
 
-  buttons_b = () => {}
+  buttons_b = () => {
+    this._terminated = true;
+  }
 
-  buttons_x = () => {}
+  buttons_x = () => {
+    if (this._text.length > 0) this._text = this._text.substring(0, this._text.length - 1);
+  }
 
-  buttons_y = () => {}
+  buttons_y = () => {
+    this._text += " ";
+  }
 
   _checkSelection = () => {
     if (this._row < 0) this._row = 0;
@@ -1092,6 +1107,22 @@ export class Keyboard {
     }
   }
 
+  _updateShift = () => {
+    if (this._shifted) {
+      for (let i=0; i<this.qRow.length; i++) this.qRow[i] = this.qRow[i].toUpperCase();
+      for (let i=0; i<this.aRow.length; i++) this.aRow[i] = this.aRow[i].toUpperCase();
+      for (let i=0; i<this.yRow.length; i++) if (this.yRow[i] !== "ß") this.yRow[i] = this.yRow[i].toUpperCase();
+      this.yRow[7] = ";";
+      this.yRow[8] = ":";
+    } else {
+      for (let i=0; i<this.qRow.length; i++) this.qRow[i] = this.qRow[i].toLowerCase();
+      for (let i=0; i<this.aRow.length; i++) this.aRow[i] = this.aRow[i].toLowerCase();
+      for (let i=0; i<this.yRow.length; i++) if (this.yRow[i] !== "ß") this.yRow[i] = this.yRow[i].toLowerCase();
+      this.yRow[7] = ",";
+      this.yRow[8] = ".";
+    }
+  }
+
   init = (user, textHint) => {
     this._terminated = false;
     this._user = user;
@@ -1103,12 +1134,13 @@ export class Keyboard {
     this._row = 0;
     this._horizontal = 0;
 
-    this._shifted = false;
-
     this.numRow = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
     this.qRow = ["Q", "W", "E", "R", "T", "Z", "U", "I", "O", "P", "Ü"];
     this.aRow = ["A", "S", "D", "F", "G", "H", "J", "K", "L", "Ö", "Ä"];
     this.yRow = ["Y", "X", "C", "V", "B", "N", "M", ",", ".", "@", "ß"];
+
+    this._shifted = false;
+    this._updateShift();
 
     return this;
   }
