@@ -18,7 +18,7 @@
       import { PhysicTest } from "./games/PhysicTest.js";
       import { HighwayRun } from "./games/HighwayRun.js";
       import { Pong } from "./games/Pong.js";
-      import { Pong } from "./games/PongMP.js";
+      import { PongMP } from "./games/PongMP.js";
 
       let canvas = {
         static: document.getElementById("canvas_static"),
@@ -55,6 +55,7 @@
 
       os.addApp("coinCollect", CoinCollect);
       os.addApp("pong", Pong);
+      os.addApp("pongMP", PongMP);
 
       os.start();
     </script>
