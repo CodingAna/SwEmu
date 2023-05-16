@@ -5,7 +5,7 @@ import { GamepadDummy } from "./GamepadDummy.js";
 import { setCookie, getCookie } from "./Cookies.js";
 import { Utils } from "./Utils.js";
 // Import SystemApplications
-import { HomeScreen, NewsApp, AddOnStore, Gallery, ControllerManager, Settings } from "./SystemApplications.js";
+import { HomeScreen, NewsApp, AddOnStore, Gallery, ControllerManager, Settings, Keyboard } from "./SystemApplications.js";
 
 export class OS {
   constructor(canvas, context) {
@@ -193,16 +193,31 @@ export class OS {
     this.notifications.push(text);
   }
 
+  showKeyboard = (textHint) => {
+    this.keyboard = new Keyboard(this.swemu);
+    this.keyboard.init(this.internals, textHint);
+
+    this.keyboardData.submitted = false;
+    this.keyboardData.text = "";
+    this.keyboardData.shown = true;
+  }
+
   init = () => {
     this.started = false;
     this.terminated = false;
+
+    this.keyboardData = {
+      shown: false,
+      text: "",
+      submitted: false,
+    };
 
     this.currentNotification = {
       animProg: 0,
       started: false,
       startTime: 0,
-      animDuration: 500,
-      holdDuration: 2000,
+      animDuration: 350,
+      holdDuration: 1250,
     };
     this.notifications = [];
 
@@ -352,7 +367,7 @@ export class OS {
       this.render.delayed.deltaTime = this.render.deltaTime;
     }, 100);
 
-    this.homeScreen = new HomeScreen(this.swemu);
+    this.homeScreen = new HomeScreen(this.swemu, this.showNotification, this.showKeyboard);
     this.homeScreen.init(this.internals);
 
     if (this.internals.users.length === 0) {
@@ -376,6 +391,9 @@ export class OS {
 
     this.getGamepadData();
     this.renderGamepad();
+
+    if (this.keyboardData.submitted)
+      this.keyboardData.shown = false;
 
     if (this.notifications.length > 0) {
       if (this.currentNotification.started) {
@@ -419,7 +437,8 @@ export class OS {
         }
         clearTimeout(this.gamepads.player1.actions.timeouts.dpad.up.timeout);
         this.gamepads.player1.actions.timeouts.dpad.up.timeout = setTimeout(() => {this.gamepads.player1.actions.dpad.up = false;}, timeoutDuration);
-        this.homeScreen.dpad_up(); // Maybe this need's some parameters. Not yet tho.
+        if (!this.keyboardData.shown) this.homeScreen.dpad_up(); // Maybe this need's some parameters. Not yet tho.
+        else this.keyboard.dpad_up();
       }
       this.gamepads.player1.actions.dpad.up = true;
     } else {
@@ -436,7 +455,8 @@ export class OS {
         }
         clearTimeout(this.gamepads.player1.actions.timeouts.dpad.down.timeout);
         this.gamepads.player1.actions.timeouts.dpad.down.timeout = setTimeout(() => {this.gamepads.player1.actions.dpad.down = false;}, timeoutDuration);
-        this.homeScreen.dpad_down(); // Maybe this need's some parameters. Not yet tho.
+        if (!this.keyboardData.shown) this.homeScreen.dpad_down(); // Maybe this need's some parameters. Not yet tho.
+        else this.keyboard.dpad_down();
       }
       this.gamepads.player1.actions.dpad.down = true;
     } else {
@@ -453,7 +473,8 @@ export class OS {
         }
         clearTimeout(this.gamepads.player1.actions.timeouts.dpad.left.timeout);
         this.gamepads.player1.actions.timeouts.dpad.left.timeout = setTimeout(() => {this.gamepads.player1.actions.dpad.left = false;}, timeoutDuration);
-        this.homeScreen.dpad_left(); // Maybe this need's some parameters. Not yet tho.
+        if (!this.keyboardData.shown) this.homeScreen.dpad_left(); // Maybe this need's some parameters. Not yet tho.
+        else this.keyboard.dpad_left();
       }
       this.gamepads.player1.actions.dpad.left = true;
     } else {
@@ -470,7 +491,8 @@ export class OS {
         }
         clearTimeout(this.gamepads.player1.actions.timeouts.dpad.right.timeout);
         this.gamepads.player1.actions.timeouts.dpad.right.timeout = setTimeout(() => {this.gamepads.player1.actions.dpad.right = false;}, timeoutDuration);
-        this.homeScreen.dpad_right(); // Maybe this need's some parameters. Not yet tho.
+        if (!this.keyboardData.shown) this.homeScreen.dpad_right(); // Maybe this need's some parameters. Not yet tho.
+        else this.keyboard.dpad_right();
       }
       this.gamepads.player1.actions.dpad.right = true;
     } else {
@@ -480,35 +502,47 @@ export class OS {
 
     if (this.gamepads.player1.pressed.a) {
       if (!this.gamepads.player1.actions.a)
-        this.homeScreen.buttons_a();
+        if (!this.keyboardData.shown) this.homeScreen.buttons_a();
+        else this.keyboard.buttons_a();
       this.gamepads.player1.actions.a = true;
     } else this.gamepads.player1.actions.a = false;
 
     if (this.gamepads.player1.pressed.b) {
       if (!this.gamepads.player1.actions.b)
-        this.homeScreen.buttons_b();
+        if (!this.keyboardData.shown) this.homeScreen.buttons_b();
+        else this.keyboard.buttons_b();
       this.gamepads.player1.actions.b = true;
     } else this.gamepads.player1.actions.b = false;
 
     if (this.gamepads.player1.pressed.x) {
       if (!this.gamepads.player1.actions.x)
-        this.homeScreen.buttons_x();
+        if (!this.keyboardData.shown) this.homeScreen.buttons_x();
+        this.keyboard.buttons_x();
       this.gamepads.player1.actions.x = true;
     } else this.gamepads.player1.actions.x = false;
 
     if (this.gamepads.player1.pressed.y) {
       if (!this.gamepads.player1.actions.y)
-        this.homeScreen.buttons_y();
+        if (!this.keyboardData.shown) this.homeScreen.buttons_y();
+        else this.keyboard.buttons_y();
       this.gamepads.player1.actions.y = true;
     } else this.gamepads.player1.actions.y = false;
 
     if (this.gamepads.player1.pressed.pause) {
       if (!this.gamepads.player1.actions.pause)
-        this.homeScreen.buttons_pause();
+        if (!this.keyboardData.shown) this.homeScreen.buttons_pause();
+        else ; // TODO: Maybe use this
       this.gamepads.player1.actions.pause = true;
     } else this.gamepads.player1.actions.pause = false;
 
-    this.homeScreen.render(this.draw.dynamic, this.gamepads, this.render);
+    if (this.keyboardData.shown) {
+      this.keyboard.render(this.draw.dynamic, this.gamepads, this.render);
+      this.keyboardData.submitted = this.keyboard._submitted;
+      if (this.keyboardData.submitted) {
+        this.keyboardData.text = this.keyboard._text;
+        this.keyboardData.shown = false;
+      }
+    } else this.homeScreen.render(this.draw.dynamic, this.gamepads, this.render, this.keyboardData.text);
 
     let now = Date.now();
     this.render.deltaTime = (now - this.render.now) / 1000;
