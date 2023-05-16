@@ -206,6 +206,8 @@ export class OS {
     this.started = false;
     this.terminated = false;
 
+    this.keyboard = new Keyboard(this.swemu);
+    this.keyboard.terminate();
     this.keyboardData = {
       shown: false,
       text: "",
@@ -367,7 +369,7 @@ export class OS {
       this.render.delayed.deltaTime = this.render.deltaTime;
     }, 100);
 
-    this.homeScreen = new HomeScreen(this.swemu, this.showNotification, this.showKeyboard);
+    this.homeScreen = new HomeScreen(this.swemu, this.keyboardData, this.showNotification, this.showKeyboard);
     this.homeScreen.init(this.internals);
 
     if (this.internals.users.length === 0) {
@@ -510,14 +512,20 @@ export class OS {
     if (this.gamepads.player1.pressed.b) {
       if (!this.gamepads.player1.actions.b)
         if (!this.keyboardData.shown) this.homeScreen.buttons_b();
-        else this.keyboard.buttons_b();
+        else {
+          this.keyboard = new Keyboard(this.swemu);
+          this.keyboard.terminate();
+          this.keyboardData.shown = false;
+          this.keyboardData.text = "";
+          this.keyboardData.submitted = false;
+        }
       this.gamepads.player1.actions.b = true;
     } else this.gamepads.player1.actions.b = false;
 
     if (this.gamepads.player1.pressed.x) {
       if (!this.gamepads.player1.actions.x)
         if (!this.keyboardData.shown) this.homeScreen.buttons_x();
-        this.keyboard.buttons_x();
+        else this.keyboard.buttons_x();
       this.gamepads.player1.actions.x = true;
     } else this.gamepads.player1.actions.x = false;
 
