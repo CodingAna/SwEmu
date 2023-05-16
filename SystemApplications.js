@@ -212,12 +212,14 @@ export class HomeScreen {
         "PhysicTest": "5a8787",
         "HighwayRun": "764976",
         "Pong": "9a7dc8",
+        "PongMP": "7d9ac8",
       };
       let selectedColors = {
         "CoinCollect": "d7d7aa",
         "PhysicTest": "aad7d7",
         "HighwayRun": "c699c6",
         "Pong": "dabdf8",
+        "PongMP": "bddaf8",
       };
       //let unselectedColors = [, "", "5a8787", "87875a", "5a8787", "87875a"];
       //let selectedColors = ["d7d7aa", "aad7d7", "aad7d7", "d7d7aa", "aad7d7", "d7d7aa"];
@@ -666,12 +668,14 @@ export class Settings {
             "PhysicTest": "5a8787",
             "HighwayRun": "764976",
             "Pong": "9a7dc8",
+            "PongMP": "7d9ac8",
           };
           let selectedColors = {
             "CoinCollect": "d7d7aa",
             "PhysicTest": "aad7d7",
             "HighwayRun": "c699c6",
             "Pong": "dabdf8",
+            "PongMP": "bddaf8",
           };
 
           let left = new Point(offset + 15 + (60 + 15) * (i - this._appScrollOffset), pHeight + 15);
