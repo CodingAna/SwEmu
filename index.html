@@ -51,6 +51,8 @@
       window.addEventListener("gamepadconnected",    event => {os.gamepadHandler(event, true );}, false);
       window.addEventListener("gamepaddisconnected", event => {os.gamepadHandler(event, false);}, false);
 
+      window.addEventListener("keydown", event => {os.keyboardHandler(event);});
+
       os.init();
 
       os.addApp("coinCollect", CoinCollect);
