@@ -52,6 +52,18 @@ export class OS {
     this.draw.static.rect(this.points.redJoyConStart, this.points.redJoyConMid);
   }
 
+  keyboardHandler = (event) => {
+    if (event.key === "ArrowUp") this.triggerDpad("up");
+    else if (event.key === "ArrowDown") this.triggerDpad("down");
+    else if (event.key === "ArrowLeft") this.triggerDpad("left");
+    else if (event.key === "ArrowRight") this.triggerDpad("right");
+    else if (event.key === " ") this.triggerButton("a");
+    else if (event.key === "b") this.triggerButton("b");
+    else if (event.key === "x") this.triggerButton("x");
+    else if (event.key === "y") this.triggerButton("y");
+    else console.log(event.key);
+  }
+
   gamepadHandler = (event, connecting) => {
     if (connecting) {
       let players = Object.entries(this.gamepads);
@@ -187,6 +199,44 @@ export class OS {
     this.draw.static.text("A", new Point(buttonRadius*2-5, 5).add(buttonCenterRight).add(this.gamepads.player1.pressed.a ? smaller : new Point()), this.gamepads.player1.pressed.a ? 10 : 12);
     this.draw.static.text("B", new Point(-5, buttonRadius*2+6).add(buttonCenterRight).add(this.gamepads.player1.pressed.b ? smaller : new Point()), this.gamepads.player1.pressed.b ? 10 : 12);
     this.draw.static.text("Y", new Point(-buttonRadius*2-6, 6).add(buttonCenterRight).add(this.gamepads.player1.pressed.y ? smaller : new Point()), this.gamepads.player1.pressed.y ? 10 : 12);
+  }
+
+  triggerDpad = (direction) => {
+    if (direction === "up") {
+      if (!this.keyboardData.shown) this.homeScreen.dpad_up(); // Maybe this need's some parameters. Not yet tho.
+      else this.keyboard.dpad_up();
+    } else if (direction === "down") {
+      if (!this.keyboardData.shown) this.homeScreen.dpad_down(); // Maybe this need's some parameters. Not yet tho.
+      else this.keyboard.dpad_down();
+    } else if (direction === "left") {
+      if (!this.keyboardData.shown) this.homeScreen.dpad_left(); // Maybe this need's some parameters. Not yet tho.
+      else this.keyboard.dpad_left();
+    } else if (direction === "right") {
+      if (!this.keyboardData.shown) this.homeScreen.dpad_right(); // Maybe this need's some parameters. Not yet tho.
+      else this.keyboard.dpad_right();
+    }
+  }
+
+  triggerButton = (button) => {
+    if (button === "a") {
+      if (!this.keyboardData.shown) this.homeScreen.buttons_a();
+      else this.keyboard.buttons_a();
+    } else if (button === "b") {
+      if (!this.keyboardData.shown) this.homeScreen.buttons_b();
+      else {
+        this.keyboard = new Keyboard(this.swemu);
+        this.keyboard.terminate();
+        this.keyboardData.shown = false;
+        this.keyboardData.text = "";
+        this.keyboardData.submitted = false;
+      }
+    } else if (button === "x") {
+      if (!this.keyboardData.shown) this.homeScreen.buttons_x();
+      else this.keyboard.buttons_x();
+    } else if (button === "y") {
+      if (!this.keyboardData.shown) this.homeScreen.buttons_y();
+      else this.keyboard.buttons_y();
+    }
   }
 
   showNotification = (text) => {
@@ -439,8 +489,7 @@ export class OS {
         }
         clearTimeout(this.gamepads.player1.actions.timeouts.dpad.up.timeout);
         this.gamepads.player1.actions.timeouts.dpad.up.timeout = setTimeout(() => {this.gamepads.player1.actions.dpad.up = false;}, timeoutDuration);
-        if (!this.keyboardData.shown) this.homeScreen.dpad_up(); // Maybe this need's some parameters. Not yet tho.
-        else this.keyboard.dpad_up();
+        this.triggerDpad("up");
       }
       this.gamepads.player1.actions.dpad.up = true;
     } else {
@@ -457,8 +506,7 @@ export class OS {
         }
         clearTimeout(this.gamepads.player1.actions.timeouts.dpad.down.timeout);
         this.gamepads.player1.actions.timeouts.dpad.down.timeout = setTimeout(() => {this.gamepads.player1.actions.dpad.down = false;}, timeoutDuration);
-        if (!this.keyboardData.shown) this.homeScreen.dpad_down(); // Maybe this need's some parameters. Not yet tho.
-        else this.keyboard.dpad_down();
+        this.triggerDpad("down");
       }
       this.gamepads.player1.actions.dpad.down = true;
     } else {
@@ -475,8 +523,7 @@ export class OS {
         }
         clearTimeout(this.gamepads.player1.actions.timeouts.dpad.left.timeout);
         this.gamepads.player1.actions.timeouts.dpad.left.timeout = setTimeout(() => {this.gamepads.player1.actions.dpad.left = false;}, timeoutDuration);
-        if (!this.keyboardData.shown) this.homeScreen.dpad_left(); // Maybe this need's some parameters. Not yet tho.
-        else this.keyboard.dpad_left();
+        this.triggerDpad("left");
       }
       this.gamepads.player1.actions.dpad.left = true;
     } else {
@@ -493,8 +540,7 @@ export class OS {
         }
         clearTimeout(this.gamepads.player1.actions.timeouts.dpad.right.timeout);
         this.gamepads.player1.actions.timeouts.dpad.right.timeout = setTimeout(() => {this.gamepads.player1.actions.dpad.right = false;}, timeoutDuration);
-        if (!this.keyboardData.shown) this.homeScreen.dpad_right(); // Maybe this need's some parameters. Not yet tho.
-        else this.keyboard.dpad_right();
+        this.triggerDpad("right");
       }
       this.gamepads.player1.actions.dpad.right = true;
     } else {
@@ -504,35 +550,25 @@ export class OS {
 
     if (this.gamepads.player1.pressed.a) {
       if (!this.gamepads.player1.actions.a)
-        if (!this.keyboardData.shown) this.homeScreen.buttons_a();
-        else this.keyboard.buttons_a();
+        this.triggerButton("a");
       this.gamepads.player1.actions.a = true;
     } else this.gamepads.player1.actions.a = false;
 
     if (this.gamepads.player1.pressed.b) {
       if (!this.gamepads.player1.actions.b)
-        if (!this.keyboardData.shown) this.homeScreen.buttons_b();
-        else {
-          this.keyboard = new Keyboard(this.swemu);
-          this.keyboard.terminate();
-          this.keyboardData.shown = false;
-          this.keyboardData.text = "";
-          this.keyboardData.submitted = false;
-        }
+        this.triggerButton("b");
       this.gamepads.player1.actions.b = true;
     } else this.gamepads.player1.actions.b = false;
 
     if (this.gamepads.player1.pressed.x) {
       if (!this.gamepads.player1.actions.x)
-        if (!this.keyboardData.shown) this.homeScreen.buttons_x();
-        else this.keyboard.buttons_x();
+        this.triggerButton("x");
       this.gamepads.player1.actions.x = true;
     } else this.gamepads.player1.actions.x = false;
 
     if (this.gamepads.player1.pressed.y) {
       if (!this.gamepads.player1.actions.y)
-        if (!this.keyboardData.shown) this.homeScreen.buttons_y();
-        else this.keyboard.buttons_y();
+        this.triggerButton("y");
       this.gamepads.player1.actions.y = true;
     } else this.gamepads.player1.actions.y = false;
 
