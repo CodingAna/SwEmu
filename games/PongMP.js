@@ -40,20 +40,44 @@ export class PongMP {
     if (this._state === States.STARTSCREEN) {
       if (this._selection === 0) {
         this._host = true;
-        this._state = States.LOBBY;
+        this._net.onrecv((resp) => {
+          this._state = States.STARTSCREEN; // ALWAYS! reset back to previous state on any response
+          if (resp.success) {
+            this._code = resp.room.code;
+            this._state = States.LOBBY;
+
+            this._startHeartbeat();
+          } else console.warn("couldn't create room");
+        });
+        this._state = States.WAIT_NET;
+        this._net.send({type: "room.create", game: "Pong", user: this._user});
       } else if (this._selection === 1) {
         this._host = false;
         this._state = States.JOIN;
       } else ;
+
     } else if (this._state === States.JOIN) {
       if (this._text === "") {
         this._showKeyboard();
       } else {
-        this._state = States.LOBBY;
+        this._net.onrecv((resp) => {
+          this._state = States.JOIN; // ALWAYS! reset back to previous state on any response
+          if (resp.success) {
+            this._code = resp.room.code;
+            this._state = States.LOBBY;
+
+            this._startHeartbeat();
+          } else console.warn("couldn't join room");
+        });
+        this._state = States.WAIT_NET;
+        this._net.send({type: "room.join", code: this._text, game: "Pong", user: this._user});
       }
+
     } else if (this._state === States.LOBBY) {
-      if (this._host) this._state = States.INGAME; // Send start game request to server
+      if (this._host) this._net.send({type: "room.start", code: this._code, game: "Pong", user: this._user}); // Send start game request to server
+
     } else if (this._state === States.INGAME) {
+
     } else if (this._state === States.END) {
     }
   }
@@ -72,6 +96,25 @@ export class PongMP {
   buttons_pause = () => {
   }
 
+  _startHeartbeat = () => {
+    this._net.onrecv((resp) => {
+      console.log(resp);
+      // *Code is executed as if it's in State.LOBBY
+      this._state = States.LOBBY; // ALWAYS! reset back to previous state on any response
+      if (resp.success) {
+        this._players = resp.room.players;
+        if (resp.room.started) {
+          this._gamecode = resp.room.gamecode;
+          this._state = States.INGAME;
+        } else setTimeout(() => {
+          this._net.send({type: "room.heartbeat", code: this._code, game: "Pong", user: this._user});
+        }, 500);
+      } else console.warn("couldn't create room");
+    }); // Overwrite current onrecv for heartbeat
+
+    this._net.send({type: "room.heartbeat", code: this._code, game: "Pong", user: this._user});
+  }
+
   init = (user) => {
     this._terminated = false;
     this._paused = false;
@@ -83,7 +126,10 @@ export class PongMP {
     this._text = "";
 
     this._host = false;
+    this._code = "";
     this._players = [{name: this._user.name}];
+
+    this._net = new NetworkConnection();
 
     return this;
   }
@@ -135,5 +181,6 @@ let States = Object.freeze({
   JOIN: 1,
   LOBBY: 2,
   INGAME: 3,
-  END: 4
+  END: 4,
+  WAIT_NET: 5,
 });
