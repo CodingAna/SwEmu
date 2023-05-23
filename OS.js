@@ -548,6 +548,7 @@ export class OS {
       this.gamepads.player1.actions.timeouts.dpad.right.first = true;
     }
 
+    // TODO: Add "holding" action for buttons, same as for dpad buttons
     if (this.gamepads.player1.pressed.a) {
       if (!this.gamepads.player1.actions.a)
         this.triggerButton("a");
