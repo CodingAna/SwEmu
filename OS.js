@@ -393,7 +393,7 @@ export class OS {
     let nc = new NetworkConnection();
     nc.onrecv((recvObj) => {
       if (!recvObj.success) console.warn(recvObj);
-      if (recvObj.type === "register.switch") console.log(recvObj.data.msg);
+      if (recvObj.type === "register.switch") console.log(recvObj);
     });
     nc.onopen(() => {
       nc.send({
@@ -608,8 +608,8 @@ export class OS {
 }
 
 export class NetworkConnection {
-  constructor(recvCallback) {
-    this.ws = new WebSocket('ws://localhost:3000');
+  constructor() {
+    this.ws = new WebSocket('ws://172.20.10.5:3000');
   }
 
   onrecv = (callback) => {
@@ -623,10 +623,10 @@ export class NetworkConnection {
   }
 
   send = (dataObj) => {
-    if (this.ws.readyState === 1) this.ws.send(JSON.stringify(dataObj));
+    if (this.isopen()) this.ws.send(JSON.stringify(dataObj));
   }
 
   isopen = () => {
-    return this.ws.readyState === 2;
+    return this.ws.readyState === 1;
   }
 };
