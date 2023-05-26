@@ -40,17 +40,7 @@ export class PongMP {
     if (this._state === States.STARTSCREEN) {
       if (this._selection === 0) {
         this._host = true;
-        this._net.onrecv((resp) => {
-          this._state = States.STARTSCREEN; // ALWAYS! reset back to previous state on any response
-          if (resp.success) {
-            this._code = resp.room.code;
-            this._state = States.LOBBY;
-
-            this._startHeartbeat();
-          } else console.warn("couldn't create room");
-        });
-        this._state = States.WAIT_NET;
-        this._net.send({type: "room.create", gametype: "Pong", user: this._user});
+        this._roomCreate();
       } else if (this._selection === 1) {
         this._host = false;
         this._state = States.JOIN;
@@ -60,21 +50,13 @@ export class PongMP {
       if (this._text === "") {
         this._showKeyboard();
       } else {
-        this._net.onrecv((resp) => {
-          this._state = States.JOIN; // ALWAYS! reset back to previous state on any response
-          if (resp.success) {
-            this._code = resp.room.code;
-            this._state = States.LOBBY;
-
-            this._startHeartbeat();
-          } else console.warn("couldn't join room");
-        });
-        this._state = States.WAIT_NET;
-        this._net.send({type: "room.join", code: this._text, game: "Pong", user: this._user});
+        this._roomJoin();
       }
 
     } else if (this._state === States.LOBBY) {
-      if (this._host) this._net.send({type: "room.start", code: this._code, game: "Pong", user: this._user}); // Send start game request to server
+      if (this._host) this._roomStart();
+
+    } else if (this._state === States.INGAME_WAIT) {
 
     } else if (this._state === States.INGAME) {
 
@@ -100,6 +82,7 @@ export class PongMP {
     if (this._waitForNet) return;
 
     this._net.onrecv((resp) => {
+      if (resp.type !== "room.create") return;
       this._waitForNet = false;
       if (resp.success) {
         this._room = resp.room;
@@ -117,6 +100,7 @@ export class PongMP {
     if (this._text.length !== 4) return;
 
     this._net.onrecv((resp) => {
+      if (resp.type !== "room.join") return;
       this._waitForNet = false;
       if (resp.success) {
         this._room = resp.room;
@@ -134,11 +118,13 @@ export class PongMP {
     if (!this._host) return;
 
     this._net.onrecv((resp) => {
+      if (resp.type !== "room.start") return;
       this._waitForNet = false;
       if (resp.success) {
         this._room = resp.room;
         this._game = resp.game;
         this._state = States.INGAME_WAIT;
+        this._gameStart();
       } else console.error("Could not start room");
     });
 
@@ -146,11 +132,12 @@ export class PongMP {
     this._waitForNet = true;
   }
 
-  roomHeartbeat = () => {
+  _roomHeartbeat = () => {
     if (!this._host) return;
     if (this._heartBeating) return;
 
     this._net.onrecv((resp) => {
+      if (resp.type !== "room.heartbeat") return;
       if (resp.success) {
         this._room = resp.room;
         this._game = resp.game;
@@ -161,7 +148,7 @@ export class PongMP {
             this._gameData();
           } else this._state = States.INGAME_WAIT;
         } else this._net.send({type: "room.heartbeat", roomcode: this._room.roomcode, user: this._user});
-      } else console.error("Could not get room info");
+      } else console.warn(resp); // console.error("Could not get room info");
     });
 
     this._net.send({type: "room.heartbeat", roomcode: this._room.roomcode, user: this._user});
@@ -173,6 +160,7 @@ export class PongMP {
     if (!this._host) return;
 
     this._net.onrecv((resp) => {
+      if (resp.type !== "game.start") return;
       this._waitForNet = false;
       if (resp.success) {
         this._game = resp.game;
@@ -181,7 +169,7 @@ export class PongMP {
       } else console.error("Could not start game");
     });
 
-    this._net.send({type: "game.start", gamecode: this._game.gamecode, user: this._user});
+    this._net.send({type: "game.start", gamecode: this._room.gamecode, user: this._user});
     this._waitForNet = true;
   }
 
@@ -190,15 +178,16 @@ export class PongMP {
     if (this._gameBeating) return;
 
     this._net.onrecv((resp) => {
+      if (resp.type !== "game.data") return;
       if (resp.success) {
         this._game = resp.game;
-        if (this._host) this._y.other = this._game.right.y;
-        else this._y.other = this._game.left.y;
-        this._net.send({type: "game.data", gamecode: this._game.gamecode, user: this._user, data: {position: {y: this._y.me, v: this._gpv.me}}});
+        if (this._host) this.y.other = this._game.right.y;
+        else this.y.other = this._game.left.y;
+        this._net.send({type: "game.data", gamecode: this._room.gamecode, user: this._user, data: {position: {y: this.y.me, v: this.gpv.me}}});
       } else console.error("Could not get game data");
     });
 
-    this._net.send({type: "game.data", gamecode: this._game.gamecode, user: this._user, data: {position: {y: this._y.me, v: this._gpv.me}}});
+    this._net.send({type: "game.data", gamecode: this._room.gamecode, user: this._user, data: {position: {y: this.y.me, v: this.gpv.me}}});
     this._gameBeating = true;
   }
 
@@ -247,9 +236,11 @@ export class PongMP {
     if (this._paused) return;
     this._text = text;
 
-    this._gpv.me = gamepads.player1.joystick.left.y;
-    if (this._host) this._gpv.other = this._game.right.v;
-    else this._gpv.other = this._game.left.v;
+    this.gpv.me = gamepads.player1.joystick.left.y;
+    if (this._game !== null) {
+      if (this._host) this.gpv.other = this._game.right.v;
+      else this.gpv.other = this._game.left.v;
+    }
 
     if (this._state === States.STARTSCREEN) {
       if (this._selection === 0) draw.setColor("ffffff");
@@ -273,8 +264,8 @@ export class PongMP {
     } else if (this._state === States.LOBBY) {
       draw.setColor("ffffff");
       draw.text("Players:", new Point(100, 100), 20);
-      for (let i=0; i<this._players.length; i++)
-        draw.text(this._players[i].name, new Point(100, 140 + 40 * i), 20);
+      for (let i=0; i<this._room.players.length; i++)
+        draw.text(this._room.players[i].name, new Point(100, 140 + 40 * i), 20);
 
       if (this._host) {
         draw.setColor("ffffff");
@@ -288,12 +279,12 @@ export class PongMP {
     } else if (this._state === States.INGAME) {
       let pps = 100;
       let speed = 1;
-      this._y.me += this._gpv.me * speed * pps;
-      this._y.other += this._gpv.other * speed * pps;
+      this.y.me += this.gpv.me * speed * pps;
+      this.y.other += this.gpv.other * speed * pps;
 
       draw.setColor("ffffff");
-      draw.rect(new Point(10, this._y.me), new Point(25, this._y.me + 50));
-      draw.rect(new Point(this._swemu.screen.width-10-15, this._y.other), new Point(this._swemu.screen.width-10, this._y.other + 50));
+      draw.rect(new Point(10, this.y.me), new Point(25, this.y.me + 50));
+      draw.rect(new Point(this._swemu.screen.width-10-15, this.y.other), new Point(this._swemu.screen.width-10, this.y.other + 50));
 
     } else if (this._state === States.END) {
     }
