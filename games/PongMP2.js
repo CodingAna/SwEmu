@@ -96,39 +96,110 @@ export class PongMP {
   buttons_pause = () => {
   }
 
-  _startHeartbeat = () => {
+  _roomCreate = () => {
+    if (this._waitForNet) return;
+
     this._net.onrecv((resp) => {
-      // *Code is executed as if it's in State.LOBBY*
-      this._state = States.LOBBY; // ALWAYS! reset back to previous state on any response
+      this._waitForNet = false;
       if (resp.success) {
-        this._players = resp.room.players;
-        if (resp.room.started) {
-          this._gamecode = resp.room.gamecode;
-          this._state = States.INGAME;
-        } else setTimeout(() => {
-          this._net.send({type: "room.heartbeat", code: this._code, game: "Pong", user: this._user});
-        }, 500);
-      } else console.warn("couldn't create room");
+        this._room = resp.room;
+        this._state = States.LOBBY;
+        this._roomHeartbeat();
+      } else console.error("Could not create room");
     });
 
-    this._net.send({type: "room.heartbeat", code: this._code, game: "Pong", user: this._user});
+    this._net.send({type: "room.create", gametype: "Pong", user: this._user});
+    this._waitForNet = true;
   }
 
-  _updatePositions = () => {
+  _roomJoin = () => {
+    if (this._waitForNet) return;
+    if (this._text.length !== 4) return;
+
     this._net.onrecv((resp) => {
-      this._state = States.INGAME; // ALWAYS! reset back to previous state on any response
+      this._waitForNet = false;
       if (resp.success) {
-        this._players = resp.room.players;
-        if (resp.room.started) {
-          this._gamecode = resp.room.gamecode;
-          this._state = States.INGAME;
-        } else setTimeout(() => {
-          this._net.send({type: "room.heartbeat", code: this._code, game: "Pong", user: this._user});
-        }, 500);
-      } else console.warn("couldn't create room");
+        this._room = resp.room;
+        this._state = States.LOBBY;
+        this._roomHeartbeat();
+      } else console.error("Could not join room");
     });
 
-    this._net.send({type: "game.data", gamecode: this._gamecode, user: this._user, data: {}});
+    this._net.send({type: "room.join", roomcode: this._text, user: this._user});
+    this._waitForNet = true;
+  }
+
+  _roomStart = () => {
+    if (this._waitForNet) return;
+    if (!this._host) return;
+
+    this._net.onrecv((resp) => {
+      this._waitForNet = false;
+      if (resp.success) {
+        this._room = resp.room;
+        this._game = resp.game;
+        this._state = States.INGAME_WAIT;
+      } else console.error("Could not start room");
+    });
+
+    this._net.send({type: "room.start", gametype: "Pong", roomcode: this._room.roomcode, user: this._user});
+    this._waitForNet = true;
+  }
+
+  roomHeartbeat = () => {
+    if (!this._host) return;
+    if (this._heartBeating) return;
+
+    this._net.onrecv((resp) => {
+      if (resp.success) {
+        this._room = resp.room;
+        this._game = resp.game;
+        if (this._game !== null) {
+          if (this._game.started) {
+            this._heartBeating = false;
+            this._state = States.INGAME;
+            this._gameData();
+          } else this._state = States.INGAME_WAIT;
+        } else this._net.send({type: "room.heartbeat", roomcode: this._room.roomcode, user: this._user});
+      } else console.error("Could not get room info");
+    });
+
+    this._net.send({type: "room.heartbeat", roomcode: this._room.roomcode, user: this._user});
+    this._heartBeating = true;
+  }
+
+  _gameStart = () => {
+    if (this._waitForNet) return;
+    if (!this._host) return;
+
+    this._net.onrecv((resp) => {
+      this._waitForNet = false;
+      if (resp.success) {
+        this._game = resp.game;
+        this._state = States.INGAME;
+        this._gameData();
+      } else console.error("Could not start game");
+    });
+
+    this._net.send({type: "game.start", gamecode: this._game.gamecode, user: this._user});
+    this._waitForNet = true;
+  }
+
+  _gameData = () => {
+    if (!this._host) return;
+    if (this._gameBeating) return;
+
+    this._net.onrecv((resp) => {
+      if (resp.success) {
+        this._game = resp.game;
+        if (this._host) this._y.other = this._game.right.y;
+        else this._y.other = this._game.left.y;
+        this._net.send({type: "game.data", gamecode: this._game.gamecode, user: this._user, data: {position: {y: this._y.me, v: this._gpv.me}}});
+      } else console.error("Could not get game data");
+    });
+
+    this._net.send({type: "game.data", gamecode: this._game.gamecode, user: this._user, data: {position: {y: this._y.me, v: this._gpv.me}}});
+    this._gameBeating = true;
   }
 
   init = (user) => {
@@ -138,14 +209,29 @@ export class PongMP {
     this._user = user;
 
     this._state = States.STARTSCREEN;
+    this._waitForNet = false;
     this._selection = 0;
     this._text = "";
+
+    this._room = null;
+    this._game = null;
 
     this._host = false;
     this._code = "";
     this._players = [{name: this._user.name}];
 
+    this.gpv = {
+      me: 0,
+      other: 0
+    };
+    this.y = {
+      me: 0,
+      other: 0
+    }
+
     this._net = new NetworkConnection();
+    this._heartBeating = false;
+    this._gameBeating = false;
 
     return this;
   }
@@ -161,6 +247,10 @@ export class PongMP {
     if (this._paused) return;
     this._text = text;
 
+    this._gpv.me = gamepads.player1.joystick.left.y;
+    if (this._host) this._gpv.other = this._game.right.v;
+    else this._gpv.other = this._game.left.v;
+
     if (this._state === States.STARTSCREEN) {
       if (this._selection === 0) draw.setColor("ffffff");
       else draw.setColor("bbbbbb");
@@ -171,6 +261,7 @@ export class PongMP {
       else draw.setColor("bbbbbb");
       draw.rect(new Point(100, 200), new Point(235, 250), false);
       draw.text("JOIN", new Point(115, 240), 30);
+
     } else if (this._state === States.JOIN) {
       draw.setColor("bbbbbb");
       draw.text("Enter room code", new Point(100, 100), 20);
@@ -178,15 +269,32 @@ export class PongMP {
       draw.setColor("ffffff");
       draw.line(new Point(100, 200), new Point(200, 200));
       draw.text(text, new Point(110, 190), 20);
+
     } else if (this._state === States.LOBBY) {
       draw.setColor("ffffff");
       draw.text("Players:", new Point(100, 100), 20);
       for (let i=0; i<this._players.length; i++)
         draw.text(this._players[i].name, new Point(100, 140 + 40 * i), 20);
-    } else if (this._state === States.INGAME) {
+
+      if (this._host) {
+        draw.setColor("ffffff");
+        draw.text("Press A to start game", new Point(300, 100), 16)
+      }
+
+    } else if (this._state === States.INGAME_WAIT) {
       draw.setColor("ffffff");
-      draw.rect(new Point(10, 0), new Point(25, 50));
-      draw.rect(new Point(this._swemu.screen.width-10-15, 0), new Point(this._swemu.screen.width-10, 50));
+      draw.text("INGAME_WAIT", new Point(100, 100), 16);
+
+    } else if (this._state === States.INGAME) {
+      let pps = 100;
+      let speed = 1;
+      this._y.me += this._gpv.me * speed * pps;
+      this._y.other += this._gpv.other * speed * pps;
+
+      draw.setColor("ffffff");
+      draw.rect(new Point(10, this._y.me), new Point(25, this._y.me + 50));
+      draw.rect(new Point(this._swemu.screen.width-10-15, this._y.other), new Point(this._swemu.screen.width-10, this._y.other + 50));
+
     } else if (this._state === States.END) {
     }
   }
@@ -196,7 +304,7 @@ let States = Object.freeze({
   STARTSCREEN: 0,
   JOIN: 1,
   LOBBY: 2,
-  INGAME: 3,
-  END: 4,
-  WAIT_NET: 5,
+  INGAME_WAIT: 3,
+  INGAME: 4,
+  END: 5,
 });
