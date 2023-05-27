@@ -47,6 +47,7 @@ export class PongMP {
       } else ;
 
     } else if (this._state === States.JOIN) {
+      this._text = "ABCD";
       if (this._text === "") {
         this._showKeyboard();
       } else {
@@ -79,116 +80,33 @@ export class PongMP {
   }
 
   _roomCreate = () => {
-    if (this._waitForNet) return;
-
-    this._net.onrecv((resp) => {
-      if (resp.type !== "room.create") return;
-      this._waitForNet = false;
-      if (resp.success) {
-        this._room = resp.room;
-        this._state = States.LOBBY;
-        this._roomHeartbeat();
-      } else console.error("Could not create room");
-    });
-
     this._net.send({type: "room.create", gametype: "Pong", user: this._user});
-    this._waitForNet = true;
   }
 
   _roomJoin = () => {
-    if (this._waitForNet) return;
     if (this._text.length !== 4) return;
 
-    this._net.onrecv((resp) => {
-      if (resp.type !== "room.join") return;
-      this._waitForNet = false;
-      if (resp.success) {
-        this._room = resp.room;
-        this._state = States.LOBBY;
-        this._roomHeartbeat();
-      } else console.error("Could not join room");
-    });
-
     this._net.send({type: "room.join", roomcode: this._text, user: this._user});
-    this._waitForNet = true;
   }
 
   _roomStart = () => {
-    if (this._waitForNet) return;
     if (!this._host) return;
 
-    this._net.onrecv((resp) => {
-      if (resp.type !== "room.start") return;
-      this._waitForNet = false;
-      if (resp.success) {
-        this._room = resp.room;
-        this._game = resp.game;
-        this._state = States.INGAME_WAIT;
-        this._gameStart();
-      } else console.error("Could not start room");
-    });
-
     this._net.send({type: "room.start", gametype: "Pong", roomcode: this._room.roomcode, user: this._user});
-    this._waitForNet = true;
   }
 
   _roomHeartbeat = () => {
-    if (!this._host) return;
-    if (this._heartBeating) return;
-
-    this._net.onrecv((resp) => {
-      if (resp.type !== "room.heartbeat") return;
-      if (resp.success) {
-        this._room = resp.room;
-        this._game = resp.game;
-        if (this._game !== null) {
-          if (this._game.started) {
-            this._heartBeating = false;
-            this._state = States.INGAME;
-            this._gameData();
-          } else this._state = States.INGAME_WAIT;
-        } else this._net.send({type: "room.heartbeat", roomcode: this._room.roomcode, user: this._user});
-      } else console.warn(resp); // console.error("Could not get room info");
-    });
-
     this._net.send({type: "room.heartbeat", roomcode: this._room.roomcode, user: this._user});
-    this._heartBeating = true;
   }
 
   _gameStart = () => {
-    if (this._waitForNet) return;
     if (!this._host) return;
 
-    this._net.onrecv((resp) => {
-      if (resp.type !== "game.start") return;
-      this._waitForNet = false;
-      if (resp.success) {
-        this._game = resp.game;
-        this._state = States.INGAME;
-        this._gameData();
-      } else console.error("Could not start game");
-    });
-
     this._net.send({type: "game.start", gamecode: this._room.gamecode, user: this._user});
-    this._waitForNet = true;
   }
 
   _gameData = () => {
-    if (!this._host) return;
-    if (this._gameBeating) return;
-
-    this._net.onrecv((resp) => {
-      if (resp.type !== "game.data") return;
-      if (resp.success) {
-        this._game = resp.game;
-        if (this._host) this.y.other = this._game.right.y;
-        else this.y.other = this._game.left.y;
-        this._net.send({type: "game.data", gamecode: this._room.gamecode, user: this._user, data: {position: {y: this.y.me, v: this.gpv.me}}});
-      } else console.error("Could not get game data");
-    });
-
     this._net.send({type: "game.data", gamecode: this._room.gamecode, user: this._user, data: {position: {y: this.y.me, v: this.gpv.me}}});
-    this._gameBeating = true;
   }
 
   init = (user) => {
@@ -217,10 +135,81 @@ export class PongMP {
       me: 0,
       other: 0
     }
+    this.ball = {
+      x: 0,
+      y: 0,
+      vx: 0,
+      vy: 0
+    }
 
     this._net = new NetworkConnection();
     this._heartBeating = false;
     this._gameBeating = false;
+
+    this._net.onrecv(resp => {
+      if (!resp.success) {
+        console.error(resp);
+        return;
+      }
+      switch (resp.type) {
+        case "room.create":
+          this._room = resp.room;
+          this._state = States.LOBBY;
+          this._roomHeartbeat();
+          break;
+
+        case "room.join":
+          this._room = resp.room;
+          this._state = States.LOBBY;
+          this._roomHeartbeat();
+          break;
+
+        case "room.start":
+          this._room = resp.room;
+          this._game = resp.game;
+          this._state = States.INGAME_WAIT;
+          this._gameStart();
+          break;
+
+        case "room.heartbeat":
+          this._room = resp.room;
+          this._game = resp.game;
+          if (this._game === null || !this._game.started) {
+            setTimeout(() => {this._net.send({type: "room.heartbeat", roomcode: this._room.roomcode, user: this._user});}, 2000);
+            break;
+          }
+          if (this._game.started) {
+            console.log("INGAME");
+            this._state = States.INGAME;
+            this._gameData();
+          } else {
+            console.log("INGAME_WAIT");
+            this._state = States.INGAME_WAIT;
+          }
+          break;
+
+        case "game.start":
+          this._game = resp.game;
+          this._state = States.INGAME;
+          this._gameData();
+          break;
+
+        case "game.data":
+          this._game = resp.game;
+          this.ball = this._game.ball;
+          if (this._host) {
+            this.y.other = this._game.right.y;
+          } else {
+            this.y.other = this._game.left.y;
+            this.ball.x = 630 - this.ball.x;
+            this.ball.vx *= -1;
+          }
+          setTimeout(() => {this._net.send({type: "game.data", gamecode: this._room.gamecode, user: this._user, data: {position: {y: this.y.me, v: this.gpv.me}}});}, (1/16)*1000);
+          break;
+
+        default: break;
+      }
+    });
 
     return this;
   }
@@ -240,6 +229,7 @@ export class PongMP {
     if (this._game !== null) {
       if (this._host) this.gpv.other = this._game.right.v;
       else this.gpv.other = this._game.left.v;
+
     }
 
     if (this._state === States.STARTSCREEN) {
@@ -279,12 +269,39 @@ export class PongMP {
     } else if (this._state === States.INGAME) {
       let pps = 100;
       let speed = 1;
-      this.y.me += this.gpv.me * speed * pps;
-      this.y.other += this.gpv.other * speed * pps;
+      this.y.me += this.gpv.me * speed * 1.2 * pps * (1/16);
+      this.y.other += this.gpv.other * speed * 1.2 * pps * (1/16);
+
+      if (this.y.me < 0) this.y.me = 0;
+      else if (this.y.me > 360-50) this.y.me = 360-50;
+
+      if (this.y.other < 0) this.y.other = 0;
+      else if (this.y.other > 360-50) this.y.other = 360-50;
+
+      this.ball.x += this.ball.vx * speed * pps * (1/16);
+      this.ball.y += this.ball.vy * speed * pps * (1/16);
+
+      if (this.ball.x < 0) {
+        this.ball.x = 0;
+        this.ball.vx *= -1;
+      } else if (this.ball.x > 630) {
+        this.ball.x = 630;
+        this.ball.vx *= -1;
+      }
+
+      if (this.ball.y < 0) {
+        this.ball.y *= -1;
+        this.ball.vy *= -1;
+      } else if (this.ball.y > 360) {
+        this.ball.y = 360;
+        this.ball.vy *= -1;
+      }
 
       draw.setColor("ffffff");
       draw.rect(new Point(10, this.y.me), new Point(25, this.y.me + 50));
       draw.rect(new Point(this._swemu.screen.width-10-15, this.y.other), new Point(this._swemu.screen.width-10, this.y.other + 50));
+
+      draw.arc(new Point(this.ball.x, this.ball.y), 10);
 
     } else if (this._state === States.END) {
     }
