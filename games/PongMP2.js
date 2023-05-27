@@ -175,7 +175,7 @@ export class PongMP {
           this._room = resp.room;
           this._game = resp.game;
           if (this._game === null || !this._game.started) {
-            setTimeout(() => {this._net.send({type: "room.heartbeat", roomcode: this._room.roomcode, user: this._user});}, 2000);
+            setTimeout(() => {this._net.send({type: "room.heartbeat", roomcode: this._room.roomcode, user: this._user});}, 500);
             break;
           }
           if (this._game.started) {
@@ -204,7 +204,7 @@ export class PongMP {
             this.ball.x = 630 - this.ball.x;
             this.ball.vx *= -1;
           }
-          setTimeout(() => {this._net.send({type: "game.data", gamecode: this._room.gamecode, user: this._user, data: {position: {y: this.y.me, v: this.gpv.me}}});}, (1/16)*1000);
+          setTimeout(() => {this._net.send({type: "game.data", gamecode: this._room.gamecode, user: this._user, data: {position: {y: this.y.me, v: this.gpv.me}}});}, 1000);
           break;
 
         default: break;
@@ -269,8 +269,8 @@ export class PongMP {
     } else if (this._state === States.INGAME) {
       let pps = 100;
       let speed = 1;
-      this.y.me += this.gpv.me * speed * 1.2 * pps * (1/16);
-      this.y.other += this.gpv.other * speed * 1.2 * pps * (1/16);
+      this.y.me += this.gpv.me * speed * 1.2 * pps * (1/60);
+      this.y.other += this.gpv.other * speed * 1.2 * pps * (1/60);
 
       if (this.y.me < 0) this.y.me = 0;
       else if (this.y.me > 360-50) this.y.me = 360-50;
@@ -278,8 +278,8 @@ export class PongMP {
       if (this.y.other < 0) this.y.other = 0;
       else if (this.y.other > 360-50) this.y.other = 360-50;
 
-      this.ball.x += this.ball.vx * speed * pps * (1/16);
-      this.ball.y += this.ball.vy * speed * pps * (1/16);
+      this.ball.x += this.ball.speed * this.ball.vx * pps * render.deltaTime;
+      this.ball.y += this.ball.speed * this.ball.vy * pps * render.deltaTime;
 
       if (this.ball.x < 0) {
         this.ball.x = 0;
