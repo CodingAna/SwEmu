@@ -610,7 +610,8 @@ export class OS {
 export class NetworkConnection {
   constructor() {
     // this.ws = new WebSocket('ws://172.20.10.5:3000');
-    this.ws = new WebSocket('ws://192.168.243.76:3000');
+    // this.ws = new WebSocket('ws://192.168.243.76:3000');
+    this.ws = new WebSocket('ws://192.168.243.172:3000');
   }
 
   onrecv = (callback) => {
