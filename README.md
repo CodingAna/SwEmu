@@ -1,5 +1,11 @@
 # SwEmu
 
+[Browser Version](https://codingana.github.io/SwEmu)
+
+**Note**: You need to use an actual gamepad. Touch / Mouse control is not supported!
+
+- - -
+
 ## Important Notes
 
 - Multiple Controllers are supported (P1 is master, P2 currently only available in "Pong" game)
