@@ -248,16 +248,18 @@ export class CoinCollect {
           this._moveToFuturePlayerPosition(draw, gamepads, render); // Update .future and push them eventually into .current
           // checkPlayerHitbox(); // Check current and .future values and reset the latter if invalid (hitbox check === true)
         } else {
-          draw.setColor("ffffff");
-          draw.text("Game over", new Point(this._swemu.screen.width / 2 - 25, this._swemu.screen.height / 2 - 70), 35, null, "bold", true);
-          draw.setColor("b0b0b0");
-          draw.text("Press A to restart", new Point(this._swemu.screen.width / 2, this._swemu.screen.height / 2), 18, null, null, true);
+          this._renderPlayer(draw, gamepads, render);
 
           draw.setColor("ef1a48");
           let [p1, width, height, scrollSpeed] = this._player.life.killer;
           draw.rect(p1, new Point(width, height).add(p1));
+
+          draw.setColor("ffffff");
+          draw.text("Game over", new Point(this._swemu.screen.width / 2 - 25, this._swemu.screen.height / 2 - 70), 35, null, "bold", true);
+          draw.setColor("b0b0b0");
+          draw.text("Press A to restart", new Point(this._swemu.screen.width / 2, this._swemu.screen.height / 2), 18, null, null, true);
         }
-        this._renderPlayer(draw, gamepads, render);
+        if (!this._player.life.dead) this._renderPlayer(draw, gamepads, render);
         // Render coin count
         draw.setColor("dbcb20");
         draw.text(this._player.coins + " Coin" + (this._player.coins === 1 ? "" : "s"), new Point(10, 30), 20);
